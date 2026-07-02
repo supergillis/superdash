@@ -15,6 +15,11 @@ build/
 local.properties
 captures/
 
+# Signing keystores — never commit
+*.jks
+*.keystore
+*.p12
+
 # Large local STT runtime and model downloads.
 packages/voice/libs/*.aar
 packages/app/src/main/assets/models/sherpa/

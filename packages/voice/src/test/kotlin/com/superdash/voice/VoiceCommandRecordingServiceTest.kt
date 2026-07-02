@@ -238,6 +238,7 @@ class VoiceCommandRecordingServiceTest {
                 )
             val results = MutableSharedFlow<VoiceRunResult>(extraBufferCapacity = 1)
             val finishAudio = CompletableDeferred<Unit>()
+            val firstFrameForwarded = CompletableDeferred<Unit>()
             val service =
                 VoiceCommandRecordingService(
                     enabled = { true },
@@ -250,10 +251,15 @@ class VoiceCommandRecordingServiceTest {
             val audio =
                 flow {
                     emit(shortArrayOf(1))
+                    firstFrameForwarded.complete(Unit)
                     finishAudio.await()
                 }
 
             val collectJob = launch { service.record(context, audio).toList() }
+            // Wait until record() has forwarded the first frame (and therefore already
+            // captured the clear generation) before clearing, so the clear-generation
+            // mismatch is deterministic and does not race on slower CI runners.
+            firstFrameForwarded.await()
             repository.clear()
             results.emit(testRunResult(context, "should not save"))
             finishAudio.complete(Unit)

@@ -45,13 +45,10 @@ android {
             }
         }
         ndk {
-            abiFilters +=
-                listOf(
-                    "arm64-v8a",
-                    "armeabi-v7a",
-                    "x86_64",
-                    "x86",
-                )
+            // superdash targets arm64-v8a tablets. The heavy STT native libs
+            // (onnxruntime, moonshine) ship arm64-only anyway. Apple Silicon
+            // emulators are arm64 too, so this also covers local dev.
+            abiFilters += "arm64-v8a"
         }
     }
 

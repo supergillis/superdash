@@ -83,6 +83,14 @@ android {
     }
 }
 
+// DataStore ships its own repackaged protobuf (datastore-preferences-external-protobuf)
+// whose com.google.protobuf.* classes collide at release dex merge with the real
+// protobuf-javalite pulled in via :packages:esphome-server. Drop DataStore's copy across
+// all configurations; javalite provides the same classes at runtime.
+configurations.all {
+    exclude(group = "androidx.datastore", module = "datastore-preferences-external-protobuf")
+}
+
 dependencies {
     implementation(project(":packages:core"))
     implementation(project(":packages:kiosk-bus"))

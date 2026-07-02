@@ -39,7 +39,6 @@ dependencies {
     implementation(libs.ktor.network)
     implementation(libs.tink.android)
     implementation(libs.protobuf.kotlin.lite)
-    protobuf("com.google.protobuf:protobuf-java:${libs.versions.protobuf.get()}")
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

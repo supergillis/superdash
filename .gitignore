@@ -1,0 +1,44 @@
+# Build output
+build/
+.gradle/
+.kotlin/
+.cxx/
+**/build/
+**/.gradle/
+**/.kotlin/
+**/.cxx/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+local.properties
+captures/
+
+# Large local STT runtime and model downloads.
+packages/voice/libs/*.aar
+packages/app/src/main/assets/models/sherpa/
+packages/voice/src/main/assets/models/sherpa/
+packages/app/src/main/assets/models/whisper/
+packages/voice/src/main/assets/models/whisper/
+packages/voice/src/main/cpp/whisper.cpp/
+
+# Node / pnpm
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code harness state
+.claude/
+.superpowers/
+
+# Moquette test broker runtime state (created when MQTT tests run)
+packages/app/data/
+
+# Local migration backups (may contain secrets)
+migration-backups/
+
+.worktrees/
+.clone/

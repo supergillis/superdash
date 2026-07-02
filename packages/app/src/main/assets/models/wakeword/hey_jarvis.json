@@ -1,0 +1,31 @@
+{
+  "id": "hey_jarvis",
+  "label": "Hey Jarvis",
+  "asset": "models/wakeword/hey_jarvis.tflite",
+  "framework": "micro-wake-word",
+  "source": "https://github.com/esphome/micro-wake-word-models/blob/main/models/v2/hey_jarvis.tflite",
+  "sourceLicense": "Apache-2.0",
+  "author": "Kevin Ahrendt",
+  "website": "https://www.kevinahrendt.com/",
+  "sampleRateHz": 16000,
+  "featureBins": 40,
+  "featureStepMs": 10,
+  "probabilityCutoff": 0.97,
+  "slidingWindowAverageSize": 5,
+  "trainedLanguages": [
+    "en"
+  ],
+  "positiveVariants": [
+    "hey jarvis"
+  ],
+  "hardNegatives": [
+    "jarvis",
+    "okay jarvis",
+    "hey service",
+    "hey harvest",
+    "hey charlie",
+    "hey james",
+    "turn on the lights",
+    "open the dashboard"
+  ]
+}

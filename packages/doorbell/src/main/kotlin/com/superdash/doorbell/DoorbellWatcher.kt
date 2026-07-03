@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val log = Log("DoorbellWatcher")
@@ -32,6 +34,11 @@ class DoorbellWatcher(
     private val lastFireById = mutableMapOf<String, Long>()
     private val started = AtomicBoolean(false)
 
+    // reconcile() runs on the combine collector while each doorbell's handleUpdate
+    // runs on its own coroutine, all on a multi-threaded dispatcher. Serialize the
+    // three shared maps so concurrent access can't corrupt them or drop a ring.
+    private val mutex = Mutex()
+
     companion object {
         const val DEBOUNCE_MS = 5_000L
     }
@@ -53,51 +60,59 @@ class DoorbellWatcher(
         }
     }
 
-    private fun reconcile(configs: List<DoorbellConfig>) {
-        val wantedById = configs.associateBy { it.id }
-        // Cancel removed AND triggerEntity-changed subscriptions.
-        val toCancel =
-            subscriptions
-                .filter { (id, sub) ->
-                    val wanted = wantedById[id]
-                    wanted == null || wanted.triggerEntity != sub.triggerEntity
-                }.keys
-                .toList()
-        for (id in toCancel) {
-            subscriptions.remove(id)?.job?.cancel()
-            lastStateById.remove(id)
-            lastFireById.remove(id)
-        }
-        for (config in configs) {
-            if (subscriptions.containsKey(config.id)) {
-                continue
+    private suspend fun reconcile(configs: List<DoorbellConfig>) {
+        mutex.withLock {
+            val wantedById = configs.associateBy { it.id }
+            // Cancel removed AND triggerEntity-changed subscriptions.
+            val toCancel =
+                subscriptions
+                    .filter { (id, sub) ->
+                        val wanted = wantedById[id]
+                        wanted == null || wanted.triggerEntity != sub.triggerEntity
+                    }.keys
+                    .toList()
+            for (id in toCancel) {
+                subscriptions.remove(id)?.job?.cancel()
+                lastStateById.remove(id)
+                lastFireById.remove(id)
             }
-            val job =
-                scope.launch {
-                    observeEntity(config.triggerEntity).collect { entity ->
-                        handleUpdate(config, entity)
-                    }
+            for (config in configs) {
+                if (subscriptions.containsKey(config.id)) {
+                    continue
                 }
-            subscriptions[config.id] = Subscription(config.triggerEntity, job)
+                val job =
+                    scope.launch {
+                        observeEntity(config.triggerEntity).collect { entity ->
+                            handleUpdate(config, entity)
+                        }
+                    }
+                subscriptions[config.id] = Subscription(config.triggerEntity, job)
+            }
         }
     }
 
-    private fun handleUpdate(config: DoorbellConfig, entity: EntityState?) {
+    private suspend fun handleUpdate(config: DoorbellConfig, entity: EntityState?) {
         val newState = entity?.state
-        val previousState = lastStateById[config.id]
-        lastStateById[config.id] = newState
-        if (!isRing(config.triggerEntity, previousState, newState)) {
-            return
+        val fireAt =
+            mutex.withLock {
+                val previousState = lastStateById[config.id]
+                lastStateById[config.id] = newState
+                if (!isRing(config.triggerEntity, previousState, newState)) {
+                    return@withLock null
+                }
+                val now = nowEpochMs()
+                val lastFire = lastFireById[config.id]
+                if (lastFire != null && now - lastFire < DEBOUNCE_MS) {
+                    log.i("ring debounced", "doorbell" to config.id, "msSinceLast" to (now - lastFire))
+                    return@withLock null
+                }
+                lastFireById[config.id] = now
+                now
+            }
+        if (fireAt != null) {
+            log.i("ring", "doorbell" to config.id, "name" to config.name)
+            bus.emit(KioskEvent.DoorbellRingStarted(config.id, fireAt))
         }
-        val now = nowEpochMs()
-        val lastFire = lastFireById[config.id]
-        if (lastFire != null && now - lastFire < DEBOUNCE_MS) {
-            log.i("ring debounced", "doorbell" to config.id, "msSinceLast" to (now - lastFire))
-            return
-        }
-        lastFireById[config.id] = now
-        log.i("ring", "doorbell" to config.id, "name" to config.name)
-        bus.emit(KioskEvent.DoorbellRingStarted(config.id, now))
     }
 
     private fun isRing(triggerEntity: String, previous: String?, current: String?): Boolean {

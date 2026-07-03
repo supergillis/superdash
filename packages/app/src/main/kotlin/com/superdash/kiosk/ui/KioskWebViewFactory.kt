@@ -150,7 +150,10 @@ internal fun buildKioskWebView(
             @Suppress("DEPRECATION")
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            // Block active mixed content (http scripts injected into an https HA
+            // origin could read the tokens in localStorage). Compatibility mode
+            // still allows passive resources like http camera images.
+            mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
             cacheMode = WebSettings.LOAD_DEFAULT
             allowFileAccess = false
             allowContentAccess = false

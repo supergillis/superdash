@@ -79,6 +79,34 @@ class VoiceCaptureLoopTest {
         }
 
     @Test
+    fun `handed off stream keeps delivering live frames past the uncollected timeout`() =
+        runTest {
+            // Regression (#28): after handoff, collection may not start until a slow
+            // provider load finishes. The uncollected timeout must not fire in the
+            // meantime, and live command frames published during the load must still
+            // reach the (late) collector.
+            val hub =
+                AudioFrameHub(
+                    capacity = 4,
+                    streamScope = this,
+                    uncollectedStreamTimeoutMs = 5_000,
+                )
+            hub.publish(frame(1)) // pre-roll captured before wake handoff
+
+            val commandAudio = hub.openStream()
+            commandAudio.markHandedOff()
+
+            hub.publish(frame(2)) // live command frame published during the slow load
+            advanceTimeBy(6_000) // exceed the 5 s uncollected timeout
+            runCurrent()
+            hub.publish(frame(3)) // more live command audio after the timeout window
+
+            val output = commandAudio.audio.takeFrameValues(3)
+
+            assertEquals(listOf(1, 2, 3), output)
+        }
+
+    @Test
     fun `provider missing closes uncollected command stream`() =
         runTest {
             var hub: AudioFrameHub? = null
@@ -121,12 +149,78 @@ class VoiceCaptureLoopTest {
             runCurrent()
             val commandAudioHub = requireNotNull(hub)
 
+            // The provider errors without ever collecting the command stream. The
+            // run's completion reclaims the uncollected stream immediately (no leaked
+            // subscriber) — cleanup is driven by the run's lifecycle, not by the
+            // wall-clock uncollected-stream timeout, which has not fired yet (t=0 <
+            // 1_000 ms). This is the leak guard that lets a slow first provider load
+            // safely disarm the timeout on handoff.
+            assertEquals(0, commandAudioHub.subscriberCount())
+
+            job.cancel()
+        }
+
+    @Test
+    fun `handed off command stream survives a slow first provider load`() =
+        runTest {
+            // Regression (#28): the first wake command after boot triggers a
+            // synchronous ~50 MB model load inside the provider before it starts
+            // collecting the command audio. If that load exceeds the 5 s
+            // uncollected-stream timeout, the handed-off stream self-closes
+            // mid-load and the first command is silently lost (empty transcript).
+            // Once the coordinator owns the stream the timeout must not fire.
+            var hub: AudioFrameHub? = null
+            val coordinator =
+                VoicePipelineCoordinator(
+                    voiceProviderRunner =
+                        VoiceProviderRunner { _, audio ->
+                            flow {
+                                // Simulate a slow first-use model load that delays
+                                // the start of command-audio collection past the 5 s
+                                // uncollected-stream timeout.
+                                delay(6_000)
+                                audio.collect { }
+                            }
+                        },
+                    ttsPlayer = NoopTts,
+                    bus = KioskEventBus(),
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                )
+            val loop =
+                VoiceCaptureLoop(
+                    source = { finiteThenSuspendingFrames() },
+                    activeWakeWord = flowOf("hey_jarvis"),
+                    vadSilenceMs = flowOf(500),
+                    coordinator = coordinator,
+                    runnerFactory = { FakeWakeWordDetector(WakeEvent("hey_jarvis")) },
+                    createRunContext = { testRunContext("run-slow-load") },
+                    audioFrameHubFactory = { scope, capacity ->
+                        AudioFrameHub(
+                            capacity = capacity,
+                            streamScope = scope,
+                            uncollectedStreamTimeoutMs = 5_000,
+                        ).also { createdHub ->
+                            hub = createdHub
+                        }
+                    },
+                )
+
+            val job = launch { loop.run() }
+            runCurrent()
+            val commandAudioHub = requireNotNull(hub)
+
             assertEquals(1, commandAudioHub.subscriberCount())
 
-            advanceTimeBy(1_000)
+            // Advance past the 5 s uncollected timeout while the provider is still
+            // "loading" and has not begun collecting the stream.
+            advanceTimeBy(5_500)
             runCurrent()
 
-            assertEquals(0, commandAudioHub.subscriberCount())
+            assertEquals(
+                "handed-off stream must stay open through a slow provider load",
+                1,
+                commandAudioHub.subscriberCount(),
+            )
 
             job.cancel()
         }

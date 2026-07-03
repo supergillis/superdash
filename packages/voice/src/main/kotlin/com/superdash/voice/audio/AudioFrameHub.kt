@@ -146,6 +146,18 @@ class AudioFrameStream(
         }
     }
 
+    /** Hands the stream off to an owner that will drive collection when it is
+     *  ready and close the stream when its run completes. Cancels the wall-clock
+     *  uncollected-stream timeout: a slow first-use provider load (e.g. a ~50 MB
+     *  Whisper/Moonshine warm-up) legitimately delays the start of collection past
+     *  the timeout, and without this the stream would self-close mid-load and drop
+     *  the first command after boot (empty transcript). The leak the timeout guards
+     *  against is still covered — the owner closes the stream on run completion even
+     *  when the provider never collects (e.g. provider-missing). */
+    fun markHandedOff() {
+        uncollectedTimeoutJob?.cancel()
+    }
+
     override fun close() {
         if (closed.compareAndSet(false, true)) {
             uncollectedTimeoutJob?.cancel()

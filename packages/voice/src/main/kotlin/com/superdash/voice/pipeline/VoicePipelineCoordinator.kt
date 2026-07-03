@@ -84,7 +84,12 @@ class VoicePipelineCoordinator(
     private var generation: Long = 0L
     private var activeGeneration: Long = 0L
 
-    fun onWake(context: VoiceRunContext, audio: Flow<ShortArray>) {
+    /** Queues the wake job and returns it so the caller can tie the command
+     *  stream's lifetime to the run: the stream is closed when this job
+     *  completes, which reclaims it even when the provider never collects
+     *  (e.g. provider-missing) without relying on a wall-clock timeout that
+     *  a slow first provider load would trip. */
+    fun onWake(context: VoiceRunContext, audio: Flow<ShortArray>): Job {
         log.i("onWake (queueing job)", "word" to context.wakeWord, "runId" to context.id.value)
         bus.emit(KioskEvent.WakeWordDetected(context.wakeWord))
         val ourGeneration =
@@ -109,6 +114,7 @@ class VoicePipelineCoordinator(
             activeJob = job
         }
         job.start()
+        return job
     }
 
     fun stopAll() {

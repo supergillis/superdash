@@ -112,11 +112,21 @@ class VoiceCaptureLoop(
                                             ),
                                         detectorFactory = { VadSpeechDetector(Vad(silenceMs)) },
                                     )
-                                coordinator.onWake(
-                                    context,
-                                    commandAudioTransform(context, gatedAudio),
-                                )
+                                val runJob =
+                                    coordinator.onWake(
+                                        context,
+                                        commandAudioTransform(context, gatedAudio),
+                                    )
                                 coordinatorOwnsStream = true
+                                // The coordinator now owns the stream. Cancel the
+                                // wall-clock uncollected-stream timeout so a slow
+                                // first provider load (~50 MB model warm-up) cannot
+                                // self-close the stream mid-load and drop the first
+                                // command. Cleanup is re-homed to the run's lifecycle:
+                                // closing on completion reclaims the stream whether or
+                                // not the provider ever collected it.
+                                commandAudio.markHandedOff()
+                                runJob.invokeOnCompletion { commandAudio.close() }
                             } finally {
                                 if (!coordinatorOwnsStream) {
                                     commandAudio.close()

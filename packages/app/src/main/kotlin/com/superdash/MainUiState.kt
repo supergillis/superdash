@@ -27,7 +27,7 @@ data class MainUiState(
     companion object {
         fun empty(): MainUiState =
             MainUiState(
-                appState = AppState.NeedsSetup,
+                appState = AppState.Loading,
                 dashboardPath = "",
                 tokens = null,
                 voiceState = VoiceState.Idle,

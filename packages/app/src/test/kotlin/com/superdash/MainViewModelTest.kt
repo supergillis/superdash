@@ -102,6 +102,16 @@ class MainViewModelTest {
         }
 
     @Test
+    fun `appState seed is Loading before settings emit`() =
+        runTest {
+            val (viewModel, _) = buildViewModel()
+            // No subscriber yet, so uiState holds the stateIn seed. It must be Loading,
+            // not NeedsSetup: otherwise an already-configured user briefly sees the
+            // first-run setup form on launch before persisted settings load.
+            assertEquals(AppState.Loading, viewModel.uiState.value.appState)
+        }
+
+    @Test
     fun `appState is NeedsSetup when haUrl is blank`() =
         runTest {
             val (viewModel, inputs) = buildViewModel()

@@ -74,6 +74,7 @@ internal suspend fun Source.readFrame(): EsphomeFrame? {
     val preamble = readByte().toInt() and 0xFF
     check(preamble == 0x00) { "Unsupported frame preamble: $preamble (encrypted streams are out of MVP scope)" }
     val length = readVarint()
+    require(length in 0..NOISE_MAX_PAYLOAD) { "ESPHome frame length out of range: $length" }
     val messageType = readVarint()
     val payload = readByteArray(length)
     return EsphomeFrame(messageType, payload)
@@ -85,6 +86,7 @@ internal suspend fun ByteReadChannel.readEsphomeFrame(): EsphomeFrame {
     val preamble = readByte().toInt() and 0xFF
     check(preamble == 0x00) { "Unsupported frame preamble: $preamble" }
     val length = readVarintFromChannel()
+    require(length in 0..NOISE_MAX_PAYLOAD) { "ESPHome frame length out of range: $length" }
     val messageType = readVarintFromChannel()
     val payload = readByteArray(length)
     return EsphomeFrame(messageType, payload)
@@ -95,6 +97,7 @@ internal suspend fun ByteReadChannel.readEsphomeFrame(): EsphomeFrame {
  *  preamble to choose between plain and Noise transports. */
 internal suspend fun ByteReadChannel.readEsphomeFrameAfterPreamble(): EsphomeFrame {
     val length = readVarintFromChannel()
+    require(length in 0..NOISE_MAX_PAYLOAD) { "ESPHome frame length out of range: $length" }
     val messageType = readVarintFromChannel()
     val payload = readByteArray(length)
     return EsphomeFrame(messageType, payload)

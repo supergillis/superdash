@@ -54,4 +54,22 @@ class EsphomeFrameCodecTest {
                 // expected: encrypted (0x01) preamble not supported
             }
         }
+
+    @Test
+    fun `decodeFrame rejects oversized length`() =
+        runTest {
+            // A malicious peer sends a length varint far above the payload cap;
+            // the codec must reject it before allocating, not attempt a huge array.
+            val source =
+                Buffer().apply {
+                    write(byteArrayOf(0x00))
+                    write(encodeVarint(NOISE_MAX_PAYLOAD + 1))
+                }
+            try {
+                source.readFrame()
+                error("expected throw")
+            } catch (illegal: IllegalArgumentException) {
+                // expected: length exceeds the frame payload cap
+            }
+        }
 }

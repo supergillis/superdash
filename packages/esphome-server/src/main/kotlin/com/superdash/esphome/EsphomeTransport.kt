@@ -20,6 +20,7 @@ internal class PlainTransport(
     firstFrameConsumesPreamble: Boolean = false,
 ) : EsphomeTransport {
     private var preambleAlreadyRead = firstFrameConsumesPreamble
+    private val writeMutex = Mutex()
 
     override suspend fun readFrame(): EsphomeFrame {
         if (preambleAlreadyRead) {
@@ -29,8 +30,13 @@ internal class PlainTransport(
         return input.readEsphomeFrame()
     }
 
+    // ByteWriteChannel is single-writer. Per-entity state jobs call writeFrame
+    // concurrently with the main loop, so serialize writes to avoid interleaving
+    // bytes on the socket (NoiseTransport does the same).
     override suspend fun writeFrame(messageType: Int, payload: ByteArray) {
-        output.writeEsphomeFrame(messageType, payload)
+        writeMutex.withLock {
+            output.writeEsphomeFrame(messageType, payload)
+        }
     }
 }
 

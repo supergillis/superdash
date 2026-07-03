@@ -27,5 +27,5 @@ jobs:
 
       # whisper.cpp is optional: CMake builds a stub when it is absent,
       # so CI does not need to fetch it.
-      - name: Lint, test and build debug APK
-        run: ./gradlew ktlintCheck testDebugUnitTest :packages:app:assembleDebug
+      - name: Lint, test and build
+        run: ./gradlew ktlintCheck testDebugUnitTest :packages:app:assembleDebug :packages:app:assembleRelease

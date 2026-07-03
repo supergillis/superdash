@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/supergillis/superdash/discussions
+    about: Ask questions or discuss ideas in GitHub Discussions.
+  - name: Security vulnerabilities
+    url: https://github.com/supergillis/superdash/security/advisories/new
+    about: Please report security issues privately via a GitHub security advisory.

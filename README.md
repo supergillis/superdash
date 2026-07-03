@@ -11,6 +11,81 @@ Home Assistant kiosk app for Android tablets.
 - Shows screensavers and doorbell camera overlays.
 - Exposes controls to Home Assistant through ESPHome native API.
 
+## Getting Started
+
+This is for installing a released build on a tablet. To build it yourself, see
+[Building from source](#building-from-source).
+
+### Requirements
+
+- **Android 15 or newer (API level 35). This is a hard requirement. The app
+  will not install on older Android versions.**
+- An arm64 (64-bit) tablet. The APK ships arm64-v8a only.
+- A running Home Assistant instance reachable from the tablet's network.
+
+### Install
+
+1. Open the [Releases](../../releases) page and download the latest
+   `app-release.apk`.
+2. Open the file. Android will ask you to allow installs from your browser or
+   file manager the first time. Allow it.
+3. Install, then open superdash.
+
+### Connect to Home Assistant
+
+On first launch you see a "Welcome to superdash" screen that says "Enter your
+Home Assistant URL to get started".
+
+1. Type your Home Assistant address in the `HA URL` field. The placeholder shows
+   the expected form, for example `homeassistant.local:8123`. If you leave off
+   the scheme, `http://` is assumed. Use `https://...` for a TLS host.
+2. Tap `Continue`. The app opens your Home Assistant login page.
+3. Sign in with your Home Assistant account and approve access.
+4. Your dashboard loads. You are done for basic use.
+
+### Grant microphone access (optional)
+
+The microphone is the only runtime permission the app asks for, and only if you
+turn on voice. It is not needed for the dashboard.
+
+- Open Settings (swipe in from the screen edge), go to `Voice`, and turn on
+  `Voice enabled`. Android then prompts for microphone access. Allow it to use
+  wake word and Home Assistant Assist.
+
+### Keep it running
+
+For an always-on tablet:
+
+- In Settings, open `Kiosk` and turn on `Keep screen on`.
+- The first time you run the app it prompts once to ignore battery optimizations.
+  Allow it so the app is not killed in the background. You can re-open this later
+  from Settings under `Admin` with the `Battery saving help` button.
+
+### Optional: boot straight into the kiosk
+
+This is optional. superdash works fine launched by hand from the app drawer.
+Set this up only if you want a wall-mounted tablet to boot straight into the
+dashboard.
+
+1. In Settings, open `Kiosk` and turn on `Launch on boot`.
+2. Make superdash your home app: open Android's own Settings, find the default
+   home app or launcher setting, and choose superdash. superdash registers as a
+   home app, so it then launches when the tablet powers on and when you press
+   Home.
+
+### Explore Settings
+
+Open Settings by swiping in from the screen edge. Top-level sections:
+
+- `Voice`: pick a wake word and, under `Local models`, download the on-device
+  speech-to-text and wake word models (tap the download icon next to a model).
+- `Screensaver`: idle display, night mode, and the Immich photo slideshow under
+  `Immich photos`.
+- `Doorbell`: turn on `Doorbell overlay` to show a camera feed when a doorbell
+  rings.
+- `ESPHome`: turn on `Enabled` to expose superdash to Home Assistant over the
+  ESPHome protocol so HA can read and control the kiosk.
+
 ## Status & Disclaimers
 
 **This project is "vibe coded."** It was built largely with an AI coding
@@ -51,12 +126,14 @@ kiosk product.
 
 See [packages/README.md](packages/README.md).
 
-## Requirements
+## Building from source
+
+### Requirements
 
 - JDK 17 on `PATH`.
 - Android SDK installed.
 
-## Common Commands
+### Common Commands
 
 ```bash
 ./gradlew :packages:app:assembleDebug

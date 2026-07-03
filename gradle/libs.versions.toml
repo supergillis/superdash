@@ -18,7 +18,7 @@ moonshineVoice = "0.0.59"
 coil = "3.0.4"
 kotlinxCollectionsImmutable = "0.4.0"
 ktlint = "14.1.0"
-protobuf = "3.25.5"
+protobuf = "4.35.1"
 protobufPlugin = "0.10.0"
 
 [libraries]

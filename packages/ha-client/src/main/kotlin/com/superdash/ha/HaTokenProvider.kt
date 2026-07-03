@@ -43,17 +43,25 @@ class HaTokenProvider(
         }
 
     private suspend fun doRefresh(cur: HaTokens): HaTokens {
-        val resp: HaTokenResponse =
-            httpClient
-                .submitForm(
-                    url = "${baseUrl()}/auth/token",
-                    formParameters =
-                        parameters {
-                            append("grant_type", "refresh_token")
-                            append("refresh_token", cur.refreshToken)
-                            append("client_id", "${baseUrl()}/")
-                        },
-                ).body()
+        val response =
+            httpClient.submitForm(
+                url = "${baseUrl()}/auth/token",
+                formParameters =
+                    parameters {
+                        append("grant_type", "refresh_token")
+                        append("refresh_token", cur.refreshToken)
+                        append("client_id", "${baseUrl()}/")
+                    },
+            )
+        if (response.status.value in 400..499) {
+            // HA rejected the refresh token itself (revoked / invalid_grant). That is
+            // a genuine reauth condition, not a transient error: throw the type the
+            // reconnect loop parks on so the user is prompted to re-authenticate,
+            // instead of retrying a dead token forever (which can trip HA's IP ban).
+            // Transient failures (network, 5xx) still propagate to the caller's backoff.
+            throw NotAuthenticatedException
+        }
+        val resp: HaTokenResponse = response.body()
         val updated =
             HaTokens(
                 accessToken = resp.accessToken,

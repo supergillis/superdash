@@ -83,6 +83,27 @@ class HaTokenProviderTest {
         assertThrows(NotAuthenticatedException::class.java) { runBlocking { p.get() } }
     }
 
+    @Test fun `refresh rejected with 4xx maps to not authenticated`() {
+        // HA revoked the refresh token: /auth/token returns 400 invalid_grant.
+        // This must surface as a reauth condition (NotAuthenticatedException), not a
+        // transient error that the reconnect loop would retry forever.
+        val store =
+            RecordingTokenStore(
+                HaTokens("near-expiry", "revoked-refresh", (now + 10.seconds).toEpochMilliseconds()),
+            )
+        val engine =
+            MockEngine { _ ->
+                respond(
+                    content = ByteReadChannel("""{"error":"invalid_grant"}"""),
+                    status = HttpStatusCode.BadRequest,
+                    headers = headersOf("Content-Type", "application/json"),
+                )
+            }
+        val httpClient = HttpClient(engine) { install(ContentNegotiation) { json() } }
+        val p = HaTokenProvider(store, httpClient, { baseUrl }, fixedClock)
+        assertThrows(NotAuthenticatedException::class.java) { runBlocking { p.get() } }
+    }
+
     @Test fun `force refresh returns fresh token`() =
         runBlocking {
             val (p, store) =

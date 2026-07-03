@@ -32,11 +32,13 @@ Current system map for agents.
 SuperdashApp.onCreate
   -> AppGraph
   -> AppGraph startup calls
-       -> voice capture loop
        -> ConnectivityManager
        -> EsphomeBindings
        -> DoorbellWatcher
        -> ScreenStateProvider
+
+VoiceService (microphone foreground service)
+  -> voice capture loop
 
 MainActivity.onCreate
   -> KioskWindowController

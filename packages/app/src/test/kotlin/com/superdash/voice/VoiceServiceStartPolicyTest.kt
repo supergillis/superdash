@@ -47,6 +47,17 @@ class VoiceServiceStartPolicyTest {
     }
 
     @Test
+    fun `background foreground start rejection is not treated as started`() {
+        val started =
+            VoiceServiceStartPolicy.tryStartForeground {
+                // ForegroundServiceStartNotAllowedException is an IllegalStateException.
+                throw IllegalStateException("startForeground not allowed from background")
+            }
+
+        assertFalse(started)
+    }
+
+    @Test
     fun `stops when voice should not run`() {
         assertTrue(VoiceServiceStartPolicy.shouldStopForShouldRun(shouldRun = false))
     }

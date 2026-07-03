@@ -28,5 +28,11 @@ internal object VoiceServiceStartPolicy {
             true
         } catch (e: SecurityException) {
             false
+        } catch (e: IllegalStateException) {
+            // ForegroundServiceStartNotAllowedException (API 31+): the system
+            // restarted the service while the app was in the background. A
+            // background mic foreground service can never start, so fail
+            // gracefully instead of crashing.
+            false
         }
 }

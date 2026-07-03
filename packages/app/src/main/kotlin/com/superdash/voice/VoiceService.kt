@@ -75,6 +75,18 @@ class VoiceService : LifecycleService() {
             }
     }
 
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
+        super.onStartCommand(intent, flags, startId)
+        // Don't let the system restart this service in the background after
+        // process death: a microphone foreground service cannot be started from
+        // the background, so a sticky restart would only crash-loop.
+        return START_NOT_STICKY
+    }
+
     override fun onDestroy() {
         log.i("onDestroy")
         voiceEnabledJob?.cancel()

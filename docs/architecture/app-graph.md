@@ -69,11 +69,13 @@ Direct calls (intentionally not on the bus):
 
 `SuperdashApp.onCreate()` starts AppGraph-owned side effects.
 
-- Starts the voice capture loop.
 - Starts Home Assistant connectivity handling.
 - Starts ESPHome native API.
 - Starts doorbell watching.
 - Starts screen state broadcasts.
+
+The voice capture loop is not started here. It runs inside `VoiceService`, a
+microphone foreground service started and stopped per `VoiceServiceRunPolicy`.
 
 ## Activity Owned Work
 

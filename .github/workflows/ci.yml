@@ -23,7 +23,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       # whisper.cpp is optional: CMake builds a stub when it is absent,
       # so CI does not need to fetch it.

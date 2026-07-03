@@ -116,12 +116,18 @@ fun ScreensaverHost(
         }
     }
 
+    // Read the latest spacing through a supplier so a slider change doesn't
+    // recreate the SlideshowScreensaver instance (which would orphan its running
+    // item collector and blank the screen). Mirrors ttlMsSupplier below.
+    val latestPictureSpacingDp by rememberUpdatedState(pictureSpacingDp)
+    val pictureSpacingSupplier = remember<() -> Int> { { latestPictureSpacingDp } }
+
     val screensaver: Screensaver? =
         when (mode) {
             ScreensaverMode.Photos -> {
                 val source = remember { PicsumSlideshowSource() }
-                remember(source, imageLoader, pictureSpacingDp) {
-                    SlideshowScreensaver(source, imageLoader, pictureSpacingDp = pictureSpacingDp)
+                remember(source, imageLoader) {
+                    SlideshowScreensaver(source, imageLoader, pictureSpacingDp = pictureSpacingSupplier)
                 }
             }
             ScreensaverMode.MediaLibrary -> {
@@ -133,8 +139,8 @@ fun ScreensaverHost(
                         remember(nonNullId, orderKey) {
                             HaMediaLibrarySource(haMediaSource, nonNullId, orderKey)
                         }
-                    remember(source, imageLoader, pictureSpacingDp) {
-                        SlideshowScreensaver(source, imageLoader, pictureSpacingDp = pictureSpacingDp)
+                    remember(source, imageLoader) {
+                        SlideshowScreensaver(source, imageLoader, pictureSpacingDp = pictureSpacingSupplier)
                     }
                 }
             }
@@ -164,8 +170,8 @@ fun ScreensaverHost(
                     DisposableEffect(source) {
                         onDispose { source.close() }
                     }
-                    remember(source, imageLoader, pictureSpacingDp) {
-                        SlideshowScreensaver(source, imageLoader, pictureSpacingDp = pictureSpacingDp)
+                    remember(source, imageLoader) {
+                        SlideshowScreensaver(source, imageLoader, pictureSpacingDp = pictureSpacingSupplier)
                     }
                 }
             }

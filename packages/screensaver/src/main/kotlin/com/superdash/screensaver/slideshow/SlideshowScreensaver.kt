@@ -54,7 +54,7 @@ class SlideshowScreensaver(
     private val source: SlideshowSource,
     private val imageLoader: ImageLoader,
     private val intervalMs: Long = 30_000L,
-    private val pictureSpacingDp: Int = 8,
+    private val pictureSpacingDp: () -> Int = { 8 },
     private val historyCapacity: Int = 20,
 ) : Screensaver {
     override val id: String = "slideshow:${source.id}"
@@ -141,7 +141,7 @@ class SlideshowScreensaver(
                                 },
                         )
                     } else {
-                        ImageGroupPane(item = item, imageLoader = imageLoader, pictureSpacingDp = pictureSpacingDp)
+                        ImageGroupPane(item = item, imageLoader = imageLoader, pictureSpacingDp = pictureSpacingDp())
                     }
                 }
                 null -> Unit

@@ -21,6 +21,8 @@ import com.superdash.ha.HaTokenProvider
 import com.superdash.ha.HaTokenStore
 import com.superdash.ha.HaWebSocketClient
 import com.superdash.ha.media.CameraStreamSource
+import com.superdash.ha.security.AeadEncryption
+import com.superdash.ha.security.KeystoreKeyProvider
 import com.superdash.immich.ImmichApiClient
 import com.superdash.immich.ImmichSettings
 import com.superdash.immich.okhttp.ImmichAuthInterceptor
@@ -30,6 +32,7 @@ import com.superdash.kiosk.bus.ActivityCommandQueue
 import com.superdash.kiosk.bus.KioskEventBus
 import com.superdash.screensaver.ScreensaverIdleController
 import com.superdash.screensaver.ScreensaverSettings
+import com.superdash.settings.AeadSecretString
 import com.superdash.settings.SettingsRepository
 import com.superdash.settings.SettingsRepositoryDoorbellSettings
 import com.superdash.settings.SettingsRepositoryImmichSettings
@@ -65,7 +68,11 @@ class AppGraph(
 
     val doorbellSettings: DoorbellSettings = SettingsRepositoryDoorbellSettings(keyValueStore)
 
-    val immichSettings: ImmichSettings = SettingsRepositoryImmichSettings(keyValueStore)
+    val immichSettings: ImmichSettings =
+        SettingsRepositoryImmichSettings(
+            store = keyValueStore,
+            secret = AeadSecretString(AeadEncryption(KeystoreKeyProvider(application))),
+        )
 
     val screensaverSettings: ScreensaverSettings = SettingsRepositoryScreensaverSettings(keyValueStore)
 

@@ -82,4 +82,39 @@ class SettingsRepositoryImmichSettingsTest {
             assertEquals("Legacy", settings.album.first())
             assertEquals(12, settings.catalogTtlHours.first())
         }
+
+    @Test
+    fun `api key is concealed at rest and revealed on read`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            val settings = SettingsRepositoryImmichSettings(store, PrefixSecret)
+            settings.setApiKey("bearer-token")
+
+            // Raw stored value is concealed (read it back through an Identity view).
+            assertEquals(
+                "enc:bearer-token",
+                SettingsRepositoryImmichSettings(store, SecretString.Identity).apiKey.first(),
+            )
+            assertEquals("bearer-token", settings.apiKey.first())
+        }
+
+    @Test
+    fun `legacy plaintext api key is read back unchanged`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            // A value written before encryption existed has no prefix.
+            SettingsRepositoryImmichSettings(store, SecretString.Identity).setApiKey("legacy-plaintext")
+
+            assertEquals(
+                "legacy-plaintext",
+                SettingsRepositoryImmichSettings(store, PrefixSecret).apiKey.first(),
+            )
+        }
+
+    private object PrefixSecret : SecretString {
+        override fun conceal(plain: String): String = if (plain.isEmpty()) plain else "enc:$plain"
+
+        override fun reveal(stored: String): String =
+            if (stored.startsWith("enc:")) stored.removePrefix("enc:") else stored
+    }
 }

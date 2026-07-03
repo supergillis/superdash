@@ -6,6 +6,7 @@ import com.superdash.core.persistence.observe
 import com.superdash.core.persistence.write
 import com.superdash.immich.ImmichSettings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
  * App-owned [ImmichSettings] backed by [KeyValueStore].
@@ -15,10 +16,12 @@ import kotlinx.coroutines.flow.Flow
  */
 internal class SettingsRepositoryImmichSettings(
     private val store: KeyValueStore,
+    // The API key is a bearer credential, so it is encrypted at rest.
+    private val secret: SecretString = SecretString.Identity,
 ) : ImmichSettings {
     override val url: Flow<String> = store.observe(URL)
 
-    override val apiKey: Flow<String> = store.observe(API_KEY)
+    override val apiKey: Flow<String> = store.observe(API_KEY).map { stored -> secret.reveal(stored) }
 
     override val album: Flow<String> = store.observe(ALBUM)
 
@@ -26,7 +29,7 @@ internal class SettingsRepositoryImmichSettings(
 
     override suspend fun setUrl(value: String) = store.write(URL, value)
 
-    override suspend fun setApiKey(value: String) = store.write(API_KEY, value)
+    override suspend fun setApiKey(value: String) = store.write(API_KEY, secret.conceal(value))
 
     override suspend fun setAlbum(value: String) = store.write(ALBUM, value)
 

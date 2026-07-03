@@ -147,7 +147,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260522")
     testImplementation(testFixtures(project(":packages:core")))
 
     androidTestImplementation(libs.androidx.test.ext.junit)

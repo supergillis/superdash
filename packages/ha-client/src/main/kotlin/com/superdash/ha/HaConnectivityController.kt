@@ -32,6 +32,12 @@ class HaConnectivityController(
                     tokenStore.tokensFlow.collect { tokens ->
                         if (tokens != null) {
                             haClient.connect()
+                            // A token save must wake the reconnect loop. connect() is a
+                            // no-op once the loop is running, so after a WebView re-auth
+                            // (tokens go non-null -> non-null) it alone would leave a loop
+                            // parked in NeedsReauth stuck. forceReconnect() emits the
+                            // reconnect signal; it is harmless when already connected.
+                            haClient.forceReconnect()
                         } else {
                             haClient.disconnect()
                         }

@@ -321,16 +321,7 @@ class HaWebSocketClient(
             readNextFrame() as? AuthRequired
                 ?: error("expected auth_required as first frame")
         log.i("auth requested", "haVersion" to authReq.haVersion)
-        val token =
-            try {
-                tokens.get()
-            } catch (t: Throwable) {
-                if (t is CancellationException) {
-                    throw t
-                }
-                // Wrap into a private exception so the loop knows to stop, not retry.
-                throw NotAuthenticatedExceptionWrapper(t)
-            }
+        val token = acquireTokenForConnect()
         sendCommand(AuthCommand(token))
         when (val response = readNextFrame()) {
             is AuthOk -> {
@@ -341,6 +332,24 @@ class HaWebSocketClient(
             else -> error("unexpected post-auth frame: " + response::class.simpleName)
         }
     }
+
+    /** Fetch an access token for the auth handshake, classifying failures.
+     *  Internal so the reconnect-latch behaviour can be unit-tested without a
+     *  live websocket. */
+    internal suspend fun acquireTokenForConnect(): String =
+        try {
+            tokens.get()
+        } catch (t: CancellationException) {
+            throw t
+        } catch (t: NotAuthenticatedException) {
+            // Only a genuine "no stored credentials" is a reauth condition.
+            // Wrap it so the loop parks awaiting a token change instead of
+            // retrying. Any other failure (transient IO during refresh, HA
+            // restarting, a LAN blip) falls through and propagates so the
+            // reconnect loop retries it with the existing exponential backoff
+            // rather than latching the socket permanently dead.
+            throw NotAuthenticatedExceptionWrapper(t)
+        }
 
     private suspend fun WebSocketSession.seedStates() {
         val id = nextId.getAndIncrement()
@@ -581,7 +590,7 @@ class HaWebSocketClient(
         pongs.tryEmit(pingId)
     }
 
-    private class NotAuthenticatedExceptionWrapper(
+    internal class NotAuthenticatedExceptionWrapper(
         cause: Throwable,
     ) : Exception(cause)
 

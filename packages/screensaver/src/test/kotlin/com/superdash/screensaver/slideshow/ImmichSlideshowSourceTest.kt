@@ -16,8 +16,12 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -26,6 +30,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
 
 class ImmichSlideshowSourceTest {
     private fun asset(
@@ -858,7 +863,7 @@ class ImmichSlideshowSourceTest {
                 fetchedAtMs = 1L,
             )
 
-            val fetchedIds = mutableListOf<String>()
+            val fetchedIds = CopyOnWriteArrayList<String>()
             val engine =
                 MockEngine { request ->
                     val path = request.url.encodedPath
@@ -894,8 +899,19 @@ class ImmichSlideshowSourceTest {
                 )
 
             source.next(SlideshowViewport.Landscape)
-            // Advance dispatchers so look-ahead coroutines run.
+            // Start the look-ahead prefetch coroutines.
             testScheduler.advanceUntilIdle()
+
+            // Their HTTP calls run on Ktor's own dispatcher, not the test
+            // scheduler, so wait in real time for them to settle rather than
+            // assuming advanceUntilIdle already drained them (flaky on slow CI).
+            withContext(Dispatchers.Default) {
+                withTimeout(10_000) {
+                    while (fetchedIds.toSet().size < 4) {
+                        delay(20)
+                    }
+                }
+            }
 
             // 1 synchronous fetch for current slide + 3 prefetches = 4 distinct ids.
             assertEquals(4, fetchedIds.toSet().size)

@@ -4,16 +4,19 @@ Home Assistant kiosk app for Android tablets.
 
 ![superdash showing the ambient photo screensaver with a clock overlay](docs/screenshots/screensaver.jpg)
 
-![superdash showing a Home Assistant dashboard with the kiosk sidebar](docs/screenshots/dashboard.jpg)
+superdash turns an Android tablet into an always-on Home Assistant wall panel. Your
+dashboard runs full-screen in a kiosk, stays signed in across restarts, and gains the
+extras a wall panel wants: hands-free voice control, an ambient photo screensaver, and
+doorbell camera overlays. It can also expose itself back to Home Assistant over the
+ESPHome native API, so HA can read and control the kiosk.
 
-## What It Does
+## Features
 
 - Shows a Home Assistant dashboard in kiosk mode.
 - Handles Home Assistant OAuth and token refresh.
-- Runs on-device wake word detection.
-- Sends captured speech to Home Assistant Assist.
+- Runs on-device wake word detection and sends captured speech to Home Assistant Assist.
 - Shows screensavers and doorbell camera overlays.
-- Exposes controls to Home Assistant through ESPHome native API.
+- Exposes controls to Home Assistant through the ESPHome native API.
 
 ## Getting Started
 

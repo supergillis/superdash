@@ -4,6 +4,8 @@ Home Assistant kiosk app for Android tablets.
 
 ![superdash showing the ambient photo screensaver with a clock overlay](docs/screenshots/screensaver.jpg)
 
+![superdash showing a Home Assistant dashboard with the kiosk sidebar](docs/screenshots/dashboard.jpg)
+
 ## What It Does
 
 - Shows a Home Assistant dashboard in kiosk mode.

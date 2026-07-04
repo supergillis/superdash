@@ -145,7 +145,17 @@ class MainActivity : ComponentActivity() {
                             VoiceService.stop(this@MainActivity)
                         }
                     },
-                    onSubmitUrl = { url -> lifecycleScope.launch { settings.setHaUrl(url) } },
+                    onSubmitUrl = { url ->
+                        lifecycleScope.launch {
+                            settings.setHaUrl(url)
+                            // Clear any stale tokens so submitting the first-run / reauth
+                            // form always (re)starts OAuth. Without this, "Sign in again"
+                            // in the NeedsReauth state just re-saved the same URL and did
+                            // nothing (tokens stayed, state stayed NeedsReauth). Tokens are
+                            // already null on first run, so this is a no-op there.
+                            graph.tokenStore.clear()
+                        }
+                    },
                     onSidebarPinnedChange = { value ->
                         lifecycleScope.launch {
                             graph.sidebarSettings.setPinned(value)

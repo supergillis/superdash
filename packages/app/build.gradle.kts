@@ -86,6 +86,8 @@ android {
     lint {
         disable += "RestrictedApi"
         disable += "UnsafeOptInUsageError"
+        // Grandfather existing lint issues so CI fails only on new ones.
+        baseline = file("lint-baseline.xml")
     }
 }
 

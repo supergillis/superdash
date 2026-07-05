@@ -6,7 +6,7 @@ apk := "packages/app/build/outputs/apk/debug/app-debug.apk"
 whisper_model := "ggml-tiny.en-q5_1.bin"
 whisper_model_dir := "packages/app/src/main/assets/models/whisper"
 whisper_version := "v1.8.1"
-whisper_src_dir := "packages/app/src/main/cpp/whisper.cpp"
+whisper_src_dir := "packages/voice/src/main/cpp/whisper.cpp"
 whisper_model_url := "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/" + whisper_model
 whisper_source_commit := "a91dd3be72f70dd1b3cb6e252f35fa17b93f596c"
 voice_commands_dir := "packages/app/src/androidTest/assets/voice/commands"
@@ -39,7 +39,7 @@ set-local-intent enabled="true":
     {{adb}} -s {{emulator}} shell am broadcast -a com.superdash.DEBUG_VOICE_SETTINGS --ez local_intent_enabled "{{enabled}}" -p com.superdash
 
 fetch-whisper:
-    mkdir -p {{whisper_model_dir}} packages/app/src/main/cpp
+    mkdir -p {{whisper_model_dir}} packages/voice/src/main/cpp
     test -d {{whisper_src_dir}}/.git || git clone https://github.com/ggml-org/whisper.cpp {{whisper_src_dir}}
     git -C {{whisper_src_dir}} fetch --depth 1 origin {{whisper_source_commit}}
     git -C {{whisper_src_dir}} checkout {{whisper_source_commit}}

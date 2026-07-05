@@ -50,6 +50,6 @@ jobs:
         run: ./gradlew :packages:app:assembleRelease
 
       - name: Attach APK to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: packages/app/build/outputs/apk/release/*.apk

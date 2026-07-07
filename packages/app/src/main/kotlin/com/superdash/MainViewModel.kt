@@ -36,6 +36,7 @@ class MainViewModel(
     sidebarPinnedFlow: Flow<Boolean>,
     sidebarShowLabelsFlow: Flow<Boolean>,
     sidebarShortcutsFlow: Flow<List<SidebarShortcut>>,
+    cameraEnabledFlow: Flow<Boolean>,
 ) : ViewModel() {
     private val connectionFlow =
         combine(haUrlFlow, dashboardPathFlow, tokensFlow, haStateFlow) { haUrl, dashboardPath, tokens, haState ->
@@ -135,6 +136,10 @@ class MainViewModel(
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    // Drives the LaunchedEffect that starts/stops the foreground CameraService.
+    val cameraServiceShouldRun: StateFlow<Boolean> =
+        cameraEnabledFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     private data class MainConnectionState(
         val haUrl: String?,
         val dashboardPath: String,
@@ -177,6 +182,7 @@ class MainViewModel(
                 sidebarPinnedFlow = graph.sidebarSettings.pinned,
                 sidebarShowLabelsFlow = graph.sidebarSettings.showLabels,
                 sidebarShortcutsFlow = graph.sidebarSettings.shortcuts,
+                cameraEnabledFlow = graph.cameraSettings.enabled,
             ) as T
     }
 }

@@ -86,6 +86,7 @@ class MainViewModelTest {
                 sidebarPinnedFlow = sidebarPinned,
                 sidebarShowLabelsFlow = sidebarShowLabels,
                 sidebarShortcutsFlow = sidebarShortcuts,
+                cameraEnabledFlow = MutableStateFlow(false),
             )
 
         return viewModel to Inputs(haUrl, tokens, haState, voiceEnabled, doorbellState)
@@ -252,6 +253,7 @@ class MainViewModelTest {
                     sidebarPinnedFlow = sidebarPinned,
                     sidebarShowLabelsFlow = sidebarShowLabels,
                     sidebarShortcutsFlow = sidebarShortcuts,
+                    cameraEnabledFlow = MutableStateFlow(false),
                 )
 
             backgroundScope.launch { viewModel.uiState.collect {} }

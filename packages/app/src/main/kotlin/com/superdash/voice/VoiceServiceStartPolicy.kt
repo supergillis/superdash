@@ -1,38 +1,35 @@
 package com.superdash.voice
 
+import com.superdash.service.ForegroundServiceStartPolicy
+
 internal object VoiceServiceStartPolicy {
     fun shouldRequestStart(
         shouldRun: Boolean,
         hasMicPermission: Boolean,
     ): Boolean =
-        shouldRun && hasMicPermission
+        ForegroundServiceStartPolicy.shouldRequestStart(
+            shouldRun = shouldRun,
+            permissionGranted = hasMicPermission,
+        )
 
     fun skipStartReason(
         shouldRun: Boolean,
         hasMicPermission: Boolean,
     ): String =
-        if (!shouldRun) {
-            "voice_disabled"
-        } else if (!hasMicPermission) {
-            "mic_permission_missing"
-        } else {
-            "none"
+        when (
+            ForegroundServiceStartPolicy.skipStartReason(
+                shouldRun = shouldRun,
+                permissionGranted = hasMicPermission,
+            )
+        ) {
+            null -> "none"
+            "disabled" -> "voice_disabled"
+            else -> "mic_permission_missing"
         }
 
     fun shouldStopForShouldRun(shouldRun: Boolean): Boolean =
         !shouldRun
 
     fun tryStartForeground(startForeground: () -> Unit): Boolean =
-        try {
-            startForeground()
-            true
-        } catch (e: SecurityException) {
-            false
-        } catch (e: IllegalStateException) {
-            // ForegroundServiceStartNotAllowedException (API 31+): the system
-            // restarted the service while the app was in the background. A
-            // background mic foreground service can never start, so fail
-            // gracefully instead of crashing.
-            false
-        }
+        ForegroundServiceStartPolicy.tryStartForeground(startForeground)
 }

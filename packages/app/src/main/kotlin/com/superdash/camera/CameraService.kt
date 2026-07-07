@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.superdash.R
 import com.superdash.SuperdashApp
 import com.superdash.core.log.Log
+import com.superdash.service.ForegroundServiceStartPolicy
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -39,11 +40,19 @@ class CameraService : LifecycleService() {
             return
         }
         ensureChannel()
-        startForeground(
-            NOTIFICATION_ID,
-            buildNotification(),
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
-        )
+        val foregroundStarted =
+            ForegroundServiceStartPolicy.tryStartForeground {
+                startForeground(
+                    NOTIFICATION_ID,
+                    buildNotification(),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
+                )
+            }
+        if (!foregroundStarted) {
+            log.w("foreground start denied; stopping camera service")
+            stopSelf()
+            return
+        }
         val graph = (application as SuperdashApp).graph
         lifecycleScope.launch {
             graph.cameraSettings.enabled.distinctUntilChanged().collect { enabled ->
@@ -53,6 +62,19 @@ class CameraService : LifecycleService() {
                 }
             }
         }
+    }
+
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
+        super.onStartCommand(intent, flags, startId)
+        // Don't let the system restart this service in the background after
+        // process death: a while-in-use camera foreground service cannot be
+        // started from the background, so a sticky restart would only
+        // crash-loop.
+        return START_NOT_STICKY
     }
 
     private fun ensureChannel() {
@@ -78,7 +100,31 @@ class CameraService : LifecycleService() {
             .build()
 
     companion object {
-        fun start(context: Context) {
+        fun start(
+            context: Context,
+            shouldRun: Boolean,
+        ) {
+            val hasCameraPermission =
+                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_GRANTED
+            val shouldRequestStart =
+                ForegroundServiceStartPolicy.shouldRequestStart(
+                    shouldRun = shouldRun,
+                    permissionGranted = hasCameraPermission,
+                )
+            if (!shouldRequestStart) {
+                val reason =
+                    ForegroundServiceStartPolicy.skipStartReason(
+                        shouldRun = shouldRun,
+                        permissionGranted = hasCameraPermission,
+                    )
+                log.w(
+                    "camera service start skipped",
+                    null,
+                    "reason" to reason,
+                )
+                return
+            }
             context.startForegroundService(Intent(context, CameraService::class.java))
         }
 

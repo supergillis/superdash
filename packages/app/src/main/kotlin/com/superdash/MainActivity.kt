@@ -1,8 +1,6 @@
 package com.superdash
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.KeyEvent
@@ -22,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -151,15 +148,9 @@ class MainActivity : AppCompatActivity() {
                         }
                     },
                     onCameraServiceShouldRunChange = { shouldRun ->
-                        val hasCameraPermission =
-                            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) ==
-                                PackageManager.PERMISSION_GRANTED
-                        if (shouldRun && hasCameraPermission) {
-                            CameraService.start(this@MainActivity)
+                        if (shouldRun) {
+                            CameraService.start(this@MainActivity, shouldRun = shouldRun)
                         } else {
-                            if (shouldRun && !hasCameraPermission) {
-                                log.w("camera service should run but CAMERA permission is not granted; not starting")
-                            }
                             CameraService.stop(this@MainActivity)
                         }
                     },

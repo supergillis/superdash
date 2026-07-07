@@ -83,6 +83,24 @@ data class EsphomeNightModeBindings(
     val setNightMode: suspend (Boolean) -> Unit,
 )
 
+/** Tablet camera: enable switch, motion sensor and tuning, wake-on-motion,
+ *  and JPEG frame sources for the ESPHome camera entity. */
+data class EsphomeCameraBindings(
+    val cameraEnabled: Flow<Boolean>,
+    val setCameraEnabled: suspend (Boolean) -> Unit,
+    val motionDetected: Flow<Boolean>,
+    val motionMode: Flow<String>,
+    val setMotionMode: suspend (String) -> Unit,
+    val motionSensitivity: Flow<Float>,
+    val setMotionSensitivity: suspend (Float) -> Unit,
+    val motionClearDelaySec: Flow<Float>,
+    val setMotionClearDelaySec: suspend (Float) -> Unit,
+    val wakeOnMotion: Flow<Boolean>,
+    val setWakeOnMotion: suspend (Boolean) -> Unit,
+    val jpegFrames: Flow<ByteArray>,
+    val latestJpeg: suspend () -> ByteArray?,
+)
+
 /** Home Assistant connectivity telemetry. */
 data class EsphomeHaBindings(
     val haEntityCount: Flow<Float>,

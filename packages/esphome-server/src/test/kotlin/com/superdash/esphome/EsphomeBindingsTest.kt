@@ -90,6 +90,22 @@ class EsphomeBindingsTest {
                         haEntityCount = MutableStateFlow(0f),
                         haConnectionState = MutableStateFlow("Disconnected"),
                     ),
+                camera =
+                    EsphomeCameraBindings(
+                        cameraEnabled = MutableStateFlow(false),
+                        setCameraEnabled = {},
+                        motionDetected = MutableStateFlow(false),
+                        motionMode = MutableStateFlow("off"),
+                        setMotionMode = {},
+                        motionSensitivity = MutableStateFlow(50f),
+                        setMotionSensitivity = {},
+                        motionClearDelaySec = MutableStateFlow(15f),
+                        setMotionClearDelaySec = {},
+                        wakeOnMotion = MutableStateFlow(false),
+                        setWakeOnMotion = {},
+                        jpegFrames = MutableStateFlow(ByteArray(0)),
+                        latestJpeg = { null },
+                    ),
             )
 
         assertEquals(
@@ -130,6 +146,13 @@ class EsphomeBindingsTest {
                 "restart_app",
                 "start_screensaver",
                 "stop_screensaver",
+                "camera_enabled",
+                "wake_on_motion",
+                "motion",
+                "motion_detection_mode",
+                "motion_sensitivity",
+                "motion_clear_delay_sec",
+                "camera",
             ),
             entities.map { entity -> entity.objectId },
         )

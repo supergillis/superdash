@@ -85,6 +85,7 @@ class SidebarRailTest {
                     pinned = false,
                     edgeHandle = false,
                     open = true,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = emptyList(),
@@ -119,6 +120,7 @@ class SidebarRailTest {
                     pinned = false,
                     edgeHandle = false,
                     open = true,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = listOf(shortcut),
@@ -147,6 +149,7 @@ class SidebarRailTest {
                     pinned = false,
                     edgeHandle = false,
                     open = false,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = emptyList(),
@@ -173,6 +176,7 @@ class SidebarRailTest {
                     pinned = true,
                     edgeHandle = false,
                     open = true,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = emptyList(),
@@ -199,6 +203,7 @@ class SidebarRailTest {
                     pinned = false,
                     edgeHandle = true,
                     open = false,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = emptyList(),
@@ -224,6 +229,7 @@ class SidebarRailTest {
                     pinned = false,
                     edgeHandle = false,
                     open = false,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = emptyList(),
@@ -249,6 +255,7 @@ class SidebarRailTest {
                     pinned = true,
                     edgeHandle = true,
                     open = false,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = emptyList(),
@@ -275,6 +282,7 @@ class SidebarRailTest {
                     pinned = false,
                     edgeHandle = true,
                     open = false,
+                    idle = false,
                     showLabels = false,
                     nightModeActive = false,
                     shortcuts = emptyList(),
@@ -290,5 +298,65 @@ class SidebarRailTest {
 
         composeRule.onNodeWithContentDescription("Open sidebar").performClick()
         composeRule.runOnIdle { assert(opened) }
+    }
+
+    @Test
+    fun idleHidesPinnedRail() {
+        val shortcut =
+            SidebarShortcut(
+                id = "settings",
+                title = "Settings",
+                icon = "settings",
+                action = SidebarAction.OpenSettings,
+            )
+
+        composeRule.setContent {
+            MaterialTheme {
+                SidebarRailLayout(
+                    position = SidebarPosition.Left,
+                    pinned = true,
+                    edgeHandle = false,
+                    open = false,
+                    idle = true,
+                    showLabels = false,
+                    nightModeActive = false,
+                    shortcuts = listOf(shortcut),
+                    onOpen = {},
+                    onDismiss = {},
+                    onPinnedChange = {},
+                    onShortcutClick = {},
+                    content = { Box {} },
+                    overlays = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithContentDescription("Settings").assertCountEquals(0)
+    }
+
+    @Test
+    fun idleHidesEdgeHandle() {
+        composeRule.setContent {
+            MaterialTheme {
+                SidebarRailLayout(
+                    position = SidebarPosition.Left,
+                    pinned = false,
+                    edgeHandle = true,
+                    open = false,
+                    idle = true,
+                    showLabels = false,
+                    nightModeActive = false,
+                    shortcuts = emptyList(),
+                    onOpen = {},
+                    onDismiss = {},
+                    onPinnedChange = {},
+                    onShortcutClick = {},
+                    content = { Box {} },
+                    overlays = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithContentDescription("Open sidebar").assertCountEquals(0)
     }
 }

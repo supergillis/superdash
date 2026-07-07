@@ -70,6 +70,7 @@ fun SidebarRailLayout(
     pinned: Boolean,
     edgeHandle: Boolean,
     open: Boolean,
+    idle: Boolean,
     showLabels: Boolean,
     nightModeActive: Boolean,
     shortcuts: List<SidebarShortcut>,
@@ -112,7 +113,8 @@ fun SidebarRailLayout(
         ) {
             overlays()
         }
-        if (pinned) {
+        // While the screensaver is showing (idle) the sidebar and edge handle stay hidden.
+        if (!idle && pinned) {
             SidebarRail(
                 position = position,
                 pinned = true,
@@ -123,7 +125,7 @@ fun SidebarRailLayout(
                 onShortcutClick = onShortcutClick,
                 modifier = Modifier.align(position.alignment),
             )
-        } else if (open) {
+        } else if (!idle && open) {
             val dismissSidebarDescription = stringResource(R.string.sidebar_dismiss_content_description)
             Box(
                 modifier =
@@ -142,7 +144,7 @@ fun SidebarRailLayout(
                 onShortcutClick = onShortcutClick,
                 modifier = Modifier.align(position.alignment),
             )
-        } else if (edgeHandle) {
+        } else if (!idle && edgeHandle) {
             SidebarEdgeHandle(
                 position = position,
                 onOpen = onOpen,

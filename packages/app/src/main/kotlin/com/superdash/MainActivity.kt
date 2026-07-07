@@ -316,6 +316,7 @@ private fun MainContent(
             pinned = state.sidebar.pinned,
             edgeHandle = state.sidebar.edgeHandle,
             open = sidebarOpen,
+            idle = state.isIdle,
             showLabels = state.sidebar.showLabels,
             nightModeActive = state.nightModeActive,
             shortcuts = state.sidebar.shortcuts,

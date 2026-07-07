@@ -56,11 +56,13 @@ class CameraXPipeline(
     private var provider: ProcessCameraProvider? = null
     private var wantedConfig: CameraPipelineConfig? = null
     private var retryDelayMs = INITIAL_RETRY_DELAY_MS
+    private var startGeneration = 0
 
     override fun start(config: CameraPipelineConfig) {
         mainHandler.post {
             wantedConfig = config
             retryDelayMs = INITIAL_RETRY_DELAY_MS
+            startGeneration++
             startOnMain(config)
         }
     }
@@ -68,6 +70,7 @@ class CameraXPipeline(
     override fun stop() {
         mainHandler.post {
             wantedConfig = null
+            startGeneration++
             stopOnMain()
         }
     }
@@ -77,7 +80,11 @@ class CameraXPipeline(
     private fun scheduleRetry() {
         val delay = retryDelayMs
         retryDelayMs = (retryDelayMs * 2).coerceAtMost(MAX_RETRY_DELAY_MS)
+        val generation = startGeneration
         mainHandler.postDelayed({
+            if (generation != startGeneration) {
+                return@postDelayed
+            }
             wantedConfig?.let { config ->
                 log.i("retrying camera start", "afterMs" to delay)
                 startOnMain(config)

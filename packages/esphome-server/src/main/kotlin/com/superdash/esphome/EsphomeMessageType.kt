@@ -52,4 +52,8 @@ internal object EsphomeMessageType {
 
     const val LIST_ENTITIES_BUTTON_RESPONSE = 61
     const val BUTTON_COMMAND_REQUEST = 62
+
+    const val LIST_ENTITIES_CAMERA_RESPONSE = 43
+    const val CAMERA_IMAGE_RESPONSE = 44
+    const val CAMERA_IMAGE_REQUEST = 45
 }

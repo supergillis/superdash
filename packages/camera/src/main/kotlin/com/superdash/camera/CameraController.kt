@@ -119,7 +119,10 @@ class CameraController(
                     runCatching { detector.process(frame) }
                         .onFailure { log.w("motion detector failed", it) }
                         .getOrDefault(false)
-                motionActiveState.value = gate.update(detected, nowMs())
+                val active = gate.update(detected, nowMs())
+                if (pipeline.availability.value == CameraAvailability.Running) {
+                    motionActiveState.value = active
+                }
             }
         }
     }

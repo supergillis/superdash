@@ -167,6 +167,36 @@ class CameraControllerTest {
         }
 
     @Test
+    fun `frame arriving after disable does not reactivate motion`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.enabledState.value = true
+            settings.motionModeState.value = "motion"
+            val detector = ScriptedDetector { true }
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = mapOf("motion" to { detector }),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+            assertFalse(controller.motionActive.value)
+
+            pipeline.framesFlow.emit(testFrame())
+            assertTrue(controller.motionActive.value)
+
+            settings.enabledState.value = false
+            assertFalse(controller.motionActive.value)
+            assertEquals(CameraAvailability.Off, pipeline.availability.value)
+
+            // Simulate a frame that was already in flight when the camera was disabled.
+            pipeline.framesFlow.emit(testFrame())
+            assertFalse(controller.motionActive.value)
+        }
+
+    @Test
     fun `mode off processes no frames`() =
         runTest(UnconfinedTestDispatcher()) {
             val pipeline = FakePipeline()

@@ -82,13 +82,16 @@ private class ScriptedDetector(
     private val answer: () -> Boolean,
 ) : MotionDetector {
     var processed = 0
+    var resets = 0
 
     override suspend fun process(frame: CameraFrame): Boolean {
         processed++
         return answer()
     }
 
-    override fun reset() {}
+    override fun reset() {
+        resets++
+    }
 }
 
 private fun testFrame(firstByte: Byte = 1): CameraFrame =
@@ -194,6 +197,30 @@ class CameraControllerTest {
             // Simulate a frame that was already in flight when the camera was disabled.
             pipeline.framesFlow.emit(testFrame())
             assertFalse(controller.motionActive.value)
+        }
+
+    @Test
+    fun `detector resets when the pipeline stops`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.enabledState.value = true
+            settings.motionModeState.value = "motion"
+            val detector = ScriptedDetector { true }
+            CameraController(
+                pipeline = pipeline,
+                settings = settings,
+                detectorFactories = mapOf("motion" to { detector }),
+                scope = backgroundScope,
+                nowMs = { 0L },
+            )
+
+            pipeline.framesFlow.emit(testFrame())
+            assertTrue(detector.processed > 0)
+
+            settings.enabledState.value = false
+
+            assertTrue(detector.resets > 0)
         }
 
     @Test

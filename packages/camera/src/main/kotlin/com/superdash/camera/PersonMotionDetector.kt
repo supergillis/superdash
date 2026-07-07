@@ -12,28 +12,29 @@ private val log = Log("PersonMotionDetector")
  *  face-detection model as a person-presence proxy — cheap, offline, and far
  *  fewer false positives than frame differencing, at the cost of missing
  *  people facing away from the tablet. Detection runs at most once per
- *  [minIntervalMs]; between runs the last result is reused. Init failures
- *  (missing ML Kit runtime) throw from the first process() call, which
- *  CameraController converts into a fallback to frame-diff mode. */
+ *  [minIntervalMs]; between runs the last result is reused. Construction
+ *  failures (ML Kit unavailable) throw from the constructor; the app's
+ *  detector factory (`CameraController.createDetector`) converts that into a
+ *  fallback to frame-diff mode. Runtime detection failures (e.g. a single bad
+ *  frame) are logged and the last result is reused instead of propagating. */
 class PersonMotionDetector(
     private val minIntervalMs: Long = 500L,
     private val nowMs: () -> Long = System::currentTimeMillis,
 ) : MotionDetector {
-    private val detector by lazy {
+    private val detector =
         FaceDetection.getClient(
             FaceDetectorOptions
                 .Builder()
                 .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                 .build(),
         )
-    }
 
     private var lastRunMs = Long.MIN_VALUE
     private var lastResult = false
 
     override suspend fun process(frame: CameraFrame): Boolean {
         val now = nowMs()
-        if (now - lastRunMs < minIntervalMs) {
+        if (lastRunMs != Long.MIN_VALUE && now - lastRunMs < minIntervalMs) {
             return lastResult
         }
         lastRunMs = now

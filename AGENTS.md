@@ -381,6 +381,9 @@ $ADB -s <device-id> shell run-as com.superdash cat files/datastore/app_settings.
 
 - Branch from `main`. Do not commit directly to `main`.
 - Keep each PR focused on a single topic.
+- PR titles MUST use the Conventional Commits format from
+  [Commit Messages](#commit-messages) (`type(scope): summary`). The PR title
+  becomes the squash-merge subject, which drives semver and changelog tooling.
 - Open a PR and merge it with **squash merge**, so each PR lands as one commit on `main` and history stays linear.
 - Make sure `./gradlew ktlintCheck testDebugUnitTest` passes before opening the PR.
 
@@ -402,3 +405,18 @@ feat(voice): add French wake word model
 fix(settings): reset locale after instrumented test
 docs: describe the ESPHome control surface
 ```
+
+## Releases
+
+- release-please maintains a release PR on `main` from Conventional Commit types.
+- `fix` bumps patch, `feat` bumps minor, `feat!` or `BREAKING CHANGE` bumps major.
+- Merging the release PR tags `vX.Y.Z`, publishes the GitHub Release with the
+  changelog, and attaches the signed APK.
+- Do not hand-edit `CHANGELOG.md` or `.release-please-manifest.json`.
+- Do not push `v*` tags by hand; merge the release PR instead, or the
+  manifest falls out of sync with the tags.
+- The release PR runs no CI: PRs created with `GITHUB_TOKEN` do not trigger
+  `pull_request` workflows. Never make `ci.yml` or `pr-title.yml` a required
+  status check on `main`, or the release PR becomes unmergeable.
+- `versionName` in `packages/app/build.gradle.kts` is bumped by release-please.
+  `versionCode` is derived from it; keep minor and patch below 100.

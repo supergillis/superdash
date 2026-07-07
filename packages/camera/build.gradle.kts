@@ -12,6 +12,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.jdk8)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.mlkit.face.detection)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

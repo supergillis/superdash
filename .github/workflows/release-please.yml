@@ -1,0 +1,45 @@
+# Maintains a release PR from Conventional Commits on main. Merging that PR
+# tags vX.Y.Z and publishes the GitHub Release, then the build-apk job calls
+# release.yml to attach the signed APK (GITHUB_TOKEN-created tags do not
+# trigger tag-push workflows, so the call must be explicit).
+
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+# issues: write is required for release-please to create and apply its
+# autorelease labels on first run.
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+# Two quick merges to main must not run overlapping release-please jobs;
+# they would race on the release branch.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  build-apk:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+    secrets: inherit

@@ -28,7 +28,7 @@ sealed interface SettingsDestination {
 
         data object Doorbell : TopLevel(R.string.settings_doorbell_title, R.string.settings_doorbell_summary)
 
-        data object Camera : TopLevel(R.string.settings_camera_section_title, R.string.settings_camera_summary)
+        data object Camera : TopLevel(R.string.settings_camera_title, R.string.settings_camera_summary)
 
         data object Esphome : TopLevel(R.string.settings_esphome_title, R.string.settings_esphome_summary)
 

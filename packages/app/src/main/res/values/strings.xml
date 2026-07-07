@@ -17,7 +17,7 @@
     <string name="settings_screensaver_summary">Idle display, overlays, and photos</string>
     <string name="settings_doorbell_title">Doorbell</string>
     <string name="settings_doorbell_summary">Camera overlay triggers</string>
-    <string name="settings_camera_section_title">Camera</string>
+    <string name="settings_camera_title">Camera</string>
     <string name="settings_camera_summary">Tablet camera and motion sensor</string>
     <string name="settings_esphome_title">ESPHome</string>
     <string name="settings_esphome_summary">Home Assistant ESPHome protocol</string>
@@ -284,8 +284,9 @@
     <string name="notification_voice_text">Listening for wake word</string>
 
     <!-- Camera service notification -->
-    <string name="camera_service_channel_name">Camera</string>
-    <string name="camera_service_notification_title">Camera active</string>
+    <string name="notification_camera_channel_name">Camera</string>
+    <string name="notification_camera_title">Camera active</string>
+    <string name="notification_camera_text">Watching for motion</string>
 
     <!-- Kiosk keep-alive notification -->
     <string name="notification_kiosk_channel_name">Kiosk keep-alive</string>

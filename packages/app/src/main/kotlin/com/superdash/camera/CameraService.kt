@@ -83,7 +83,7 @@ class CameraService : LifecycleService() {
             nm.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID,
-                    getString(R.string.camera_service_channel_name),
+                    getString(R.string.notification_camera_channel_name),
                     NotificationManager.IMPORTANCE_MIN,
                 ),
             )
@@ -93,7 +93,8 @@ class CameraService : LifecycleService() {
     private fun buildNotification(): Notification =
         NotificationCompat
             .Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.camera_service_notification_title))
+            .setContentTitle(getString(R.string.notification_camera_title))
+            .setContentText(getString(R.string.notification_camera_text))
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)

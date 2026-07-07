@@ -264,8 +264,9 @@
     <string name="notification_voice_text">Luisteren naar wake word</string>
 
     <!-- Camera service notification -->
-    <string name="camera_service_channel_name">Camera</string>
-    <string name="camera_service_notification_title">Camera actief</string>
+    <string name="notification_camera_channel_name">Camera</string>
+    <string name="notification_camera_title">Camera actief</string>
+    <string name="notification_camera_text">Bewaakt op beweging</string>
 
     <!-- Kiosk keep-alive notification -->
     <string name="notification_kiosk_channel_name">Kiosk keep-alive</string>

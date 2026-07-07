@@ -85,8 +85,8 @@ class MainViewModel(
                 position = position,
                 pinned = pinned,
                 showLabels = showLabels,
-                shortcuts = shortcuts.toImmutableList(),
                 edgeHandle = edgeHandle,
+                shortcuts = shortcuts.toImmutableList(),
             )
         }
 

@@ -60,7 +60,7 @@ private val labeledRailSize = 96.dp
 private val compactButtonSize = 48.dp
 private val labeledItemWidth = 84.dp
 private val labeledItemHeight = 64.dp
-private val edgeHandleTouchThickness = 24.dp
+private val edgeHandleTouchThickness = 48.dp
 private val edgeHandleLength = 48.dp
 private val edgeHandleThickness = 6.dp
 

@@ -413,7 +413,10 @@ docs: describe the ESPHome control surface
 - Merging the release PR tags `vX.Y.Z`, publishes the GitHub Release with the
   changelog, and attaches the signed APK.
 - Do not hand-edit `CHANGELOG.md` or `.release-please-manifest.json`.
+- Do not push `v*` tags by hand; merge the release PR instead, or the
+  manifest falls out of sync with the tags.
 - The release PR runs no CI: PRs created with `GITHUB_TOKEN` do not trigger
-  `pull_request` workflows. Do not add it to required checks.
+  `pull_request` workflows. Never make `ci.yml` or `pr-title.yml` a required
+  status check on `main`, or the release PR becomes unmergeable.
 - `versionName` in `packages/app/build.gradle.kts` is bumped by release-please.
   `versionCode` is derived from it; keep minor and patch below 100.

@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -61,8 +61,9 @@ private val compactButtonSize = 48.dp
 private val labeledItemWidth = 84.dp
 private val labeledItemHeight = 64.dp
 private val edgeHandleTouchThickness = 48.dp
-private val edgeHandleLength = 48.dp
-private val edgeHandleThickness = 6.dp
+private val edgeHandleDotSize = 4.dp
+private val edgeHandleDotSpacing = 6.dp
+private val edgeHandleEdgeInset = 10.dp
 
 @Composable
 fun SidebarRailLayout(
@@ -382,33 +383,64 @@ private fun SidebarEdgeHandle(
 ) {
     val isVertical = position == SidebarPosition.Left || position == SidebarPosition.Right
     val description = stringResource(R.string.sidebar_open_content_description)
+    val dotColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    // Sit the grip near the bezel so it reads as attached to the hidden rail's edge.
+    val edgeAlignment =
+        when (position) {
+            SidebarPosition.Left -> Alignment.CenterStart
+            SidebarPosition.Right -> Alignment.CenterEnd
+            SidebarPosition.Top -> Alignment.TopCenter
+            SidebarPosition.Bottom -> Alignment.BottomCenter
+        }
+    val insetPadding =
+        when (position) {
+            SidebarPosition.Left -> Modifier.padding(start = edgeHandleEdgeInset)
+            SidebarPosition.Right -> Modifier.padding(end = edgeHandleEdgeInset)
+            SidebarPosition.Top -> Modifier.padding(top = edgeHandleEdgeInset)
+            SidebarPosition.Bottom -> Modifier.padding(bottom = edgeHandleEdgeInset)
+        }
     Box(
         modifier =
             modifier
                 .then(
                     if (isVertical) {
-                        Modifier.width(edgeHandleTouchThickness).height(edgeHandleLength)
+                        Modifier.width(edgeHandleTouchThickness).height(edgeHandleTouchThickness)
                     } else {
-                        Modifier.height(edgeHandleTouchThickness).width(edgeHandleLength)
+                        Modifier.height(edgeHandleTouchThickness).width(edgeHandleTouchThickness)
                     },
                 ).clickable(onClickLabel = description, onClick = onOpen)
                 .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
+        contentAlignment = edgeAlignment,
     ) {
-        Box(
-            modifier =
-                (
-                    if (isVertical) {
-                        Modifier.width(edgeHandleThickness).height(edgeHandleLength)
-                    } else {
-                        Modifier.height(edgeHandleThickness).width(edgeHandleLength)
-                    }
-                ).background(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(edgeHandleThickness / 2),
-                ),
-        )
+        // Three dots in drag-handle grammar: reads as a "grab" affordance, not a scrollbar.
+        if (isVertical) {
+            Column(
+                modifier = insetPadding,
+                verticalArrangement = Arrangement.spacedBy(edgeHandleDotSpacing),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                repeat(3) { EdgeHandleDot(dotColor) }
+            }
+        } else {
+            Row(
+                modifier = insetPadding,
+                horizontalArrangement = Arrangement.spacedBy(edgeHandleDotSpacing),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                repeat(3) { EdgeHandleDot(dotColor) }
+            }
+        }
     }
+}
+
+@Composable
+private fun EdgeHandleDot(color: Color) {
+    Box(
+        modifier =
+            Modifier
+                .size(edgeHandleDotSize)
+                .background(color = color, shape = CircleShape),
+    )
 }
 
 private val SidebarPosition.alignment: Alignment

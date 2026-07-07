@@ -263,6 +263,10 @@
     <string name="notification_voice_title">superdash voix</string>
     <string name="notification_voice_text">Écoute du mot de réveil</string>
 
+    <!-- Camera service notification -->
+    <string name="camera_service_channel_name">Caméra</string>
+    <string name="camera_service_notification_title">Caméra active</string>
+
     <!-- Kiosk keep-alive notification -->
     <string name="notification_kiosk_channel_name">Maintien actif du kiosque</string>
     <string name="notification_kiosk_channel_description">Maintient superdash actif sur les appareils à gestion de batterie agressive.</string>

@@ -110,6 +110,7 @@ dependencies {
     implementation(project(":packages:doorbell"))
     implementation(project(":packages:screensaver"))
     implementation(project(":packages:voice"))
+    implementation(project(":packages:camera"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)

@@ -1,12 +1,15 @@
 package com.superdash
 
 import android.app.Application
+import com.superdash.camera.CameraController
+import com.superdash.camera.CameraSettings
 import com.superdash.device.DeviceInfo
 import com.superdash.device.ScreenStateProvider
 import com.superdash.doorbell.DoorbellOverlayController
 import com.superdash.doorbell.DoorbellSettings
 import com.superdash.doorbell.DoorbellState
 import com.superdash.esphome.EsphomeBindings
+import com.superdash.esphome.EsphomeCameraBindings
 import com.superdash.esphome.EsphomeDeviceMetadata
 import com.superdash.esphome.EsphomeDoorbellBindings
 import com.superdash.esphome.EsphomeHaBindings
@@ -50,6 +53,8 @@ class EsphomeSubgraph(
     voiceCoordinator: VoicePipelineCoordinator,
     haClient: HaWebSocketClient,
     noisePsk: Flow<ByteArray?> = flowOf(null),
+    cameraSettings: CameraSettings,
+    cameraController: CameraController,
 ) {
     private val deviceMetadata: EsphomeDeviceMetadata =
         EsphomeDeviceMetadata(
@@ -176,6 +181,29 @@ class EsphomeSubgraph(
                     .distinctUntilChanged(),
         )
 
+    private val cameraBindings: EsphomeCameraBindings =
+        EsphomeCameraBindings(
+            cameraEnabled = cameraSettings.enabled,
+            setCameraEnabled = { value -> cameraSettings.setEnabled(value) },
+            motionDetected = cameraController.motionActive,
+            motionMode = cameraController.activeMotionMode,
+            setMotionMode = { value -> cameraSettings.setMotionMode(value) },
+            motionSensitivity =
+                cameraSettings.motionSensitivity
+                    .map { value -> value.toFloat() }
+                    .distinctUntilChanged(),
+            setMotionSensitivity = { value -> cameraSettings.setMotionSensitivity(value.toInt()) },
+            motionClearDelaySec =
+                cameraSettings.motionClearDelaySec
+                    .map { value -> value.toFloat() }
+                    .distinctUntilChanged(),
+            setMotionClearDelaySec = { value -> cameraSettings.setMotionClearDelaySec(value.toInt()) },
+            wakeOnMotion = cameraSettings.wakeOnMotion,
+            setWakeOnMotion = { value -> cameraSettings.setWakeOnMotion(value) },
+            jpegFrames = cameraController.jpegFrames,
+            latestJpeg = { cameraController.latestJpeg() },
+        )
+
     val bindings: EsphomeBindings =
         EsphomeBindings(
             appContext = application.applicationContext,
@@ -189,5 +217,6 @@ class EsphomeSubgraph(
             doorbell = doorbellBindings,
             nightMode = nightModeBindings,
             ha = haBindings,
+            camera = cameraBindings,
         )
 }

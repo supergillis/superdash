@@ -25,6 +25,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.superdash.camera.CameraService
 import com.superdash.core.log.Log
 import com.superdash.ha.HaOAuthInterceptor
 import com.superdash.ha.JsBridge
@@ -144,6 +145,13 @@ class MainActivity : AppCompatActivity() {
                             VoiceService.start(this@MainActivity, shouldRun = shouldRun)
                         } else {
                             VoiceService.stop(this@MainActivity)
+                        }
+                    },
+                    onCameraServiceShouldRunChange = { shouldRun ->
+                        if (shouldRun) {
+                            CameraService.start(this@MainActivity)
+                        } else {
+                            CameraService.stop(this@MainActivity)
                         }
                     },
                     onSubmitUrl = { url ->
@@ -269,15 +277,20 @@ private fun MainScreen(
     onCloseDoorbell: () -> Unit,
     onCancelVoice: () -> Unit,
     onVoiceServiceShouldRunChange: (Boolean) -> Unit,
+    onCameraServiceShouldRunChange: (Boolean) -> Unit,
     onSubmitUrl: (String) -> Unit,
     onSidebarPinnedChange: (Boolean) -> Unit,
     onSidebarShortcut: (SidebarShortcut) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val shouldRunVoiceService by viewModel.voiceServiceShouldRun.collectAsStateWithLifecycle()
+    val shouldRunCameraService by viewModel.cameraServiceShouldRun.collectAsStateWithLifecycle()
 
     LaunchedEffect(shouldRunVoiceService) {
         onVoiceServiceShouldRunChange(shouldRunVoiceService)
+    }
+    LaunchedEffect(shouldRunCameraService) {
+        onCameraServiceShouldRunChange(shouldRunCameraService)
     }
     MainContent(
         state = state,

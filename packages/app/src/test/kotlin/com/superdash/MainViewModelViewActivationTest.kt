@@ -100,6 +100,7 @@ class MainViewModelViewActivationTest {
                 sidebarPinnedFlow = MutableStateFlow(false),
                 sidebarShowLabelsFlow = MutableStateFlow(false),
                 sidebarShortcutsFlow = MutableStateFlow(SidebarSettingsDefaults.shortcuts),
+                sidebarEdgeHandleFlow = MutableStateFlow(SidebarSettingsDefaults.edgeHandle),
             )
         return viewModel to flows
     }

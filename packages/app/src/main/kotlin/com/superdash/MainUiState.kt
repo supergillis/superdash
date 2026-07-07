@@ -47,6 +47,7 @@ data class SidebarUiState(
     val pinned: Boolean,
     val showLabels: Boolean,
     val shortcuts: ImmutableList<SidebarShortcut>,
+    val edgeHandle: Boolean,
 ) {
     companion object {
         fun empty(): SidebarUiState =
@@ -55,6 +56,7 @@ data class SidebarUiState(
                 pinned = SidebarSettingsDefaults.pinned,
                 showLabels = SidebarSettingsDefaults.showLabels,
                 shortcuts = SidebarSettingsDefaults.shortcuts.toImmutableList(),
+                edgeHandle = SidebarSettingsDefaults.edgeHandle,
             )
     }
 }

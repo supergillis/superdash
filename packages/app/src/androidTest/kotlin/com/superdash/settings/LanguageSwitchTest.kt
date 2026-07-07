@@ -20,7 +20,7 @@ class LanguageSwitchTest {
     }
 
     @Test
-    fun `voice title differs between en and nl`() {
+    fun voiceTitleDiffersBetweenEnAndNl() {
         assertNotEquals(
             stringIn("en", R.string.settings_voice_title),
             stringIn("nl", R.string.settings_voice_title),

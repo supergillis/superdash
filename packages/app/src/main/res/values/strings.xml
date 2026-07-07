@@ -59,7 +59,7 @@
     <!-- Camera -->
     <string name="settings_camera_enabled_title">Camera</string>
     <string name="settings_camera_enabled_summary">Expose the tablet camera and motion sensor to Home Assistant</string>
-    <string name="settings_camera_facing_label">Camera</string>
+    <string name="settings_camera_facing_label">Camera facing</string>
     <string name="settings_camera_facing_front">Front</string>
     <string name="settings_camera_facing_back">Back</string>
     <string name="settings_camera_resolution_label">Resolution</string>

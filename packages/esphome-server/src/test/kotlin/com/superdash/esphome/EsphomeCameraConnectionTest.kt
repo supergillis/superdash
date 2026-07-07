@@ -195,4 +195,26 @@ class EsphomeCameraConnectionTest {
             assertTrue(harness.job.isActive)
             harness.job.cancel()
         }
+
+    @Test
+    fun `concurrent single and stream image sends do not interleave chunks`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val jpeg1 = ByteArray(40_000) { 1 } // latest frame, delivered via the single request
+            val jpeg2 = ByteArray(40_000) { 2 } // pushed concurrently via the stream job
+            val frames = MutableSharedFlow<ByteArray>()
+            val harness = Harness(this, listOf(cameraEntity(frames, latest = jpeg1)), nanoTime = { 0L })
+            harness.hello()
+            harness.requestImage(single = false, stream = true) // opens the stream window/job
+
+            // Fire the single-image send and the stream-frame send close together so their
+            // chunk writes race for the transport.
+            launch { harness.requestImage(single = true, stream = false) }
+            launch { frames.emit(jpeg2) }
+
+            val images = listOf(harness.readImage(), harness.readImage()).sortedBy { it[0] }
+            assertArrayEquals(jpeg1, images[0])
+            assertArrayEquals(jpeg2, images[1])
+
+            harness.job.cancel()
+        }
 }

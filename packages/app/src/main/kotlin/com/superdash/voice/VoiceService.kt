@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.superdash.R
@@ -34,7 +35,8 @@ class VoiceService : LifecycleService() {
         ensureChannel()
         val foregroundStarted =
             VoiceServiceStartPolicy.tryStartForeground {
-                startForeground(
+                ServiceCompat.startForeground(
+                    this,
                     NOTIFICATION_ID,
                     buildNotification(),
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,

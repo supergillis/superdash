@@ -25,8 +25,9 @@ This is for installing a released build on a tablet. To build it yourself, see
 
 ### Requirements
 
-- **Android 11 or newer (API level 30). This is a hard requirement. The app
-  will not install on older Android versions.**
+- **Android 9 or newer (API level 28). This is a hard requirement. The app
+  will not install on older Android versions.** Old tablets also need a
+  reasonably recent WebView for the Home Assistant dashboard.
 - An arm64 (64-bit) tablet. The APK ships arm64-v8a only.
 - A running Home Assistant instance reachable from the tablet's network.
 

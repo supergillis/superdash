@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.superdash"
-        minSdk = 30
+        minSdk = 28
         targetSdk = 35
         versionName = "0.2.0" // x-release-please-version
         // Derived so release-please only manages versionName. Monotonic

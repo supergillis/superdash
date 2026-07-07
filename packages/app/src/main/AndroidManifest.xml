@@ -71,6 +71,17 @@
             android:foregroundServiceType="microphone"
             android:exported="false" />
 
+        <!-- Never started: disabled marker read by AppCompat to persist the
+             per-app locale choice below API 33 (autoStoreLocales). -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
         <receiver
             android:name=".kiosk.boot.BootReceiver"
             android:exported="true"

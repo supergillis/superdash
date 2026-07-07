@@ -389,8 +389,7 @@ private fun SidebarEdgeHandle(
                     } else {
                         Modifier.height(edgeHandleTouchThickness).width(edgeHandleLength)
                     },
-                )
-                .clickable(onClickLabel = description, onClick = onOpen)
+                ).clickable(onClickLabel = description, onClick = onOpen)
                 .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {

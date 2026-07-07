@@ -2,7 +2,6 @@ package com.superdash.kiosk
 
 import android.app.Activity
 import android.app.KeyguardManager
-import android.os.Build
 import android.view.WindowManager
 import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
@@ -31,10 +30,8 @@ class KioskWindowController(
         }
 
         if (snapshot.startOnBoot) {
-            if (Build.VERSION.SDK_INT >= 27) {
-                activity.setShowWhenLocked(true)
-                activity.setTurnScreenOn(true)
-            }
+            activity.setShowWhenLocked(true)
+            activity.setTurnScreenOn(true)
             val keyguardManager = activity.getSystemService<KeyguardManager>()
             if (launchedFromBoot &&
                 keyguardManager != null &&

@@ -4,7 +4,6 @@ import android.app.Application
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
-import com.superdash.core.locale.LocaleController
 import com.superdash.core.persistence.DataStoreKeyValueStore
 import com.superdash.core.persistence.KeyValueStore
 import com.superdash.core.resources.AndroidStringProvider
@@ -33,6 +32,7 @@ import com.superdash.kiosk.KioskSettings
 import com.superdash.kiosk.SidebarSettings
 import com.superdash.kiosk.bus.ActivityCommandQueue
 import com.superdash.kiosk.bus.KioskEventBus
+import com.superdash.locale.LocaleController
 import com.superdash.screensaver.ScreensaverIdleController
 import com.superdash.screensaver.ScreensaverSettings
 import com.superdash.settings.AeadSecretString
@@ -69,7 +69,7 @@ class AppGraph(
 
     val keyValueStore: KeyValueStore = DataStoreKeyValueStore(settings.dataStore)
 
-    val localeController: LocaleController = LocaleController(application)
+    val localeController: LocaleController = LocaleController()
 
     val strings: StringProvider = AndroidStringProvider(application)
 

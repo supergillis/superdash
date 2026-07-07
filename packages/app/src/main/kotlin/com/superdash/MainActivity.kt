@@ -5,8 +5,8 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -56,7 +56,7 @@ import kotlinx.coroutines.launch
 
 private val log = Log("MainActivity")
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private lateinit var graph: AppGraph
     private lateinit var eventBus: KioskEventBus
     private lateinit var kioskWindow: KioskWindowController

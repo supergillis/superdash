@@ -91,6 +91,7 @@ private class ScriptedDetector(
 ) : MotionDetector {
     var processed = 0
     var resets = 0
+    var closes = 0
 
     override suspend fun process(frame: CameraFrame): Boolean {
         processed++
@@ -99,6 +100,10 @@ private class ScriptedDetector(
 
     override fun reset() {
         resets++
+    }
+
+    override fun close() {
+        closes++
     }
 }
 
@@ -286,6 +291,36 @@ class CameraControllerTest {
             settings.enabledState.value = false
 
             assertTrue(detector.resets > 0)
+        }
+
+    @Test
+    fun `switching motion mode closes the previous detector`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.enabledState.value = true
+            settings.motionModeState.value = "motion"
+            val motionDetector = ScriptedDetector { true }
+            val personDetector = ScriptedDetector { true }
+            CameraController(
+                pipeline = pipeline,
+                settings = settings,
+                detectorFactories =
+                    mapOf(
+                        "motion" to { motionDetector },
+                        "person" to { personDetector },
+                    ),
+                scope = backgroundScope,
+                nowMs = { 0L },
+            )
+
+            pipeline.framesFlow.emit(testFrame())
+            assertEquals(0, motionDetector.closes)
+
+            settings.motionModeState.value = "person"
+
+            assertEquals(1, motionDetector.closes)
+            assertEquals(0, personDetector.closes)
         }
 
     @Test

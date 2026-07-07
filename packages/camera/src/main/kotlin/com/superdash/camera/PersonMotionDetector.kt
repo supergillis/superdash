@@ -57,4 +57,8 @@ class PersonMotionDetector(
         lastResult = false
         lastRunMs = Long.MIN_VALUE
     }
+
+    override fun close() {
+        runCatching { detector.close() }.onFailure { log.w("face detector close failed", it) }
+    }
 }

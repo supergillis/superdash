@@ -9,4 +9,8 @@ interface MotionDetector {
 
     /** Drops accumulated reference state (e.g. the previous frame). */
     fun reset()
+
+    /** Releases underlying resources; the detector must not be used
+     *  afterwards. */
+    fun close()
 }

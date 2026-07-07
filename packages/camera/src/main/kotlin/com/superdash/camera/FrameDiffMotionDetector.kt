@@ -45,6 +45,8 @@ class FrameDiffMotionDetector(
         previous = null
     }
 
+    override fun close() {}
+
     /** Mean luma per grid cell, sampled every 4th pixel for speed. */
     private fun downscaleLuma(frame: CameraFrame): IntArray {
         val grid = IntArray(GRID_W * GRID_H)

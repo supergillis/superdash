@@ -126,28 +126,32 @@ class CameraController(
             motionActiveState.value = false
             val detector = createDetector(mode) ?: return@collectLatest
             val gate = MotionGate(clearDelayMs = { clearDelaySec.value * 1000L })
-            coroutineScope {
-                launch {
-                    pipeline.availability.collect { state ->
-                        if (state !is CameraAvailability.Running) {
-                            detector.reset()
-                            // Belt-and-braces: availability can lag the actual
-                            // disable (see pipelineWanted), but when it does
-                            // report non-Running, make sure the latch clears.
-                            motionActiveState.value = false
+            try {
+                coroutineScope {
+                    launch {
+                        pipeline.availability.collect { state ->
+                            if (state !is CameraAvailability.Running) {
+                                detector.reset()
+                                // Belt-and-braces: availability can lag the actual
+                                // disable (see pipelineWanted), but when it does
+                                // report non-Running, make sure the latch clears.
+                                motionActiveState.value = false
+                            }
+                        }
+                    }
+                    pipeline.frames.collect { frame ->
+                        val detected =
+                            runCatching { detector.process(frame) }
+                                .onFailure { log.w("motion detector failed", it) }
+                                .getOrDefault(false)
+                        val active = gate.update(detected, nowMs())
+                        if (pipelineWanted) {
+                            motionActiveState.value = active
                         }
                     }
                 }
-                pipeline.frames.collect { frame ->
-                    val detected =
-                        runCatching { detector.process(frame) }
-                            .onFailure { log.w("motion detector failed", it) }
-                            .getOrDefault(false)
-                    val active = gate.update(detected, nowMs())
-                    if (pipelineWanted) {
-                        motionActiveState.value = active
-                    }
-                }
+            } finally {
+                detector.close()
             }
         }
     }

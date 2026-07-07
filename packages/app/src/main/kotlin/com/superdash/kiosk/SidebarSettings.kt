@@ -13,6 +13,8 @@ interface SidebarSettings {
 
     val showLabels: Flow<Boolean>
 
+    val edgeHandle: Flow<Boolean>
+
     val shortcuts: Flow<List<SidebarShortcut>>
 
     suspend fun setPosition(value: SidebarPosition)
@@ -20,6 +22,8 @@ interface SidebarSettings {
     suspend fun setPinned(value: Boolean)
 
     suspend fun setShowLabels(value: Boolean)
+
+    suspend fun setEdgeHandle(value: Boolean)
 
     suspend fun setShortcuts(value: List<SidebarShortcut>)
 }
@@ -128,9 +132,11 @@ internal fun SidebarShortcut.selectedInSidebar(nightModeActive: Boolean): Boolea
 object SidebarSettingsDefaults {
     val position: SidebarPosition = SidebarPosition.Left
 
-    val pinned: Boolean = false
+    val pinned: Boolean = true
 
     val showLabels: Boolean = false
+
+    val edgeHandle: Boolean = true
 
     val settingsShortcut =
         SidebarShortcut(

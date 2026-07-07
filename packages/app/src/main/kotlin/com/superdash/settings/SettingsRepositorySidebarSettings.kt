@@ -28,6 +28,8 @@ internal class SettingsRepositorySidebarSettings(
 
     override val showLabels: Flow<Boolean> = store.observe(SHOW_LABELS)
 
+    override val edgeHandle: Flow<Boolean> = store.observe(EDGE_HANDLE)
+
     override val shortcuts: Flow<List<SidebarShortcut>> =
         store.observe(SHORTCUTS_JSON).map { value -> decodeShortcuts(value) }
 
@@ -36,6 +38,8 @@ internal class SettingsRepositorySidebarSettings(
     override suspend fun setPinned(value: Boolean) = store.write(PINNED, value)
 
     override suspend fun setShowLabels(value: Boolean) = store.write(SHOW_LABELS, value)
+
+    override suspend fun setEdgeHandle(value: Boolean) = store.write(EDGE_HANDLE, value)
 
     override suspend fun setShortcuts(value: List<SidebarShortcut>) {
         store.write(SHORTCUTS_JSON, encodeShortcuts(value))
@@ -117,6 +121,7 @@ internal class SettingsRepositorySidebarSettings(
             )
         val PINNED = Setting(key = "sidebar.pinned", default = SidebarSettingsDefaults.pinned)
         val SHOW_LABELS = Setting(key = "sidebar.showLabels", default = SidebarSettingsDefaults.showLabels)
+        val EDGE_HANDLE = Setting(key = "sidebar.edgeHandle", default = SidebarSettingsDefaults.edgeHandle)
         val generatedShortLabels =
             setOf(
                 SidebarAction.OpenSettings.defaultShortLabel,

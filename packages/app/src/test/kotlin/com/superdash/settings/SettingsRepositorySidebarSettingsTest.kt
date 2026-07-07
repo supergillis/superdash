@@ -17,16 +17,29 @@ class SettingsRepositorySidebarSettingsTest {
             assertEquals(SidebarPosition.Left, settings.position.first())
         }
 
-    @Test fun `pinned defaults to false`() =
+    @Test fun `pinned defaults to true`() =
         runTest {
             val settings = SettingsRepositorySidebarSettings(InMemoryKeyValueStore())
-            assertEquals(false, settings.pinned.first())
+            assertEquals(true, settings.pinned.first())
         }
 
     @Test fun `showLabels defaults to false`() =
         runTest {
             val settings = SettingsRepositorySidebarSettings(InMemoryKeyValueStore())
             assertEquals(false, settings.showLabels.first())
+        }
+
+    @Test fun `edgeHandle defaults to true`() =
+        runTest {
+            val settings = SettingsRepositorySidebarSettings(InMemoryKeyValueStore())
+            assertEquals(true, settings.edgeHandle.first())
+        }
+
+    @Test fun `setEdgeHandle stores edge handle value`() =
+        runTest {
+            val settings = SettingsRepositorySidebarSettings(InMemoryKeyValueStore())
+            settings.setEdgeHandle(false)
+            assertEquals(false, settings.edgeHandle.first())
         }
 
     @Test fun `setShowLabels stores show label value`() =

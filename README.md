@@ -16,6 +16,7 @@ ESPHome native API, so HA can read and control the kiosk.
 - Handles Home Assistant OAuth and token refresh.
 - Runs on-device wake word detection and sends captured speech to Home Assistant Assist.
 - Shows screensavers and doorbell camera overlays.
+- Exposes the tablet camera and a motion sensor to Home Assistant.
 - Exposes controls to Home Assistant through the ESPHome native API.
 
 ## Getting Started
@@ -123,6 +124,7 @@ kiosk product.
 | Package | Purpose |
 |---|---|
 | `packages/app` | Android app, UI, wiring, services, settings. |
+| `packages/camera` | Tablet camera pipeline and motion detection for the ESPHome camera entity. |
 | `packages/core` | Shared logging and small utilities. |
 | `packages/ha-client` | Home Assistant OAuth, tokens, WebSocket, Assist, media source. |
 | `packages/voice` | Wake word, on-device STT (Whisper/Moonshine), local intents. |

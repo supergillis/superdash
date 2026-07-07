@@ -20,6 +20,7 @@ Multi-module Gradle/Kotlin build. The app module is `:packages:app`.
 | Package | Purpose |
 |---|---|
 | `packages/app` | Android app, UI, wiring, services, settings. |
+| `packages/camera` | Tablet camera pipeline and motion detection for the ESPHome camera entity. |
 | `packages/core` | Shared logging and small utilities. |
 | `packages/ha-client` | Home Assistant OAuth, tokens, WebSocket, Assist, media source. |
 | `packages/voice` | Wake word, on-device STT (Whisper/Moonshine), local intents. |

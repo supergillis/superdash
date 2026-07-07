@@ -96,6 +96,28 @@ Tests:
 ./gradlew :packages:esphome-server:testDebugUnitTest
 ```
 
+## `packages/camera`
+
+Tablet camera and motion detection.
+
+Owns:
+
+- CameraX capture pipeline (NV21 frames, JPEG encoding).
+- Frame-diff and ML Kit person motion detectors.
+- Motion gate (clear-delay hold).
+- Camera controller (settings-driven orchestration).
+
+Start with:
+
+- `src/main/kotlin/com/superdash/camera/CameraController.kt`
+- `src/main/kotlin/com/superdash/camera/CameraXPipeline.kt`
+
+Tests:
+
+```bash
+./gradlew :packages:camera:testDebugUnitTest
+```
+
 ## `packages/immich-client`
 
 Immich client library.

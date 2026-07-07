@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
@@ -42,11 +43,17 @@ class CameraService : LifecycleService() {
         ensureChannel()
         val foregroundStarted =
             ForegroundServiceStartPolicy.tryStartForeground {
-                startForeground(
-                    NOTIFICATION_ID,
-                    buildNotification(),
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
-                )
+                // The camera FGS type exists from API 30 (R) only; below that,
+                // minSdk 28 devices must use the untyped overload.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    startForeground(
+                        NOTIFICATION_ID,
+                        buildNotification(),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
+                    )
+                } else {
+                    startForeground(NOTIFICATION_ID, buildNotification())
+                }
             }
         if (!foregroundStarted) {
             log.w("foreground start denied; stopping camera service")

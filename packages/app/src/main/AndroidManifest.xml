@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ai.moonshine:moonshine-voice declares minSdk 35, but its native libs
+         only import pre-API-21 libc/libandroid symbols (verified by ELF
+         analysis) and run fine on API 30. -->
+    <uses-sdk tools:overrideLibrary="ai.moonshine.voice" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />

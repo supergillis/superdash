@@ -29,6 +29,14 @@ class MotionGateTest {
     }
 
     @Test
+    fun `zero clear delay is active only on detection frames`() {
+        val gate = MotionGate(clearDelayMs = { 0L })
+        assertTrue(gate.update(detected = true, nowMs = 0L))
+        assertFalse(gate.update(detected = false, nowMs = 0L))
+        assertFalse(gate.update(detected = false, nowMs = 1L))
+    }
+
+    @Test
     fun `clear delay is read at detection time`() {
         var delay = 10_000L
         val gate = MotionGate(clearDelayMs = { delay })

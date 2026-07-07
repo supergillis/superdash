@@ -14,6 +14,7 @@ class MotionGate(
     ): Boolean {
         if (detected) {
             activeUntilMs = nowMs + clearDelayMs()
+            return true
         }
         return nowMs < activeUntilMs
     }

@@ -12,11 +12,12 @@ ESPHome native API, so HA can read and control the kiosk.
 
 ## Features
 
-- Shows a Home Assistant dashboard in kiosk mode.
-- Handles Home Assistant OAuth and token refresh.
-- Runs on-device wake word detection and sends captured speech to Home Assistant Assist.
-- Shows screensavers and doorbell camera overlays.
-- Exposes controls to Home Assistant through the ESPHome native API.
+- **Full-screen kiosk** — Your Home Assistant dashboard, edge-to-edge and always-on. Stays signed in across reboots.
+- **Hands-free voice** — On-device wake word detection sends your speech straight to Home Assistant Assist.
+- **Ambient screensaver** — Photo slideshow (Immich), clock overlay, and a night mode for idle hours.
+- **Doorbell overlays** — A live camera feed pops up when a doorbell rings.
+- **Two-way with Home Assistant** — Exposes the tablet back to HA over the ESPHome native API, so HA can read and control the kiosk.
+- **Customizable sidebar** — A rail of shortcuts (settings, reload, sleep/wake, night mode, jump to any dashboard view) pinned to any screen edge.
 
 ## Getting Started
 

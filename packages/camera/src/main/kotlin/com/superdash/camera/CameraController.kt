@@ -24,6 +24,8 @@ internal const val STREAM_MIN_INTERVAL_MS = 100L
 
 private const val DEFAULT_RESOLUTION = "1280x720"
 
+private const val JPEG_QUALITY = 60
+
 internal fun parseResolution(value: String): Pair<Int, Int> {
     val parts = value.split("x")
     val width = parts.getOrNull(0)?.toIntOrNull()
@@ -64,9 +66,6 @@ class CameraController(
      *  pipeline runs; encoding is skipped when nobody collects. */
     val jpegFrames: Flow<ByteArray> = jpegFramesFlow.asSharedFlow()
 
-    private val quality: StateFlow<Int> =
-        settings.jpegQuality.stateIn(scope, SharingStarted.Eagerly, 60)
-
     private val clearDelaySec: StateFlow<Int> =
         settings.motionClearDelaySec.stateIn(scope, SharingStarted.Eagerly, 15)
 
@@ -77,7 +76,7 @@ class CameraController(
     }
 
     suspend fun latestJpeg(): ByteArray? =
-        latestFrame.value?.let { frame -> pipeline.encodeJpeg(frame, quality.value) }
+        latestFrame.value?.let { frame -> pipeline.encodeJpeg(frame, JPEG_QUALITY) }
 
     private suspend fun runPipelineControl() {
         combine(settings.enabled, settings.resolution, settings.facing) { enabled, resolution, facing ->
@@ -102,7 +101,7 @@ class CameraController(
             if (jpegFramesFlow.subscriptionCount.value > 0 &&
                 now - lastStreamEmitMs >= STREAM_MIN_INTERVAL_MS
             ) {
-                pipeline.encodeJpeg(frame, quality.value)?.let { jpeg ->
+                pipeline.encodeJpeg(frame, JPEG_QUALITY)?.let { jpeg ->
                     lastStreamEmitMs = now
                     jpegFramesFlow.emit(jpeg)
                 }

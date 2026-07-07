@@ -45,7 +45,6 @@ private class FakeSettings : CameraSettings {
     val enabledState = MutableStateFlow(false)
     val facingState = MutableStateFlow("front")
     val resolutionState = MutableStateFlow("1280x720")
-    val jpegQualityState = MutableStateFlow(60)
     val motionModeState = MutableStateFlow("off")
     val motionSensitivityState = MutableStateFlow(50)
     val motionClearDelaySecState = MutableStateFlow(15)
@@ -54,7 +53,6 @@ private class FakeSettings : CameraSettings {
     override val enabled: Flow<Boolean> = enabledState
     override val facing: Flow<String> = facingState
     override val resolution: Flow<String> = resolutionState
-    override val jpegQuality: Flow<Int> = jpegQualityState
     override val motionMode: Flow<String> = motionModeState
     override val motionSensitivity: Flow<Int> = motionSensitivityState
     override val motionClearDelaySec: Flow<Int> = motionClearDelaySecState
@@ -65,8 +63,6 @@ private class FakeSettings : CameraSettings {
     override suspend fun setFacing(value: String) = facingState.emit(value)
 
     override suspend fun setResolution(value: String) = resolutionState.emit(value)
-
-    override suspend fun setJpegQuality(value: Int) = jpegQualityState.emit(value)
 
     override suspend fun setMotionMode(value: String) = motionModeState.emit(value)
 
@@ -273,7 +269,6 @@ class CameraControllerTest {
             val pipeline = FakePipeline()
             val settings = FakeSettings()
             settings.enabledState.value = true
-            settings.jpegQualityState.value = 42
             val controller =
                 CameraController(
                     pipeline = pipeline,
@@ -284,7 +279,7 @@ class CameraControllerTest {
                 )
             assertNull(controller.latestJpeg())
             pipeline.framesFlow.emit(testFrame(firstByte = 7))
-            assertEquals(listOf<Byte>(42, 7), controller.latestJpeg()?.toList())
+            assertEquals(listOf<Byte>(60, 7), controller.latestJpeg()?.toList())
         }
 
     @Test

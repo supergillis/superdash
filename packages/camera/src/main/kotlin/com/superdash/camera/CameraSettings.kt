@@ -14,9 +14,6 @@ interface CameraSettings {
     /** "640x480" | "1280x720" | "1920x1080" */
     val resolution: Flow<String>
 
-    /** 1..100 */
-    val jpegQuality: Flow<Int>
-
     /** "off" | "motion" | "person" */
     val motionMode: Flow<String>
 
@@ -32,8 +29,6 @@ interface CameraSettings {
     suspend fun setFacing(value: String)
 
     suspend fun setResolution(value: String)
-
-    suspend fun setJpegQuality(value: Int)
 
     suspend fun setMotionMode(value: String)
 

@@ -794,7 +794,6 @@ class SettingsViewModelTest {
         override val enabled: Flow<Boolean> = enabledFlow.asStateFlow()
         override val facing: Flow<String> = facingFlow.asStateFlow()
         override val resolution: Flow<String> = resolutionFlow.asStateFlow()
-        override val jpegQuality: Flow<Int> = MutableStateFlow(60).asStateFlow()
         override val motionMode: Flow<String> = motionModeFlow.asStateFlow()
         override val motionSensitivity: Flow<Int> = motionSensitivityFlow.asStateFlow()
         override val motionClearDelaySec: Flow<Int> = motionClearDelaySecFlow.asStateFlow()
@@ -819,8 +818,6 @@ class SettingsViewModelTest {
         override suspend fun setResolution(value: String) {
             lastResolution = value
         }
-
-        override suspend fun setJpegQuality(value: Int) = Unit
 
         override suspend fun setMotionMode(value: String) {
             lastMotionMode = value

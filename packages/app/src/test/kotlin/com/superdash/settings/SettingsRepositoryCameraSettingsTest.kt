@@ -29,29 +29,6 @@ class SettingsRepositoryCameraSettingsTest {
         }
 
     @Test
-    fun `jpeg quality defaults to 60`() =
-        runTest {
-            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
-            assertEquals(60, settings.jpegQuality.first())
-        }
-
-    @Test
-    fun `jpeg quality coerces below 1 to 1`() =
-        runTest {
-            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
-            settings.setJpegQuality(-5)
-            assertEquals(1, settings.jpegQuality.first())
-        }
-
-    @Test
-    fun `jpeg quality coerces above 100 to 100`() =
-        runTest {
-            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
-            settings.setJpegQuality(999)
-            assertEquals(100, settings.jpegQuality.first())
-        }
-
-    @Test
     fun `motion mode defaults to motion`() =
         runTest {
             val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())

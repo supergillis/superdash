@@ -248,6 +248,7 @@
 
     <!-- Sidebar overlay -->
     <string name="sidebar_dismiss_content_description">Dismiss sidebar</string>
+    <string name="sidebar_open_content_description">Open sidebar</string>
     <string name="sidebar_unpin_content_description">Unpin sidebar</string>
     <string name="sidebar_pin_content_description">Pin sidebar</string>
     <string name="sidebar_item_active_content_description">%1$s, active</string>

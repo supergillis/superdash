@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.superdash.kiosk.SidebarAction
 import com.superdash.kiosk.SidebarPosition
@@ -82,6 +83,7 @@ class SidebarRailTest {
                 SidebarRailLayout(
                     position = SidebarPosition.Left,
                     pinned = false,
+                    edgeHandle = false,
                     open = true,
                     showLabels = false,
                     nightModeActive = false,
@@ -115,6 +117,7 @@ class SidebarRailTest {
                 SidebarRailLayout(
                     position = SidebarPosition.Left,
                     pinned = false,
+                    edgeHandle = false,
                     open = true,
                     showLabels = false,
                     nightModeActive = false,
@@ -142,6 +145,7 @@ class SidebarRailTest {
                 SidebarRailLayout(
                     position = SidebarPosition.Left,
                     pinned = false,
+                    edgeHandle = false,
                     open = false,
                     showLabels = false,
                     nightModeActive = false,
@@ -167,6 +171,7 @@ class SidebarRailTest {
                 SidebarRailLayout(
                     position = SidebarPosition.Left,
                     pinned = true,
+                    edgeHandle = false,
                     open = true,
                     showLabels = false,
                     nightModeActive = false,
@@ -183,5 +188,107 @@ class SidebarRailTest {
 
         composeRule.onAllNodesWithText("Background action").assertCountEquals(1)
         composeRule.onAllNodesWithText("Overlay action").assertCountEquals(1)
+    }
+
+    @Test
+    fun unpinnedClosedSidebarWithHandleShowsHandle() {
+        composeRule.setContent {
+            MaterialTheme {
+                SidebarRailLayout(
+                    position = SidebarPosition.Left,
+                    pinned = false,
+                    edgeHandle = true,
+                    open = false,
+                    showLabels = false,
+                    nightModeActive = false,
+                    shortcuts = emptyList(),
+                    onOpen = {},
+                    onDismiss = {},
+                    onPinnedChange = {},
+                    onShortcutClick = {},
+                    content = { Box {} },
+                    overlays = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Open sidebar").assertHasClickAction()
+    }
+
+    @Test
+    fun unpinnedClosedSidebarWithoutHandleHidesHandle() {
+        composeRule.setContent {
+            MaterialTheme {
+                SidebarRailLayout(
+                    position = SidebarPosition.Left,
+                    pinned = false,
+                    edgeHandle = false,
+                    open = false,
+                    showLabels = false,
+                    nightModeActive = false,
+                    shortcuts = emptyList(),
+                    onOpen = {},
+                    onDismiss = {},
+                    onPinnedChange = {},
+                    onShortcutClick = {},
+                    content = { Box {} },
+                    overlays = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithContentDescription("Open sidebar").assertCountEquals(0)
+    }
+
+    @Test
+    fun pinnedSidebarHidesHandle() {
+        composeRule.setContent {
+            MaterialTheme {
+                SidebarRailLayout(
+                    position = SidebarPosition.Left,
+                    pinned = true,
+                    edgeHandle = true,
+                    open = false,
+                    showLabels = false,
+                    nightModeActive = false,
+                    shortcuts = emptyList(),
+                    onOpen = {},
+                    onDismiss = {},
+                    onPinnedChange = {},
+                    onShortcutClick = {},
+                    content = { Box {} },
+                    overlays = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithContentDescription("Open sidebar").assertCountEquals(0)
+    }
+
+    @Test
+    fun tappingHandleOpensSidebar() {
+        var opened = false
+        composeRule.setContent {
+            MaterialTheme {
+                SidebarRailLayout(
+                    position = SidebarPosition.Left,
+                    pinned = false,
+                    edgeHandle = true,
+                    open = false,
+                    showLabels = false,
+                    nightModeActive = false,
+                    shortcuts = emptyList(),
+                    onOpen = { opened = true },
+                    onDismiss = {},
+                    onPinnedChange = {},
+                    onShortcutClick = {},
+                    content = { Box {} },
+                    overlays = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Open sidebar").performClick()
+        composeRule.runOnIdle { assert(opened) }
     }
 }

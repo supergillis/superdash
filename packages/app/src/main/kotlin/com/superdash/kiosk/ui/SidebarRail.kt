@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -59,11 +60,15 @@ private val labeledRailSize = 96.dp
 private val compactButtonSize = 48.dp
 private val labeledItemWidth = 84.dp
 private val labeledItemHeight = 64.dp
+private val edgeHandleTouchThickness = 24.dp
+private val edgeHandleLength = 48.dp
+private val edgeHandleThickness = 6.dp
 
 @Composable
 fun SidebarRailLayout(
     position: SidebarPosition,
     pinned: Boolean,
+    edgeHandle: Boolean,
     open: Boolean,
     showLabels: Boolean,
     nightModeActive: Boolean,
@@ -135,6 +140,12 @@ fun SidebarRailLayout(
                 shortcuts = shortcuts,
                 onPinnedChange = onPinnedChange,
                 onShortcutClick = onShortcutClick,
+                modifier = Modifier.align(position.alignment),
+            )
+        } else if (edgeHandle) {
+            SidebarEdgeHandle(
+                position = position,
+                onOpen = onOpen,
                 modifier = Modifier.align(position.alignment),
             )
         }
@@ -357,6 +368,44 @@ private fun PinButton(
                     Icons.Filled.PushPin
                 },
             contentDescription = contentDesc,
+        )
+    }
+}
+
+@Composable
+private fun SidebarEdgeHandle(
+    position: SidebarPosition,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isVertical = position == SidebarPosition.Left || position == SidebarPosition.Right
+    val description = stringResource(R.string.sidebar_open_content_description)
+    Box(
+        modifier =
+            modifier
+                .then(
+                    if (isVertical) {
+                        Modifier.width(edgeHandleTouchThickness).height(edgeHandleLength)
+                    } else {
+                        Modifier.height(edgeHandleTouchThickness).width(edgeHandleLength)
+                    },
+                )
+                .clickable(onClickLabel = description, onClick = onOpen)
+                .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier =
+                (
+                    if (isVertical) {
+                        Modifier.width(edgeHandleThickness).height(edgeHandleLength)
+                    } else {
+                        Modifier.height(edgeHandleThickness).width(edgeHandleLength)
+                    }
+                ).background(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(edgeHandleThickness / 2),
+                ),
         )
     }
 }

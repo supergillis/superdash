@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -101,7 +100,7 @@ fun SidebarRailLayout(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .hideFromAccessibilityWhen(hideBackgroundSemantics),
+                        .clearSemanticsWhen(hideBackgroundSemantics),
             ) {
                 content()
             }
@@ -110,7 +109,7 @@ fun SidebarRailLayout(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .hideFromAccessibilityWhen(hideBackgroundSemantics),
+                    .clearSemanticsWhen(hideBackgroundSemantics),
         ) {
             overlays()
         }
@@ -155,9 +154,9 @@ fun SidebarRailLayout(
     }
 }
 
-private fun Modifier.hideFromAccessibilityWhen(value: Boolean): Modifier =
+private fun Modifier.clearSemanticsWhen(value: Boolean): Modifier =
     if (value) {
-        semantics { hideFromAccessibility() }
+        clearAndSetSemantics {}
     } else {
         this
     }

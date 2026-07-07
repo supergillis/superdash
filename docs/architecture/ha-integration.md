@@ -88,6 +88,8 @@ The camera module exposes:
 
 The JPEG stream is chunked to 15 KiB frames to fit under the 16 KiB Noise frame cap. A rolling ~5 second window is refreshed at several fps; Home Assistant polls the picture entity to fetch the latest frame.
 
+`Allow remote enable` (`camera_allow_remote_enable`, on by default) is a local-only setting that gates remote turn-ON of `camera_enabled`: when off, a remote command that would enable the camera is dropped at the command boundary (`EsphomeBindings`) and logged, while remote turn-OFF always goes through regardless of this setting. Since the ESPHome API is unauthenticated on the LAN without a configured Noise PSK, enabling the camera feature is a good reason to configure Noise encryption (see below).
+
 ## ESPHome Noise Encryption
 
 - Server-side support for `Noise_NNpsk0_25519_ChaChaPoly_SHA256`.

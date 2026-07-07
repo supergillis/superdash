@@ -18,6 +18,7 @@ android {
         // while minor and patch stay below 100.
         versionCode =
             versionName!!.split(".").map { it.toInt() }.let { (major, minor, patch) ->
+                require(minor < 100 && patch < 100) { "versionCode scheme requires minor and patch below 100" }
                 major * 10000 + minor * 100 + patch
             }
 

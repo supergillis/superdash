@@ -52,6 +52,7 @@ data class SettingsActions(
     val device: DeviceSettingsActions,
     val voice: VoiceSettingsActions,
     val doorbell: DoorbellSettingsActions,
+    val camera: CameraSettingsActions,
     val esphome: EsphomeSettingsActions,
     val screensaver: ScreensaverSettingsActions,
     val immich: ImmichSettingsActions,
@@ -136,6 +137,18 @@ data class DoorbellSettingsActions(
 )
 
 @Immutable
+data class CameraSettingsActions(
+    val onRequestCameraEnable: () -> Unit,
+    val onCameraDisable: () -> Unit,
+    val onFacingChange: (String) -> Unit,
+    val onResolutionChange: (String) -> Unit,
+    val onMotionModeChange: (String) -> Unit,
+    val onMotionSensitivityChange: (Int) -> Unit,
+    val onMotionClearDelayChange: (Int) -> Unit,
+    val onWakeOnMotionChange: (Boolean) -> Unit,
+)
+
+@Immutable
 data class EsphomeSettingsActions(
     val onEsphomeEnabledChange: (Boolean) -> Unit,
     val onSavePskBase64: (String) -> Boolean,
@@ -174,6 +187,24 @@ class SettingsActivity : AppCompatActivity() {
             settingsViewModel.setVoiceEnabled(true)
         } else {
             micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private val cameraPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            settingsViewModel.setCameraEnabled(granted)
+        }
+
+    fun requestCameraAndEnable() {
+        val granted =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            settingsViewModel.setCameraEnabled(true)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -231,6 +262,7 @@ class SettingsActivity : AppCompatActivity() {
                     onBatteryHelp = { BatteryOptimizationPrompt.openSettingsForUser(this@SettingsActivity) },
                     onOpenWsDebug = { startActivity(Intent(this@SettingsActivity, WsDebugActivity::class.java)) },
                     onRequestVoiceEnable = { requestMicAndEnableVoice() },
+                    onRequestCameraEnable = { requestCameraAndEnable() },
                     onBack = { finish() },
                     // Don't finish(). Overlay renders above Settings, so closing
                     // the overlay returns the user to where they triggered Test.
@@ -289,6 +321,7 @@ private fun SettingsScreen(
     onBatteryHelp: () -> Unit,
     onOpenWsDebug: () -> Unit,
     onRequestVoiceEnable: () -> Unit,
+    onRequestCameraEnable: () -> Unit,
     onBack: () -> Unit,
     onTestDoorbell: (DoorbellConfig) -> Unit,
     onTestScreensaver: () -> Unit,
@@ -302,6 +335,7 @@ private fun SettingsScreen(
             onBatteryHelp,
             onOpenWsDebug,
             onRequestVoiceEnable,
+            onRequestCameraEnable,
             onBack,
             onTestDoorbell,
             onTestScreensaver,
@@ -351,6 +385,17 @@ private fun SettingsScreen(
                         onUpsertDoorbell = settingsViewModel::upsertDoorbell,
                         onRemoveDoorbell = settingsViewModel::removeDoorbell,
                         onTestDoorbell = onTestDoorbell,
+                    ),
+                camera =
+                    CameraSettingsActions(
+                        onRequestCameraEnable = onRequestCameraEnable,
+                        onCameraDisable = { settingsViewModel.setCameraEnabled(false) },
+                        onFacingChange = settingsViewModel::setCameraFacing,
+                        onResolutionChange = settingsViewModel::setCameraResolution,
+                        onMotionModeChange = settingsViewModel::setCameraMotionMode,
+                        onMotionSensitivityChange = settingsViewModel::setCameraMotionSensitivity,
+                        onMotionClearDelayChange = settingsViewModel::setCameraMotionClearDelay,
+                        onWakeOnMotionChange = settingsViewModel::setCameraWakeOnMotion,
                     ),
                 esphome =
                     EsphomeSettingsActions(

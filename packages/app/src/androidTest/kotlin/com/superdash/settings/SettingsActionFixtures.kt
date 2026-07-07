@@ -45,6 +45,17 @@ internal fun testSettingsActions(): SettingsActions =
                 onRemoveDoorbell = {},
                 onTestDoorbell = {},
             ),
+        camera =
+            CameraSettingsActions(
+                onRequestCameraEnable = {},
+                onCameraDisable = {},
+                onFacingChange = {},
+                onResolutionChange = {},
+                onMotionModeChange = {},
+                onMotionSensitivityChange = {},
+                onMotionClearDelayChange = {},
+                onWakeOnMotionChange = {},
+            ),
         esphome =
             EsphomeSettingsActions(
                 onEsphomeEnabledChange = {},

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.ui.graphics.vector.ImageVector
 
 fun SettingsDestination.TopLevel.icon(): ImageVector =
@@ -35,6 +36,9 @@ fun SettingsDestination.TopLevel.icon(): ImageVector =
         }
         SettingsDestination.TopLevel.Doorbell -> {
             Icons.Filled.Notifications
+        }
+        SettingsDestination.TopLevel.Camera -> {
+            Icons.Filled.Videocam
         }
         SettingsDestination.TopLevel.Esphome -> {
             Icons.Filled.Memory

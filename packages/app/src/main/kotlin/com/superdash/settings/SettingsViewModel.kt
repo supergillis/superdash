@@ -223,10 +223,9 @@ class SettingsViewModel(
             },
             combine(
                 cameraSettings.motionSensitivity,
-                cameraSettings.motionClearDelaySec,
                 cameraSettings.wakeOnMotion,
-            ) { motionSensitivity, motionClearDelaySec, wakeOnMotion ->
-                CameraTail(motionSensitivity, motionClearDelaySec, wakeOnMotion)
+            ) { motionSensitivity, wakeOnMotion ->
+                CameraTail(motionSensitivity, wakeOnMotion)
             },
         ) { core, tail ->
             CameraSettingsState(
@@ -235,7 +234,6 @@ class SettingsViewModel(
                 resolution = core.resolution,
                 motionMode = core.motionMode,
                 motionSensitivity = tail.motionSensitivity,
-                motionClearDelaySec = tail.motionClearDelaySec,
                 wakeOnMotion = tail.wakeOnMotion,
             )
         }
@@ -394,7 +392,6 @@ class SettingsViewModel(
 
     private data class CameraTail(
         val motionSensitivity: Int,
-        val motionClearDelaySec: Int,
         val wakeOnMotion: Boolean,
     )
 
@@ -544,8 +541,6 @@ class SettingsViewModel(
     fun setCameraMotionMode(value: String) = launch { cameraSettings.setMotionMode(value) }
 
     fun setCameraMotionSensitivity(value: Int) = launch { cameraSettings.setMotionSensitivity(value) }
-
-    fun setCameraMotionClearDelay(value: Int) = launch { cameraSettings.setMotionClearDelaySec(value) }
 
     fun setCameraWakeOnMotion(value: Boolean) = launch { cameraSettings.setWakeOnMotion(value) }
 

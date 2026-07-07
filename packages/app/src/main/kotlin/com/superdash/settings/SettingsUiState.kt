@@ -179,7 +179,6 @@ data class CameraSettingsState(
     val resolution: String,
     val motionMode: String,
     val motionSensitivity: Int,
-    val motionClearDelaySec: Int,
     val wakeOnMotion: Boolean,
 ) {
     companion object {
@@ -190,7 +189,6 @@ data class CameraSettingsState(
                 resolution = "1280x720",
                 motionMode = "motion",
                 motionSensitivity = 50,
-                motionClearDelaySec = 15,
                 wakeOnMotion = false,
             )
     }

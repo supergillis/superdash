@@ -144,7 +144,6 @@ data class CameraSettingsActions(
     val onResolutionChange: (String) -> Unit,
     val onMotionModeChange: (String) -> Unit,
     val onMotionSensitivityChange: (Int) -> Unit,
-    val onMotionClearDelayChange: (Int) -> Unit,
     val onWakeOnMotionChange: (Boolean) -> Unit,
 )
 
@@ -395,7 +394,6 @@ private fun SettingsScreen(
                         onResolutionChange = settingsViewModel::setCameraResolution,
                         onMotionModeChange = settingsViewModel::setCameraMotionMode,
                         onMotionSensitivityChange = settingsViewModel::setCameraMotionSensitivity,
-                        onMotionClearDelayChange = settingsViewModel::setCameraMotionClearDelay,
                         onWakeOnMotionChange = settingsViewModel::setCameraWakeOnMotion,
                     ),
                 esphome =

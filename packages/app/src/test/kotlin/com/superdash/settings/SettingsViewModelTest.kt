@@ -575,7 +575,6 @@ class SettingsViewModelTest {
                     resolutionFlow = MutableStateFlow("640x480"),
                     motionModeFlow = MutableStateFlow("person"),
                     motionSensitivityFlow = MutableStateFlow(80),
-                    motionClearDelaySecFlow = MutableStateFlow(30),
                     wakeOnMotionFlow = MutableStateFlow(true),
                 )
             val viewModel = buildViewModel(camera = camera)
@@ -587,7 +586,6 @@ class SettingsViewModelTest {
             assertEquals("640x480", viewModel.uiState.value.camera.resolution)
             assertEquals("person", viewModel.uiState.value.camera.motionMode)
             assertEquals(80, viewModel.uiState.value.camera.motionSensitivity)
-            assertEquals(30, viewModel.uiState.value.camera.motionClearDelaySec)
             assertEquals(true, viewModel.uiState.value.camera.wakeOnMotion)
         }
 
@@ -602,7 +600,6 @@ class SettingsViewModelTest {
             viewModel.setCameraResolution("1920x1080")
             viewModel.setCameraMotionMode("off")
             viewModel.setCameraMotionSensitivity(10)
-            viewModel.setCameraMotionClearDelay(45)
             viewModel.setCameraWakeOnMotion(true)
             advanceUntilIdle()
 
@@ -611,7 +608,6 @@ class SettingsViewModelTest {
             assertEquals("1920x1080", camera.lastResolution)
             assertEquals("off", camera.lastMotionMode)
             assertEquals(10, camera.lastMotionSensitivity)
-            assertEquals(45, camera.lastMotionClearDelaySec)
             assertEquals(true, camera.lastWakeOnMotion)
         }
 

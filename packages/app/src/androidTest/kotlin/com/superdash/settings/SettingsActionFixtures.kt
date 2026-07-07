@@ -53,7 +53,6 @@ internal fun testSettingsActions(): SettingsActions =
                 onResolutionChange = {},
                 onMotionModeChange = {},
                 onMotionSensitivityChange = {},
-                onMotionClearDelayChange = {},
                 onWakeOnMotionChange = {},
             ),
         esphome =

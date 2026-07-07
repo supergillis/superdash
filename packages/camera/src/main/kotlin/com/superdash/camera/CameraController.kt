@@ -48,6 +48,15 @@ class CameraController(
 ) {
     private val latestFrame = MutableStateFlow<CameraFrame?>(null)
     private val motionActiveState = MutableStateFlow(false)
+
+    /** Synchronous "should the pipeline be running" flag, written only from
+     *  [runPipelineControl]. [CameraPipeline.availability] lags disable
+     *  because [CameraXPipeline.stop] only posts the unbind to its main
+     *  handler; frames already in flight can still arrive afterwards. This
+     *  flag lets frame consumers reject those late frames immediately,
+     *  instead of trusting the lagging availability signal. */
+    @Volatile
+    private var pipelineWanted = false
     private val activeMotionModeState = MutableStateFlow("off")
     private val jpegFramesFlow =
         MutableSharedFlow<ByteArray>(
@@ -84,8 +93,10 @@ class CameraController(
         }.distinctUntilChanged().collect { (enabled, resolution, facing) ->
             if (enabled) {
                 val (width, height) = parseResolution(resolution)
+                pipelineWanted = true
                 pipeline.start(CameraPipelineConfig(width, height, facingFront = facing != "back"))
             } else {
+                pipelineWanted = false
                 pipeline.stop()
                 latestFrame.value = null
                 motionActiveState.value = false
@@ -96,6 +107,7 @@ class CameraController(
     private suspend fun cacheAndEncodeFrames() {
         var lastStreamEmitMs = -STREAM_MIN_INTERVAL_MS
         pipeline.frames.collect { frame ->
+            if (!pipelineWanted) return@collect
             latestFrame.value = frame
             val now = nowMs()
             if (jpegFramesFlow.subscriptionCount.value > 0 &&
@@ -119,6 +131,10 @@ class CameraController(
                     pipeline.availability.collect { state ->
                         if (state !is CameraAvailability.Running) {
                             detector.reset()
+                            // Belt-and-braces: availability can lag the actual
+                            // disable (see pipelineWanted), but when it does
+                            // report non-Running, make sure the latch clears.
+                            motionActiveState.value = false
                         }
                     }
                 }
@@ -128,7 +144,7 @@ class CameraController(
                             .onFailure { log.w("motion detector failed", it) }
                             .getOrDefault(false)
                     val active = gate.update(detected, nowMs())
-                    if (pipeline.availability.value == CameraAvailability.Running) {
+                    if (pipelineWanted) {
                         motionActiveState.value = active
                     }
                 }

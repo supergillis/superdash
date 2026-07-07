@@ -24,6 +24,12 @@ private class FakePipeline : CameraPipeline {
     var started: CameraPipelineConfig? = null
     var stopCount = 0
 
+    /** Simulates [CameraXPipeline.stop] posting the unbind asynchronously: when
+     *  true, [stop] leaves [availabilityState] at Running instead of flipping
+     *  it synchronously, so late frames can still arrive with a lagging
+     *  availability signal. */
+    var deferAvailabilityOnStop = false
+
     override fun start(config: CameraPipelineConfig) {
         started = config
         availabilityState.value = CameraAvailability.Running
@@ -32,7 +38,9 @@ private class FakePipeline : CameraPipeline {
     override fun stop() {
         stopCount++
         started = null
-        availabilityState.value = CameraAvailability.Off
+        if (!deferAvailabilityOnStop) {
+            availabilityState.value = CameraAvailability.Off
+        }
     }
 
     override fun encodeJpeg(
@@ -195,6 +203,63 @@ class CameraControllerTest {
             assertEquals(CameraAvailability.Off, pipeline.availability.value)
 
             // Simulate a frame that was already in flight when the camera was disabled.
+            pipeline.framesFlow.emit(testFrame())
+            assertFalse(controller.motionActive.value)
+        }
+
+    @Test
+    fun `late frame after disable does not repopulate the cached image`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.enabledState.value = true
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = emptyMap(),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+            pipeline.framesFlow.emit(testFrame())
+            assertTrue(controller.latestJpeg() != null)
+
+            // Simulate CameraXPipeline.stop() only posting the unbind: availability
+            // still reports Running while the disable path has already run.
+            pipeline.deferAvailabilityOnStop = true
+            settings.enabledState.value = false
+            assertNull(controller.latestJpeg())
+            assertEquals(CameraAvailability.Running, pipeline.availability.value)
+
+            // A frame that was already in flight arrives after disable.
+            pipeline.framesFlow.emit(testFrame())
+            assertNull(controller.latestJpeg())
+        }
+
+    @Test
+    fun `late frame after disable does not reactivate motion even while availability lags`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.enabledState.value = true
+            settings.motionModeState.value = "motion"
+            val detector = ScriptedDetector { true }
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = mapOf("motion" to { detector }),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+            pipeline.framesFlow.emit(testFrame())
+            assertTrue(controller.motionActive.value)
+
+            pipeline.deferAvailabilityOnStop = true
+            settings.enabledState.value = false
+            assertFalse(controller.motionActive.value)
+            assertEquals(CameraAvailability.Running, pipeline.availability.value)
+
             pipeline.framesFlow.emit(testFrame())
             assertFalse(controller.motionActive.value)
         }

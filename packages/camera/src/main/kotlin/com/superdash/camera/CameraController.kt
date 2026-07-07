@@ -3,6 +3,7 @@ package com.superdash.camera
 import com.superdash.core.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -114,14 +115,23 @@ class CameraController(
             motionActiveState.value = false
             val detector = createDetector(mode) ?: return@collectLatest
             val gate = MotionGate(clearDelayMs = { clearDelaySec.value * 1000L })
-            pipeline.frames.collect { frame ->
-                val detected =
-                    runCatching { detector.process(frame) }
-                        .onFailure { log.w("motion detector failed", it) }
-                        .getOrDefault(false)
-                val active = gate.update(detected, nowMs())
-                if (pipeline.availability.value == CameraAvailability.Running) {
-                    motionActiveState.value = active
+            coroutineScope {
+                launch {
+                    pipeline.availability.collect { state ->
+                        if (state !is CameraAvailability.Running) {
+                            detector.reset()
+                        }
+                    }
+                }
+                pipeline.frames.collect { frame ->
+                    val detected =
+                        runCatching { detector.process(frame) }
+                            .onFailure { log.w("motion detector failed", it) }
+                            .getOrDefault(false)
+                    val active = gate.update(detected, nowMs())
+                    if (pipeline.availability.value == CameraAvailability.Running) {
+                        motionActiveState.value = active
+                    }
                 }
             }
         }

@@ -1,0 +1,148 @@
+package com.superdash.camera
+
+import com.superdash.core.log.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+private val log = Log("CameraController")
+
+/** Minimum ms between JPEG stream frames (~10 fps cap). */
+internal const val STREAM_MIN_INTERVAL_MS = 100L
+
+private const val DEFAULT_RESOLUTION = "1280x720"
+
+internal fun parseResolution(value: String): Pair<Int, Int> {
+    val parts = value.split("x")
+    val width = parts.getOrNull(0)?.toIntOrNull()
+    val height = parts.getOrNull(1)?.toIntOrNull()
+    if (width == null || height == null || width <= 0 || height <= 0) {
+        return parseResolution(DEFAULT_RESOLUTION)
+    }
+    return width to height
+}
+
+/** Orchestrates the camera feature: starts/stops the pipeline from settings,
+ *  runs the selected motion detector behind a [MotionGate], caches the latest
+ *  frame for single-image requests, and exposes a rate-limited JPEG stream. */
+class CameraController(
+    private val pipeline: CameraPipeline,
+    private val settings: CameraSettings,
+    private val detectorFactories: Map<String, () -> MotionDetector>,
+    private val scope: CoroutineScope,
+    private val nowMs: () -> Long = System::currentTimeMillis,
+) {
+    private val latestFrame = MutableStateFlow<CameraFrame?>(null)
+    private val motionActiveState = MutableStateFlow(false)
+    private val activeMotionModeState = MutableStateFlow("off")
+    private val jpegFramesFlow =
+        MutableSharedFlow<ByteArray>(
+            extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
+
+    val motionActive: StateFlow<Boolean> = motionActiveState.asStateFlow()
+
+    /** The mode actually running; differs from the setting after fallback. */
+    val activeMotionMode: StateFlow<String> = activeMotionModeState.asStateFlow()
+
+    val availability: StateFlow<CameraAvailability> get() = pipeline.availability
+
+    /** Encoded JPEG frames, capped at [STREAM_MIN_INTERVAL_MS]. Hot while the
+     *  pipeline runs; encoding is skipped when nobody collects. */
+    val jpegFrames: Flow<ByteArray> = jpegFramesFlow.asSharedFlow()
+
+    private val quality: StateFlow<Int> =
+        settings.jpegQuality.stateIn(scope, SharingStarted.Eagerly, 60)
+
+    private val clearDelaySec: StateFlow<Int> =
+        settings.motionClearDelaySec.stateIn(scope, SharingStarted.Eagerly, 15)
+
+    init {
+        scope.launch { runPipelineControl() }
+        scope.launch { cacheAndEncodeFrames() }
+        scope.launch { runMotionDetection() }
+    }
+
+    suspend fun latestJpeg(): ByteArray? =
+        latestFrame.value?.let { frame -> pipeline.encodeJpeg(frame, quality.value) }
+
+    private suspend fun runPipelineControl() {
+        combine(settings.enabled, settings.resolution, settings.facing) { enabled, resolution, facing ->
+            Triple(enabled, resolution, facing)
+        }.distinctUntilChanged().collect { (enabled, resolution, facing) ->
+            if (enabled) {
+                val (width, height) = parseResolution(resolution)
+                pipeline.start(CameraPipelineConfig(width, height, facingFront = facing != "back"))
+            } else {
+                pipeline.stop()
+                latestFrame.value = null
+                motionActiveState.value = false
+            }
+        }
+    }
+
+    private suspend fun cacheAndEncodeFrames() {
+        var lastStreamEmitMs = -STREAM_MIN_INTERVAL_MS
+        pipeline.frames.collect { frame ->
+            latestFrame.value = frame
+            val now = nowMs()
+            if (jpegFramesFlow.subscriptionCount.value > 0 &&
+                now - lastStreamEmitMs >= STREAM_MIN_INTERVAL_MS
+            ) {
+                pipeline.encodeJpeg(frame, quality.value)?.let { jpeg ->
+                    lastStreamEmitMs = now
+                    jpegFramesFlow.emit(jpeg)
+                }
+            }
+        }
+    }
+
+    private suspend fun runMotionDetection() {
+        settings.motionMode.distinctUntilChanged().collectLatest { mode ->
+            motionActiveState.value = false
+            val detector = createDetector(mode) ?: return@collectLatest
+            val gate = MotionGate(clearDelayMs = { clearDelaySec.value * 1000L })
+            pipeline.frames.collect { frame ->
+                val detected =
+                    runCatching { detector.process(frame) }
+                        .onFailure { log.w("motion detector failed", it) }
+                        .getOrDefault(false)
+                motionActiveState.value = gate.update(detected, nowMs())
+            }
+        }
+    }
+
+    /** Builds the detector for [mode]; on failure falls back to "motion". */
+    private fun createDetector(mode: String): MotionDetector? {
+        if (mode == "off") {
+            activeMotionModeState.value = "off"
+            return null
+        }
+        val primary = detectorFactories[mode]
+        val fromPrimary =
+            primary?.let { factory ->
+                runCatching { factory() }
+                    .onFailure { log.w("detector init failed; falling back", it, "mode" to mode) }
+                    .getOrNull()
+            }
+        if (fromPrimary != null) {
+            activeMotionModeState.value = mode
+            return fromPrimary
+        }
+        val fallback = detectorFactories["motion"]?.let { runCatching { it() }.getOrNull() }
+        activeMotionModeState.value = if (fallback != null) "motion" else "off"
+        return fallback
+    }
+}

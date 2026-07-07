@@ -82,7 +82,7 @@ The camera module exposes:
 - A camera picture entity with live JPEG stream.
 - A motion binary sensor (device class `motion`) from frame-diff and ML Kit person detectors.
 - `camera_enabled` and `wake_on_motion` switches to control capture and screensaver wake.
-- `motion_detection_mode` select to choose between `off`, `frame_diff`, and `person` (ML Kit).
+- `motion_detection_mode` select to choose between `off`, `motion`, and `person` (ML Kit).
 - `motion_sensitivity` and `motion_clear_delay_sec` numbers to tune detection and event hold.
 
 The JPEG stream is chunked to 15 KiB frames to fit under the 16 KiB Noise frame cap. A rolling ~5 second window is refreshed at several fps; Home Assistant polls the picture entity to fetch the latest frame.

@@ -33,6 +33,16 @@ fun CameraSettingsSection(
             )
         },
     )
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.settings_camera_allow_remote_enable_title)) },
+        supportingContent = { Text(stringResource(R.string.settings_camera_allow_remote_enable_summary)) },
+        trailingContent = {
+            Switch(
+                checked = state.allowRemoteEnable,
+                onCheckedChange = actions.onAllowRemoteEnableChange,
+            )
+        },
+    )
     if (state.enabled) {
         SettingsChoiceRow(
             label = stringResource(R.string.settings_camera_facing_label),

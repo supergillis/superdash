@@ -70,6 +70,8 @@
     <string name="settings_camera_sensitivity_label">Sensibilité de détection</string>
     <string name="settings_camera_wake_on_motion_title">Réveiller l\'écran en cas de mouvement</string>
     <string name="settings_camera_wake_on_motion_summary">Quitter l\'écran de veille lorsqu\'un mouvement est détecté</string>
+    <string name="settings_camera_allow_remote_enable_title">Activation à distance</string>
+    <string name="settings_camera_allow_remote_enable_summary">Autoriser Home Assistant à activer la caméra. La désactivation à distance reste toujours possible.</string>
     <string name="settings_esphome_enabled_title">Activé</string>
     <string name="settings_esphome_enabled_summary">Exposer superdash à HA via le protocole ESPHome.</string>
     <string name="settings_esphome_encryption_key_title">Clé de chiffrement (base64)</string>

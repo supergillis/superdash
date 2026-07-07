@@ -49,6 +49,7 @@ private class FakeSettings : CameraSettings {
     val motionSensitivityState = MutableStateFlow(50)
     val motionClearDelaySecState = MutableStateFlow(15)
     val wakeOnMotionState = MutableStateFlow(false)
+    val allowRemoteEnableState = MutableStateFlow(true)
 
     override val enabled: Flow<Boolean> = enabledState
     override val facing: Flow<String> = facingState
@@ -57,6 +58,7 @@ private class FakeSettings : CameraSettings {
     override val motionSensitivity: Flow<Int> = motionSensitivityState
     override val motionClearDelaySec: Flow<Int> = motionClearDelaySecState
     override val wakeOnMotion: Flow<Boolean> = wakeOnMotionState
+    override val allowRemoteEnable: Flow<Boolean> = allowRemoteEnableState
 
     override suspend fun setEnabled(value: Boolean) = enabledState.emit(value)
 
@@ -71,6 +73,8 @@ private class FakeSettings : CameraSettings {
     override suspend fun setMotionClearDelaySec(value: Int) = motionClearDelaySecState.emit(value)
 
     override suspend fun setWakeOnMotion(value: Boolean) = wakeOnMotionState.emit(value)
+
+    override suspend fun setAllowRemoteEnable(value: Boolean) = allowRemoteEnableState.emit(value)
 }
 
 /** Detector scripted to a fixed answer per frame. */

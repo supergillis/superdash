@@ -4,6 +4,7 @@ import android.content.Context
 import com.superdash.core.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -364,7 +365,13 @@ internal fun esphomeEntities(
             objectId = "camera_enabled",
             name = "Camera Enabled",
             state = camera.cameraEnabled,
-            onCommand = camera.setCameraEnabled,
+            onCommand = { value ->
+                if (value && !camera.allowRemoteEnable.first()) {
+                    log.w("remote camera enable blocked by local setting")
+                } else {
+                    camera.setCameraEnabled(value)
+                }
+            },
         ),
         switchEntity(
             objectId = "wake_on_motion",

@@ -185,6 +185,7 @@ class EsphomeSubgraph(
         EsphomeCameraBindings(
             cameraEnabled = cameraSettings.enabled,
             setCameraEnabled = { value -> cameraSettings.setEnabled(value) },
+            allowRemoteEnable = cameraSettings.allowRemoteEnable,
             motionDetected = cameraController.motionActive,
             motionMode = cameraController.activeMotionMode,
             setMotionMode = { value -> cameraSettings.setMotionMode(value) },

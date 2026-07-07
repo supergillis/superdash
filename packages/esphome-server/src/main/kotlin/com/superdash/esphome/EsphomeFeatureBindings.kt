@@ -88,6 +88,7 @@ data class EsphomeNightModeBindings(
 data class EsphomeCameraBindings(
     val cameraEnabled: Flow<Boolean>,
     val setCameraEnabled: suspend (Boolean) -> Unit,
+    val allowRemoteEnable: Flow<Boolean>,
     val motionDetected: Flow<Boolean>,
     val motionMode: Flow<String>,
     val setMotionMode: suspend (String) -> Unit,

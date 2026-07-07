@@ -611,6 +611,29 @@ class SettingsViewModelTest {
             assertEquals(true, camera.lastWakeOnMotion)
         }
 
+    @Test
+    fun `allowRemoteEnable propagates to uiState`() =
+        runTest {
+            val camera = FakeCameraSettings(allowRemoteEnableFlow = MutableStateFlow(false))
+            val viewModel = buildViewModel(camera = camera)
+            backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.camera.allowRemoteEnable)
+        }
+
+    @Test
+    fun `setCameraAllowRemoteEnable delegates to camera settings`() =
+        runTest {
+            val camera = FakeCameraSettings()
+            val viewModel = buildViewModel(camera = camera)
+
+            viewModel.setCameraAllowRemoteEnable(false)
+            advanceUntilIdle()
+
+            assertEquals(false, camera.lastAllowRemoteEnable)
+        }
+
     private class FakeKioskSettings(
         keepScreenOnFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
         startOnBootFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
@@ -786,6 +809,7 @@ class SettingsViewModelTest {
         motionSensitivityFlow: MutableStateFlow<Int> = MutableStateFlow(50),
         motionClearDelaySecFlow: MutableStateFlow<Int> = MutableStateFlow(15),
         wakeOnMotionFlow: MutableStateFlow<Boolean> = MutableStateFlow(false),
+        allowRemoteEnableFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
     ) : CameraSettings {
         override val enabled: Flow<Boolean> = enabledFlow.asStateFlow()
         override val facing: Flow<String> = facingFlow.asStateFlow()
@@ -794,6 +818,7 @@ class SettingsViewModelTest {
         override val motionSensitivity: Flow<Int> = motionSensitivityFlow.asStateFlow()
         override val motionClearDelaySec: Flow<Int> = motionClearDelaySecFlow.asStateFlow()
         override val wakeOnMotion: Flow<Boolean> = wakeOnMotionFlow.asStateFlow()
+        override val allowRemoteEnable: Flow<Boolean> = allowRemoteEnableFlow.asStateFlow()
 
         var lastEnabled: Boolean? = null
         var lastFacing: String? = null
@@ -802,6 +827,7 @@ class SettingsViewModelTest {
         var lastMotionSensitivity: Int? = null
         var lastMotionClearDelaySec: Int? = null
         var lastWakeOnMotion: Boolean? = null
+        var lastAllowRemoteEnable: Boolean? = null
 
         override suspend fun setEnabled(value: Boolean) {
             lastEnabled = value
@@ -829,6 +855,10 @@ class SettingsViewModelTest {
 
         override suspend fun setWakeOnMotion(value: Boolean) {
             lastWakeOnMotion = value
+        }
+
+        override suspend fun setAllowRemoteEnable(value: Boolean) {
+            lastAllowRemoteEnable = value
         }
     }
 

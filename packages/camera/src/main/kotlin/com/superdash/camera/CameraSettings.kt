@@ -24,6 +24,10 @@ interface CameraSettings {
 
     val wakeOnMotion: Flow<Boolean>
 
+    /** Whether Home Assistant is allowed to remotely turn the camera ON via ESPHome.
+     *  Remote OFF is always allowed regardless of this setting. */
+    val allowRemoteEnable: Flow<Boolean>
+
     suspend fun setEnabled(value: Boolean)
 
     suspend fun setFacing(value: String)
@@ -37,4 +41,6 @@ interface CameraSettings {
     suspend fun setMotionClearDelaySec(value: Int)
 
     suspend fun setWakeOnMotion(value: Boolean)
+
+    suspend fun setAllowRemoteEnable(value: Boolean)
 }

@@ -145,6 +145,7 @@ data class CameraSettingsActions(
     val onMotionModeChange: (String) -> Unit,
     val onMotionSensitivityChange: (Int) -> Unit,
     val onWakeOnMotionChange: (Boolean) -> Unit,
+    val onAllowRemoteEnableChange: (Boolean) -> Unit,
 )
 
 @Immutable
@@ -395,6 +396,7 @@ private fun SettingsScreen(
                         onMotionModeChange = settingsViewModel::setCameraMotionMode,
                         onMotionSensitivityChange = settingsViewModel::setCameraMotionSensitivity,
                         onWakeOnMotionChange = settingsViewModel::setCameraWakeOnMotion,
+                        onAllowRemoteEnableChange = settingsViewModel::setCameraAllowRemoteEnable,
                     ),
                 esphome =
                     EsphomeSettingsActions(

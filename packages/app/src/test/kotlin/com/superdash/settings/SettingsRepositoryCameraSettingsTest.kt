@@ -87,4 +87,19 @@ class SettingsRepositoryCameraSettingsTest {
             val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
             assertEquals(false, settings.wakeOnMotion.first())
         }
+
+    @Test
+    fun `allow remote enable defaults to true`() =
+        runTest {
+            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
+            assertEquals(true, settings.allowRemoteEnable.first())
+        }
+
+    @Test
+    fun `allow remote enable roundtrips through write and read`() =
+        runTest {
+            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
+            settings.setAllowRemoteEnable(false)
+            assertEquals(false, settings.allowRemoteEnable.first())
+        }
 }

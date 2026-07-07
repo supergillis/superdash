@@ -224,8 +224,9 @@ class SettingsViewModel(
             combine(
                 cameraSettings.motionSensitivity,
                 cameraSettings.wakeOnMotion,
-            ) { motionSensitivity, wakeOnMotion ->
-                CameraTail(motionSensitivity, wakeOnMotion)
+                cameraSettings.allowRemoteEnable,
+            ) { motionSensitivity, wakeOnMotion, allowRemoteEnable ->
+                CameraTail(motionSensitivity, wakeOnMotion, allowRemoteEnable)
             },
         ) { core, tail ->
             CameraSettingsState(
@@ -235,6 +236,7 @@ class SettingsViewModel(
                 motionMode = core.motionMode,
                 motionSensitivity = tail.motionSensitivity,
                 wakeOnMotion = tail.wakeOnMotion,
+                allowRemoteEnable = tail.allowRemoteEnable,
             )
         }
 
@@ -393,6 +395,7 @@ class SettingsViewModel(
     private data class CameraTail(
         val motionSensitivity: Int,
         val wakeOnMotion: Boolean,
+        val allowRemoteEnable: Boolean,
     )
 
     private data class VoiceCore(
@@ -543,6 +546,8 @@ class SettingsViewModel(
     fun setCameraMotionSensitivity(value: Int) = launch { cameraSettings.setMotionSensitivity(value) }
 
     fun setCameraWakeOnMotion(value: Boolean) = launch { cameraSettings.setWakeOnMotion(value) }
+
+    fun setCameraAllowRemoteEnable(value: Boolean) = launch { cameraSettings.setAllowRemoteEnable(value) }
 
     fun setEsphomeEnabled(value: Boolean) = launch { kioskSettings.setEsphomeEnabled(value) }
 

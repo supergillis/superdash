@@ -54,6 +54,7 @@ internal fun testSettingsActions(): SettingsActions =
                 onMotionModeChange = {},
                 onMotionSensitivityChange = {},
                 onWakeOnMotionChange = {},
+                onAllowRemoteEnableChange = {},
             ),
         esphome =
             EsphomeSettingsActions(

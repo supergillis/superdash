@@ -1,5 +1,6 @@
 package com.superdash.settings
 
+import com.superdash.camera.CameraSettings
 import com.superdash.core.locale.SupportedLanguage
 import com.superdash.core.resources.StringProvider
 import com.superdash.doorbell.DoorbellConfig
@@ -105,6 +106,7 @@ class SettingsViewModelTest {
         sidebar: FakeSidebarSettings = FakeSidebarSettings(),
         voice: FakeVoiceSettings = FakeVoiceSettings(),
         doorbell: FakeDoorbellSettings = FakeDoorbellSettings(),
+        camera: FakeCameraSettings = FakeCameraSettings(),
         screensaver: FakeScreensaverSettings = FakeScreensaverSettings(),
         pskStore: PskStore = fakePskStore,
         localeController: LocaleSettingsController = fakeLocaleController,
@@ -122,6 +124,7 @@ class SettingsViewModelTest {
             sidebarSettings = sidebar,
             voiceSettings = voice,
             doorbellSettings = doorbell,
+            cameraSettings = camera,
             screensaverSettings = screensaver,
             esphomePskStore = pskStore,
             localeController = localeController,
@@ -562,6 +565,56 @@ class SettingsViewModelTest {
             assertEquals(false, sidebar.lastEdgeHandle)
         }
 
+    @Test
+    fun `camera settings propagate to uiState`() =
+        runTest {
+            val camera =
+                FakeCameraSettings(
+                    enabledFlow = MutableStateFlow(true),
+                    facingFlow = MutableStateFlow("back"),
+                    resolutionFlow = MutableStateFlow("640x480"),
+                    motionModeFlow = MutableStateFlow("person"),
+                    motionSensitivityFlow = MutableStateFlow(80),
+                    motionClearDelaySecFlow = MutableStateFlow(30),
+                    wakeOnMotionFlow = MutableStateFlow(true),
+                )
+            val viewModel = buildViewModel(camera = camera)
+            backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.uiState.value.camera.enabled)
+            assertEquals("back", viewModel.uiState.value.camera.facing)
+            assertEquals("640x480", viewModel.uiState.value.camera.resolution)
+            assertEquals("person", viewModel.uiState.value.camera.motionMode)
+            assertEquals(80, viewModel.uiState.value.camera.motionSensitivity)
+            assertEquals(30, viewModel.uiState.value.camera.motionClearDelaySec)
+            assertEquals(true, viewModel.uiState.value.camera.wakeOnMotion)
+        }
+
+    @Test
+    fun `camera setters delegate to camera settings`() =
+        runTest {
+            val camera = FakeCameraSettings()
+            val viewModel = buildViewModel(camera = camera)
+
+            viewModel.setCameraEnabled(true)
+            viewModel.setCameraFacing("back")
+            viewModel.setCameraResolution("1920x1080")
+            viewModel.setCameraMotionMode("off")
+            viewModel.setCameraMotionSensitivity(10)
+            viewModel.setCameraMotionClearDelay(45)
+            viewModel.setCameraWakeOnMotion(true)
+            advanceUntilIdle()
+
+            assertEquals(true, camera.lastEnabled)
+            assertEquals("back", camera.lastFacing)
+            assertEquals("1920x1080", camera.lastResolution)
+            assertEquals("off", camera.lastMotionMode)
+            assertEquals(10, camera.lastMotionSensitivity)
+            assertEquals(45, camera.lastMotionClearDelaySec)
+            assertEquals(true, camera.lastWakeOnMotion)
+        }
+
     private class FakeKioskSettings(
         keepScreenOnFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
         startOnBootFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
@@ -727,6 +780,63 @@ class SettingsViewModelTest {
         override suspend fun upsertDoorbell(config: DoorbellConfig) = Unit
 
         override suspend fun removeDoorbell(id: String) = Unit
+    }
+
+    private class FakeCameraSettings(
+        enabledFlow: MutableStateFlow<Boolean> = MutableStateFlow(false),
+        facingFlow: MutableStateFlow<String> = MutableStateFlow("front"),
+        resolutionFlow: MutableStateFlow<String> = MutableStateFlow("1280x720"),
+        motionModeFlow: MutableStateFlow<String> = MutableStateFlow("motion"),
+        motionSensitivityFlow: MutableStateFlow<Int> = MutableStateFlow(50),
+        motionClearDelaySecFlow: MutableStateFlow<Int> = MutableStateFlow(15),
+        wakeOnMotionFlow: MutableStateFlow<Boolean> = MutableStateFlow(false),
+    ) : CameraSettings {
+        override val enabled: Flow<Boolean> = enabledFlow.asStateFlow()
+        override val facing: Flow<String> = facingFlow.asStateFlow()
+        override val resolution: Flow<String> = resolutionFlow.asStateFlow()
+        override val jpegQuality: Flow<Int> = MutableStateFlow(60).asStateFlow()
+        override val motionMode: Flow<String> = motionModeFlow.asStateFlow()
+        override val motionSensitivity: Flow<Int> = motionSensitivityFlow.asStateFlow()
+        override val motionClearDelaySec: Flow<Int> = motionClearDelaySecFlow.asStateFlow()
+        override val wakeOnMotion: Flow<Boolean> = wakeOnMotionFlow.asStateFlow()
+
+        var lastEnabled: Boolean? = null
+        var lastFacing: String? = null
+        var lastResolution: String? = null
+        var lastMotionMode: String? = null
+        var lastMotionSensitivity: Int? = null
+        var lastMotionClearDelaySec: Int? = null
+        var lastWakeOnMotion: Boolean? = null
+
+        override suspend fun setEnabled(value: Boolean) {
+            lastEnabled = value
+        }
+
+        override suspend fun setFacing(value: String) {
+            lastFacing = value
+        }
+
+        override suspend fun setResolution(value: String) {
+            lastResolution = value
+        }
+
+        override suspend fun setJpegQuality(value: Int) = Unit
+
+        override suspend fun setMotionMode(value: String) {
+            lastMotionMode = value
+        }
+
+        override suspend fun setMotionSensitivity(value: Int) {
+            lastMotionSensitivity = value
+        }
+
+        override suspend fun setMotionClearDelaySec(value: Int) {
+            lastMotionClearDelaySec = value
+        }
+
+        override suspend fun setWakeOnMotion(value: Boolean) {
+            lastWakeOnMotion = value
+        }
     }
 
     private class FakeScreensaverSettings(

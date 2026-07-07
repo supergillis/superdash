@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.superdash.R
 import com.superdash.settings.ui.AdminSettingsSection
+import com.superdash.settings.ui.CameraSettingsSection
 import com.superdash.settings.ui.ConnectionSettingsSection
 import com.superdash.settings.ui.DeviceSettingsSection
 import com.superdash.settings.ui.DoorbellSettingsSection
@@ -401,6 +402,12 @@ private fun SettingsDestinationContent(
                 state = state.doorbell,
                 haEntities = state.haEntities,
                 actions = actions.doorbell,
+            )
+        }
+        SettingsDestination.TopLevel.Camera -> {
+            CameraSettingsSection(
+                state = state.camera,
+                actions = actions.camera,
             )
         }
         SettingsDestination.TopLevel.Esphome -> {

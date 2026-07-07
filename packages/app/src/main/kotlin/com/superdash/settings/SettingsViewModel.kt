@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.superdash.AppGraph
 import com.superdash.R
+import com.superdash.camera.CameraSettings
 import com.superdash.core.locale.SupportedLanguage
 import com.superdash.core.resources.StringProvider
 import com.superdash.core.util.UrlNormalizer
@@ -78,6 +79,7 @@ class SettingsViewModel(
     private val sidebarSettings: SidebarSettings,
     private val voiceSettings: VoiceSettings,
     private val doorbellSettings: DoorbellSettings,
+    private val cameraSettings: CameraSettings,
     private val screensaverSettings: ScreensaverSettings,
     private val esphomePskStore: PskStore,
     private val localeController: LocaleSettingsController,
@@ -209,6 +211,35 @@ class SettingsViewModel(
             )
         }
 
+    private val cameraUiStateFlow: Flow<CameraSettingsState> =
+        combine(
+            combine(
+                cameraSettings.enabled,
+                cameraSettings.facing,
+                cameraSettings.resolution,
+                cameraSettings.motionMode,
+            ) { enabled, facing, resolution, motionMode ->
+                CameraCore(enabled, facing, resolution, motionMode)
+            },
+            combine(
+                cameraSettings.motionSensitivity,
+                cameraSettings.motionClearDelaySec,
+                cameraSettings.wakeOnMotion,
+            ) { motionSensitivity, motionClearDelaySec, wakeOnMotion ->
+                CameraTail(motionSensitivity, motionClearDelaySec, wakeOnMotion)
+            },
+        ) { core, tail ->
+            CameraSettingsState(
+                enabled = core.enabled,
+                facing = core.facing,
+                resolution = core.resolution,
+                motionMode = core.motionMode,
+                motionSensitivity = tail.motionSensitivity,
+                motionClearDelaySec = tail.motionClearDelaySec,
+                wakeOnMotion = tail.wakeOnMotion,
+            )
+        }
+
     private val connectionUiStateFlow: Flow<ConnectionEntities> =
         combine(
             haUrlFlow,
@@ -285,13 +316,20 @@ class SettingsViewModel(
 
     val uiState: StateFlow<SettingsUiState> =
         combine(
-            combine(connectionUiStateFlow, deviceUiStateFlow, esphomeUiStateFlow, overlayUiStateFlow) {
+            combine(
+                connectionUiStateFlow,
+                deviceUiStateFlow,
+                esphomeUiStateFlow,
+                overlayUiStateFlow,
+                cameraUiStateFlow,
+            ) {
                 conn,
                 device,
                 esphome,
                 overlay,
+                camera,
                 ->
-                CoreUi(conn, device, esphome, overlay)
+                CoreUi(conn, device, esphome, overlay, camera)
             },
             combine(
                 voiceUiStateFlow,
@@ -316,6 +354,7 @@ class SettingsViewModel(
                 device = core.device,
                 voice = features.voice,
                 doorbell = features.doorbell,
+                camera = core.camera,
                 esphome = core.esphome,
                 screensaver = features.screensaver,
                 immich = features.immich,
@@ -330,6 +369,7 @@ class SettingsViewModel(
         val device: DeviceSettingsState,
         val esphome: EsphomeSettingsState,
         val overlay: SettingsOverlayState,
+        val camera: CameraSettingsState,
     )
 
     private data class FeatureUi(
@@ -343,6 +383,19 @@ class SettingsViewModel(
     private data class ConnectionEntities(
         val connection: ConnectionSettingsState,
         val entities: kotlinx.collections.immutable.ImmutableList<EntityState>,
+    )
+
+    private data class CameraCore(
+        val enabled: Boolean,
+        val facing: String,
+        val resolution: String,
+        val motionMode: String,
+    )
+
+    private data class CameraTail(
+        val motionSensitivity: Int,
+        val motionClearDelaySec: Int,
+        val wakeOnMotion: Boolean,
     )
 
     private data class VoiceCore(
@@ -482,6 +535,20 @@ class SettingsViewModel(
 
     fun removeDoorbell(id: String) = launch { doorbellSettings.removeDoorbell(id) }
 
+    fun setCameraEnabled(value: Boolean) = launch { cameraSettings.setEnabled(value) }
+
+    fun setCameraFacing(value: String) = launch { cameraSettings.setFacing(value) }
+
+    fun setCameraResolution(value: String) = launch { cameraSettings.setResolution(value) }
+
+    fun setCameraMotionMode(value: String) = launch { cameraSettings.setMotionMode(value) }
+
+    fun setCameraMotionSensitivity(value: Int) = launch { cameraSettings.setMotionSensitivity(value) }
+
+    fun setCameraMotionClearDelay(value: Int) = launch { cameraSettings.setMotionClearDelaySec(value) }
+
+    fun setCameraWakeOnMotion(value: Boolean) = launch { cameraSettings.setWakeOnMotion(value) }
+
     fun setEsphomeEnabled(value: Boolean) = launch { kioskSettings.setEsphomeEnabled(value) }
 
     fun setSidebarPosition(value: SidebarPosition) = launch { sidebarSettings.setPosition(value) }
@@ -526,6 +593,7 @@ class SettingsViewModel(
                 sidebarSettings = graph.sidebarSettings,
                 voiceSettings = graph.voiceSettings,
                 doorbellSettings = graph.doorbellSettings,
+                cameraSettings = graph.cameraSettings,
                 screensaverSettings = graph.screensaverSettings,
                 esphomePskStore =
                     object : PskStore {

@@ -17,6 +17,8 @@
     <string name="settings_screensaver_summary">Idle display, overlays, and photos</string>
     <string name="settings_doorbell_title">Doorbell</string>
     <string name="settings_doorbell_summary">Camera overlay triggers</string>
+    <string name="settings_camera_section_title">Camera</string>
+    <string name="settings_camera_summary">Tablet camera and motion sensor</string>
     <string name="settings_esphome_title">ESPHome</string>
     <string name="settings_esphome_summary">Home Assistant ESPHome protocol</string>
     <string name="settings_admin_title">Admin</string>
@@ -54,6 +56,21 @@
     <string name="settings_doorbell_list_title">Doorbells</string>
     <string name="settings_doorbell_list_empty">Add at least one doorbell.</string>
     <string name="settings_doorbell_add_button">+ Add doorbell</string>
+    <!-- Camera -->
+    <string name="settings_camera_enabled_title">Camera</string>
+    <string name="settings_camera_enabled_summary">Expose the tablet camera and motion sensor to Home Assistant</string>
+    <string name="settings_camera_facing_label">Camera</string>
+    <string name="settings_camera_facing_front">Front</string>
+    <string name="settings_camera_facing_back">Back</string>
+    <string name="settings_camera_resolution_label">Resolution</string>
+    <string name="settings_camera_motion_mode_label">Motion detection</string>
+    <string name="settings_camera_motion_mode_off">Off</string>
+    <string name="settings_camera_motion_mode_motion">Any motion</string>
+    <string name="settings_camera_motion_mode_person">Person only</string>
+    <string name="settings_camera_sensitivity_label">Motion sensitivity</string>
+    <string name="settings_camera_wake_on_motion_title">Wake screen on motion</string>
+    <string name="settings_camera_wake_on_motion_summary">Exit the screensaver when motion is detected</string>
+
     <string name="settings_esphome_enabled_title">Enabled</string>
     <string name="settings_esphome_enabled_summary">Expose superdash to HA via the ESPHome protocol.</string>
     <string name="settings_esphome_encryption_key_title">Encryption key (base64)</string>

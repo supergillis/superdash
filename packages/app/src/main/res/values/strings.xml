@@ -144,6 +144,8 @@
     <string name="settings_sidebar_pinned_summary">Pinned sidebars reserve dashboard space.</string>
     <string name="settings_sidebar_show_labels_label">Show labels</string>
     <string name="settings_sidebar_show_labels_summary">Shows short text under each sidebar icon.</string>
+    <string name="settings_sidebar_edge_handle_label">Edge handle</string>
+    <string name="settings_sidebar_edge_handle_summary">Shows a small tab to open an unpinned sidebar.</string>
     <string name="settings_sidebar_add_shortcut_button">Add shortcut</string>
     <string name="settings_sidebar_edit_shortcut_title">Edit shortcut</string>
     <string name="settings_sidebar_add_shortcut_title">Add shortcut</string>

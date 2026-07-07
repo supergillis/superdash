@@ -153,6 +153,7 @@ data class SidebarSettingsActions(
     val onPositionChange: (SidebarPosition) -> Unit,
     val onPinnedChange: (Boolean) -> Unit,
     val onShowLabelsChange: (Boolean) -> Unit,
+    val onEdgeHandleChange: (Boolean) -> Unit,
     val onShortcutsChange: (List<SidebarShortcut>) -> Unit,
 )
 
@@ -388,6 +389,7 @@ private fun SettingsScreen(
                         onPositionChange = settingsViewModel::setSidebarPosition,
                         onPinnedChange = settingsViewModel::setSidebarPinned,
                         onShowLabelsChange = settingsViewModel::setSidebarShowLabels,
+                        onEdgeHandleChange = settingsViewModel::setSidebarEdgeHandle,
                         onShortcutsChange = settingsViewModel::setSidebarShortcuts,
                     ),
                 admin =

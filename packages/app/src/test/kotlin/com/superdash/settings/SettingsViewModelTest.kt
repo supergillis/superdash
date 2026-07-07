@@ -510,6 +510,7 @@ class SettingsViewModelTest {
                     shortcutsFlow = MutableStateFlow(SidebarSettingsDefaults.shortcuts.take(2)),
                 )
             sidebar.showLabelsValue.value = true
+            sidebar.edgeHandleValue.value = false
             val viewModel = buildViewModel(sidebar = sidebar)
             backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -517,6 +518,7 @@ class SettingsViewModelTest {
             assertEquals(SidebarPosition.Top, viewModel.uiState.value.sidebar.position)
             assertEquals(true, viewModel.uiState.value.sidebar.pinned)
             assertEquals(true, viewModel.uiState.value.sidebar.showLabels)
+            assertEquals(false, viewModel.uiState.value.sidebar.edgeHandle)
             assertEquals(SidebarSettingsDefaults.shortcuts.take(2), viewModel.uiState.value.sidebar.shortcuts)
         }
 
@@ -546,6 +548,18 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(true, sidebar.lastShowLabels)
+        }
+
+    @Test
+    fun `setSidebarEdgeHandle delegates to sidebar settings`() =
+        runTest {
+            val sidebar = FakeSidebarSettings()
+            val viewModel = buildViewModel(sidebar = sidebar)
+
+            viewModel.setSidebarEdgeHandle(false)
+            advanceUntilIdle()
+
+            assertEquals(false, sidebar.lastEdgeHandle)
         }
 
     private class FakeKioskSettings(

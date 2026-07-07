@@ -267,12 +267,14 @@ class SettingsViewModel(
             sidebarSettings.pinned,
             sidebarSettings.showLabels,
             sidebarSettings.shortcuts,
-        ) { position, pinned, showLabels, shortcuts ->
+            sidebarSettings.edgeHandle,
+        ) { position, pinned, showLabels, shortcuts, edgeHandle ->
             SidebarSettingsState(
                 position = position,
                 pinned = pinned,
                 showLabels = showLabels,
                 shortcuts = shortcuts.toImmutableList(),
+                edgeHandle = edgeHandle,
             )
         }
 
@@ -487,6 +489,8 @@ class SettingsViewModel(
     fun setSidebarPinned(value: Boolean) = launch { sidebarSettings.setPinned(value) }
 
     fun setSidebarShowLabels(value: Boolean) = launch { sidebarSettings.setShowLabels(value) }
+
+    fun setSidebarEdgeHandle(value: Boolean) = launch { sidebarSettings.setEdgeHandle(value) }
 
     fun setSidebarShortcuts(value: List<SidebarShortcut>) = launch { sidebarSettings.setShortcuts(value) }
 

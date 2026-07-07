@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doorbell_connecting">Connexion…</string>
+    <string name="doorbell_close">Fermer</string>
+    <string name="doorbell_push_to_talk">Appuyer pour parler (bientôt disponible)</string>
+    <string name="doorbell_stream_interrupted">Flux interrompu</string>
+    <string name="doorbell_camera_unavailable">Caméra indisponible</string>
+</resources>

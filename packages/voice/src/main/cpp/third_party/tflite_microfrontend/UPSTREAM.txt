@@ -1,0 +1,5 @@
+Source: https://android.googlesource.com/platform/external/tensorflow/+/HEAD/tensorflow/lite/experimental/microfrontend/lib/
+Revision: HEAD tree 4cd7104b059c39b6cb7bc06a339b3aa007a885ae
+License: Apache-2.0
+Vendored paths:
+- tensorflow/lite/experimental/microfrontend/lib/

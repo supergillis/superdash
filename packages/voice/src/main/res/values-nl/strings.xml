@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_response_mode_speak">Spreken</string>
+    <string name="voice_response_mode_silent">Stil</string>
+    <string name="voice_response_mode_visual">Visueel</string>
+
+    <string name="voice_stt_provider_none">Geen</string>
+    <string name="voice_stt_provider_ha_assist">Home Assistant Assist</string>
+    <string name="voice_stt_provider_whisper">Lokale Whisper-STT (experimenteel)</string>
+    <string name="voice_stt_provider_moonshine">Lokale Moonshine-STT (experimenteel)</string>
+</resources>

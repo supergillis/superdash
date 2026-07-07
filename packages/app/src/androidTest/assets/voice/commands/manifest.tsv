@@ -1,0 +1,9 @@
+# wake_file	command_file	wake_word	text	action	target	wake_command_silence_ms
+wakeword_hey_jarvis.wav	turn_on_kitchen_lights.wav	Hey Jarvis	Turn on the kitchen lights.	light.turn_on	light.kitchen	250
+wakeword_hey_jarvis.wav	turn_on_desk_lights.wav	Hey Jarvis	Turn on desk lights.	light.turn_on	light.desk	250
+wakeword_hey_jarvis.wav	turn_off_desk_lights.wav	Hey Jarvis	Turn off desk lights.	light.turn_off	light.desk	250
+wakeword_hey_jarvis.wav	turn_on_office_lights.wav	Hey Jarvis	Turn on office lights.	light.turn_on	light.office	250
+wakeword_hey_jarvis.wav	turn_off_office_lights.wav	Hey Jarvis	Turn off office lights.	light.turn_off	light.office	250
+wakeword_hey_jarvis.wav	turn_off_living_room_lights.wav	Hey Jarvis	Turn off the living room lights.	light.turn_off	light.living_room	250
+wakeword_hey_jarvis.wav	set_hallway_brightness_20.wav	Hey Jarvis	Set the hallway brightness to twenty percent.	light.turn_on	light.hallway	250
+wakeword_hey_jarvis.wav	pause_250ms_turn_on_kitchen_lights.wav	Hey Jarvis	Turn on the kitchen... lights.	light.turn_on	light.kitchen	250

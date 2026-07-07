@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doorbell_connecting">Verbinden…</string>
+    <string name="doorbell_close">Sluiten</string>
+    <string name="doorbell_push_to_talk">Push-to-talk (binnenkort beschikbaar)</string>
+    <string name="doorbell_stream_interrupted">Stream onderbroken</string>
+    <string name="doorbell_camera_unavailable">Camera niet beschikbaar</string>
+</resources>

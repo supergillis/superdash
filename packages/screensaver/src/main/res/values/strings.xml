@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screensaver_calendar_now">Now</string>
+    <string name="screensaver_calendar_today">Today</string>
+    <string name="screensaver_calendar_tomorrow">Tomorrow</string>
+
+    <!-- Media source picker dialog -->
+    <string name="screensaver_picker_title_default">Pick a source</string>
+    <string name="screensaver_picker_load_error">Couldn\'t load: %1$s</string>
+    <string name="screensaver_picker_retry">Retry</string>
+    <string name="screensaver_picker_back">Back</string>
+    <string name="screensaver_picker_current_label">Current: %1$s</string>
+    <string name="screensaver_picker_selected_label">Selected: %1$s</string>
+    <string name="screensaver_picker_selected_none">None</string>
+    <string name="screensaver_picker_search_label">Search</string>
+    <string name="screensaver_picker_root_label">root</string>
+    <string name="screensaver_picker_back_to">Back to %1$s</string>
+    <string name="screensaver_picker_this_folder">This folder</string>
+    <string name="screensaver_picker_no_images">No images available here</string>
+    <string name="screensaver_picker_selected_description">Selected</string>
+    <string name="screensaver_picker_no_matching">No matching media</string>
+    <string name="screensaver_picker_try_different_search">Try a different search.</string>
+    <string name="screensaver_picker_no_media">No media in this folder</string>
+    <string name="screensaver_picker_use_folder">Use this folder</string>
+    <string name="screensaver_picker_cancel">Cancel</string>
+    <string name="screensaver_picker_browse_failed">Couldn\'t load media</string>
+</resources>

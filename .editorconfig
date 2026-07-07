@@ -1,0 +1,78 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+# ktlint configuration. K&R brace style is the Kotlin convention and is what
+# ktlint enforces (opening brace at end-of-line, closing brace on its own line).
+# We deliberately do NOT use Allman style (opening brace on its own line);
+# ktlint cannot enforce it and it would fight every other Kotlin tool.
+max_line_length = 120
+ij_kotlin_packages_to_use_import_on_demand = unset
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+ij_kotlin_blank_lines_after_class_header = 1
+
+# Standard rules: enable explicit braces on if/else and multi-line expression wrapping.
+ktlint_standard_if-else-bracing = enabled
+ktlint_standard_multiline-expression-wrapping = enabled
+
+# ----------------------------------------------------------------------------
+# Project convention: ALWAYS USE BRACES on every `if`/`else` body, with the
+# body on its OWN LINE (not on the same line as the opening brace).
+#
+#   GOOD:
+#       if (bytes.isEmpty()) {
+#           return null
+#       }
+#
+#   BAD:
+#       if (bytes.isEmpty()) return null
+#       if (bytes.isEmpty()) { return null }
+#
+# This applies to expression-form too (e.g. `return if (...) A else B` should
+# be split into a multi-line braced form). ktlint's standard `if-else-bracing`
+# rule only enforces *consistency* on already-multiline blocks; it doesn't
+# mandate braces on the single-line form. Reviewers: please call out unbraced
+# `if`/`else` bodies in PR review.
+# ----------------------------------------------------------------------------
+
+# Don't reshape existing function signatures (the project uses a mix of
+# expression-body and block-body intentionally).
+ktlint_standard_function-signature = disabled
+
+# Comment-related rule that disagrees with the existing codebase style is
+# disabled to keep the diff scoped to formatting only.
+ktlint_standard_no-empty-first-line-in-method-block = disabled
+
+# Compose @Composable functions are PascalCase by convention. ktlint's standard
+# function-naming rule flags this; the compose-specific rule set already exempts
+# @Composable, but we don't pull that ruleset in. Disable here.
+ktlint_standard_function-naming = disabled
+
+# Package names are enforced elsewhere. Keep this off to avoid noise.
+ktlint_standard_package-name = disabled
+
+# `_activeSession`, `_state`, etc. are intentional backing properties exposed
+# via read-only StateFlow/SharedFlow. ktlint can't always detect the public
+# counterpart pattern; disable to avoid noise.
+ktlint_standard_backing-property-naming = disabled
+
+# Test fixtures often contain long inline JSON strings. Allow longer lines and
+# disable max-line-length for tests; the production rules still apply elsewhere.
+[**/src/test/**.{kt,kts}]
+max_line_length = unset
+ktlint_standard_max-line-length = disabled
+
+[**/src/androidTest/**.{kt,kts}]
+max_line_length = unset
+ktlint_standard_max-line-length = disabled
+
+[*.md]
+trim_trailing_whitespace = false

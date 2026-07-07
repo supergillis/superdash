@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_response_mode_speak">Parler</string>
+    <string name="voice_response_mode_silent">Silencieux</string>
+    <string name="voice_response_mode_visual">Visuel</string>
+
+    <string name="voice_stt_provider_none">Aucun</string>
+    <string name="voice_stt_provider_ha_assist">Home Assistant Assist</string>
+    <string name="voice_stt_provider_whisper">STT Whisper local (expérimental)</string>
+    <string name="voice_stt_provider_moonshine">STT Moonshine local (expérimental)</string>
+</resources>

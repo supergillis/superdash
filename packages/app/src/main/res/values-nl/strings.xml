@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">superdash</string>
+    <string name="settings_general_title">Algemeen</string>
+    <string name="settings_general_summary">Taal en algemene app-voorkeuren</string>
+    <string name="settings_language_title">Taal</string>
+    <string name="settings_language_system_default">Systeemstandaard</string>
+    <string name="settings_home_assistant_title">Home Assistant</string>
+    <string name="settings_home_assistant_summary">Verbinding, authenticatie en dashboard</string>
+    <string name="settings_kiosk_title">Kiosk</string>
+    <string name="settings_kiosk_summary">Apparaatgedrag en opstartinstellingen</string>
+    <string name="settings_sidebar_title">Zijbalk</string>
+    <string name="settings_sidebar_summary">Snelle toegangsbalk</string>
+    <string name="settings_voice_title">Spraak</string>
+    <string name="settings_voice_summary">Wake word en spraakassistent</string>
+    <string name="settings_screensaver_title">Screensaver</string>
+    <string name="settings_screensaver_summary">Inactief scherm, overlays en foto\'s</string>
+    <string name="settings_doorbell_title">Deurbel</string>
+    <string name="settings_doorbell_summary">Camera-overlay triggers</string>
+    <string name="settings_esphome_title">ESPHome</string>
+    <string name="settings_esphome_summary">Home Assistant ESPHome-protocol</string>
+    <string name="settings_admin_title">Beheer</string>
+    <string name="settings_admin_summary">Diagnostiek en onderhoud</string>
+    <string name="settings_voice_speech_pipeline_title">Spraakpijplijn</string>
+    <string name="settings_voice_local_models_title">Lokale modellen</string>
+    <string name="settings_voice_command_recording_title">Opname van opdrachten</string>
+    <string name="settings_voice_advanced_tuning_title">Geavanceerde afstemming</string>
+    <string name="settings_immich_photos_title">Immich-foto\'s</string>
+
+    <!-- Generic shared action labels -->
+    <string name="settings_action_save">Opslaan</string>
+    <string name="settings_action_cancel">Annuleren</string>
+    <string name="settings_action_edit">Bewerken</string>
+    <string name="settings_action_delete">Verwijderen</string>
+    <string name="settings_action_clear">Wissen</string>
+    <string name="settings_action_test">Testen</string>
+    <string name="settings_action_selected">Geselecteerd</string>
+    <string name="settings_value_not_set">Niet ingesteld</string>
+    <string name="settings_value_off">Uit</string>
+
+    <!-- Doorbell -->
+    <string name="settings_doorbell_trigger_entity">Trigger-entiteit</string>
+    <string name="settings_doorbell_camera_entity">Camera-entiteit</string>
+    <string name="settings_doorbell_camera_entity_or_url">Camera-entiteit of stream-URL</string>
+    <string name="settings_doorbell_dialog_add_title">Deurbel toevoegen</string>
+    <string name="settings_doorbell_dialog_edit_title">Deurbel bewerken</string>
+    <string name="settings_doorbell_name_label">Naam</string>
+    <string name="settings_doorbell_name_placeholder">Voordeur</string>
+    <string name="settings_doorbell_camera_url_hint">Directe URL\'s (bijv. go2rtc) slaan HA over en starten sneller op.</string>
+    <string name="settings_doorbell_overlay_title">Deurbeloverlay</string>
+    <string name="settings_doorbell_overlay_summary">Toon camerabeeld wanneer de deurbel gaat</string>
+    <string name="settings_doorbell_auto_close_never">Automatisch sluiten: nooit</string>
+    <string name="settings_doorbell_auto_close_seconds">Automatisch sluiten: %1$ds</string>
+    <string name="settings_doorbell_list_title">Deurbellen</string>
+    <string name="settings_doorbell_list_empty">Voeg minstens één deurbel toe.</string>
+    <string name="settings_doorbell_add_button">+ Deurbel toevoegen</string>
+    <string name="settings_esphome_enabled_title">Ingeschakeld</string>
+    <string name="settings_esphome_enabled_summary">Maak superdash via het ESPHome-protocol zichtbaar voor HA.</string>
+    <string name="settings_esphome_encryption_key_title">Versleutelingssleutel (base64)</string>
+    <string name="settings_esphome_encryption_key_placeholder">32-byte sleutel, base64-gecodeerd</string>
+    <string name="settings_esphome_psk_not_set">Niet ingesteld — platte tekst wordt gebruikt.</string>
+    <string name="settings_esphome_psk_configured">Geconfigureerd (%1$s). Vervang door een nieuwe waarde in te voeren.</string>
+    <string name="settings_esphome_psk_invalid">Sleutel moet exact 32 bytes decoderen.</string>
+
+    <!-- HA entity picker -->
+    <string name="settings_ha_entity_id_default">Entiteit-ID</string>
+    <string name="settings_ha_enter_manually_title">Handmatig invoeren</string>
+    <string name="settings_ha_search_label">Zoeken</string>
+    <string name="settings_ha_no_entities_loaded">Geen Home Assistant-entiteiten geladen</string>
+    <string name="settings_ha_no_matching_entities">Geen overeenkomende entiteiten</string>
+    <string name="settings_ha_manual_entry_hint">Gebruik handmatige invoer om een entiteit-ID te blijven typen.</string>
+    <string name="settings_ha_manual_button">Handmatig</string>
+
+    <!-- Immich -->
+    <string name="settings_immich_url_label">Immich-URL</string>
+    <string name="settings_immich_url_dialog_title">Immich-URL bewerken</string>
+    <string name="settings_immich_api_key_label">Immich API-sleutel</string>
+    <string name="settings_immich_api_key_set">Ingesteld</string>
+    <string name="settings_immich_api_key_dialog_title">Immich API-sleutel bewerken</string>
+    <string name="settings_immich_album_label">Immich-album (optioneel)</string>
+    <string name="settings_immich_album_whole_library">Volledige bibliotheek</string>
+    <string name="settings_immich_album_dialog_title">Immich-album bewerken</string>
+    <string name="settings_immich_refresh_hours_label">Foto catalogus vernieuwen (uren)</string>
+    <string name="settings_immich_refresh_hours_dialog_title">Vernieuwingsinterval bewerken (uren)</string>
+    <string name="settings_immich_refresh_button">Fotocatalogus vernieuwen</string>
+    <string name="settings_immich_test_button">Immich-verbinding testen</string>
+    <string name="settings_immich_refreshing_status">Vernieuwen…</string>
+    <string name="settings_immich_testing_status">Testen…</string>
+    <string name="settings_immich_test_unreachable">Kon server niet bereiken: %1$s</string>
+    <string name="settings_immich_test_missing_scope">API-sleutel mist scope \'%1$s\' (HTTP %2$d). Genereer de sleutel opnieuw met alle leesscopes.</string>
+    <string name="settings_immich_test_no_album_filter">geen albumfilter ingesteld</string>
+    <string name="settings_immich_test_album_found">album \'%1$s\' gevonden</string>
+    <plurals name="settings_immich_test_album_not_found">
+        <item quantity="one">album \'%1$s\' niet gevonden tussen %2$d album</item>
+        <item quantity="other">album \'%1$s\' niet gevonden tussen %2$d albums</item>
+    </plurals>
+    <string name="settings_immich_test_thumbnails_ok">miniaturen OK</string>
+    <string name="settings_immich_test_missing_asset_view">ONTBREKENDE asset.view scope (genereer sleutel opnieuw met asset.view)</string>
+    <string name="settings_immich_test_no_assets">geen assets om toegang tot miniaturen te testen</string>
+    <plurals name="settings_immich_test_connected">
+        <item quantity="one">Verbonden. %1$d album. %2$s. %3$s.</item>
+        <item quantity="other">Verbonden. %1$d albums. %2$s. %3$s.</item>
+    </plurals>
+
+    <!-- Screensaver -->
+    <string name="settings_screensaver_test_button">Screensaver testen</string>
+    <string name="settings_screensaver_day_mode_label">Dagmodus</string>
+    <string name="settings_screensaver_night_mode_label">Nachtmodus</string>
+    <string name="settings_screensaver_mode_picsum">Picsum</string>
+    <string name="settings_screensaver_mode_immich">Immich</string>
+    <string name="settings_screensaver_mode_media_library">Mediabibliotheek</string>
+    <string name="settings_screensaver_mode_clock">Klok</string>
+    <string name="settings_screensaver_mode_black">Zwart</string>
+    <string name="settings_screensaver_overlay_bottom_left">Linksonder</string>
+    <string name="settings_screensaver_overlay_bottom_right">Rechtsonder</string>
+    <string name="settings_screensaver_overlay_top_left">Linksboven</string>
+    <string name="settings_screensaver_overlay_top_right">Rechtsboven</string>
+    <string name="settings_screensaver_overlay_random">Willekeurig</string>
+    <string name="settings_screensaver_order_shuffle">Willekeurige volgorde</string>
+    <string name="settings_screensaver_order_chronological">Chronologisch</string>
+    <string name="settings_screensaver_idle_timeout_off">Time-out bij inactiviteit: Uit</string>
+    <string name="settings_screensaver_idle_timeout">Time-out bij inactiviteit: %1$d min %2$ds</string>
+    <string name="settings_screensaver_weather_entity">Weerentiteit</string>
+    <string name="settings_screensaver_calendar_entity">Agenda-entiteit</string>
+    <string name="settings_screensaver_power_usage_entity">Energieverbruikentiteit</string>
+    <string name="settings_screensaver_solar_power_entity">Zonne-energie-entiteit</string>
+    <string name="settings_screensaver_grid_power_entity_label">Netstroom-entiteit (+ import / − export)</string>
+    <string name="settings_screensaver_grid_power_entity_title">Netstroom-entiteit</string>
+    <string name="settings_screensaver_overlay_position_label">Overlaypositie</string>
+    <string name="settings_screensaver_picture_spacing">Afbeeldingstussenruimte: %1$d dp</string>
+    <string name="settings_screensaver_source_label">Bron</string>
+    <string name="settings_screensaver_source_pick">Kiezen</string>
+    <string name="settings_screensaver_source_change">Wijzigen</string>
+    <string name="settings_screensaver_display_order_label">Weergavevolgorde</string>
+    <string name="settings_screensaver_immich_photos_summary">Server, API-sleutel, album en catalogusvernieuwing</string>
+
+    <!-- Sidebar -->
+    <string name="settings_sidebar_position_label">Positie</string>
+    <string name="settings_sidebar_position_left">Links</string>
+    <string name="settings_sidebar_position_right">Rechts</string>
+    <string name="settings_sidebar_position_top">Boven</string>
+    <string name="settings_sidebar_position_bottom">Onder</string>
+    <string name="settings_sidebar_pinned_label">Vastgezet</string>
+    <string name="settings_sidebar_pinned_summary">Vastgezette zijbalken reserveren dashboardruimte.</string>
+    <string name="settings_sidebar_show_labels_label">Labels tonen</string>
+    <string name="settings_sidebar_show_labels_summary">Toont korte tekst onder elk zijbalkpictogram.</string>
+    <string name="settings_sidebar_add_shortcut_button">Snelkoppeling toevoegen</string>
+    <string name="settings_sidebar_edit_shortcut_title">Snelkoppeling bewerken</string>
+    <string name="settings_sidebar_add_shortcut_title">Snelkoppeling toevoegen</string>
+    <string name="settings_sidebar_move_up">Omhoog verplaatsen</string>
+    <string name="settings_sidebar_move_down">Omlaag verplaatsen</string>
+    <string name="settings_sidebar_title_label">Titel</string>
+    <string name="settings_sidebar_label_label">Label</string>
+    <string name="settings_sidebar_icon_label">Pictogram</string>
+    <string name="settings_sidebar_action_label">Actie</string>
+    <string name="settings_sidebar_dashboard_path_label">Dashboardpad</string>
+    <string name="settings_sidebar_action_settings">Instellingen</string>
+    <string name="settings_sidebar_action_open_settings">Instellingen openen</string>
+    <string name="settings_sidebar_action_reload_dashboard">Dashboard herladen</string>
+    <string name="settings_sidebar_action_show_screensaver">Screensaver tonen</string>
+    <string name="settings_sidebar_action_dismiss_screensaver">Screensaver sluiten</string>
+    <string name="settings_sidebar_action_night_mode_on">Nachtmodus aan</string>
+    <string name="settings_sidebar_action_night_mode_off">Nachtmodus uit</string>
+    <string name="settings_sidebar_action_open_dashboard_view">Dashboardweergave openen</string>
+    <string name="settings_sidebar_action_open_dashboard_view_path">Dashboardweergave openen: %1$s</string>
+    <string name="settings_sidebar_icon_moon">Maan</string>
+    <string name="settings_sidebar_icon_sun">Zon</string>
+    <string name="settings_sidebar_icon_refresh">Vernieuwen</string>
+    <string name="settings_sidebar_icon_dashboard">Dashboard</string>
+
+    <!-- Device -->
+    <string name="settings_device_keep_screen_on">Scherm aan houden</string>
+    <string name="settings_device_launch_on_boot">Opstarten bij inschakelen</string>
+
+    <!-- Voice -->
+    <string name="settings_voice_enabled_title">Spraak ingeschakeld</string>
+    <string name="settings_voice_enabled_summary">Wake word op het apparaat en HA Assist</string>
+    <string name="settings_voice_wake_word_label">Wake word</string>
+    <string name="settings_voice_response_mode_label">Reactiemodus</string>
+    <string name="settings_voice_speech_pipeline_summary">%1$s primair, %2$s secundair</string>
+    <string name="settings_voice_local_models_summary">%1$s, %2$s</string>
+    <string name="settings_voice_command_recording_summary_off">Uit</string>
+    <plurals name="settings_voice_command_recording_summary_on">
+        <item quantity="one">%1$d opname bewaard</item>
+        <item quantity="other">%1$d opnames bewaard</item>
+    </plurals>
+    <string name="settings_voice_assist_provider_label">Assist-provider</string>
+    <string name="settings_voice_primary_stt_label">Primaire STT</string>
+    <string name="settings_voice_secondary_stt_label">Secundaire STT</string>
+    <string name="settings_voice_local_intent_recognizer_title">Lokale intentieherkenner</string>
+    <string name="settings_voice_local_intent_recognizer_summary">Probeer opgeslagen entiteitopdrachten vóór HA-tekst</string>
+    <string name="settings_voice_stt_model_label">STT-model</string>
+    <string name="settings_voice_intent_embedding_model_label">Intentie-embeddingmodel</string>
+    <string name="settings_voice_save_command_recordings_title">Opdrachtopnames opslaan</string>
+    <string name="settings_voice_save_command_recordings_summary">Bewaar echte opdrachtaudio voor beoordeling en lokale STT-backtesting</string>
+    <string name="settings_voice_keep_recordings">Opnames bewaren: %1$d</string>
+    <string name="settings_voice_clear_command_recordings_label">Opdrachtopnames wissen</string>
+    <string name="settings_voice_clear_command_recordings_confirm_title">Opdrachtopnames wissen?</string>
+    <string name="settings_voice_silence_timeout">Stilte-time-out: %1$d ms</string>
+    <string name="settings_voice_model_selected">Geselecteerd</string>
+    <string name="settings_voice_model_available">Beschikbaar</string>
+    <string name="settings_voice_model_not_installed">Niet geïnstalleerd</string>
+    <string name="settings_voice_model_downloading">Downloaden</string>
+    <string name="settings_voice_model_install_failed">Installatie mislukt</string>
+    <string name="settings_voice_model_download_content_description">%1$s downloaden</string>
+    <string name="settings_voice_model_delete_content_description">%1$s verwijderen</string>
+
+    <!-- Connection / Home Assistant -->
+    <string name="settings_connection_ha_url_label">HA-URL</string>
+    <string name="settings_connection_ha_url_dialog_title">HA-URL bewerken</string>
+    <string name="settings_connection_test_button">Verbinding testen</string>
+    <string name="settings_connection_reauthenticate_button">HA opnieuw authenticeren</string>
+    <string name="settings_connection_reachable">✓ HA bereikbaar</string>
+    <string name="settings_connection_unreachable">✗ Kon HA niet bereiken op deze URL</string>
+    <string name="settings_connection_pinned_dashboard_label">Vastgezet dashboard</string>
+    <string name="settings_connection_pinned_dashboard_dialog_title">Vastgezet dashboard bewerken</string>
+    <string name="settings_connection_pinned_dashboard_summary">Vergrendelt op dit dashboard. Laat leeg om niet te vergrendelen.</string>
+
+    <!-- Admin -->
+    <string name="settings_admin_battery_help_button">Hulp bij batterijbesparing</string>
+    <string name="settings_admin_ws_debug_button">WS-debuglog tonen</string>
+
+    <!-- Settings shell -->
+    <string name="settings_exit_content_description">Instellingen sluiten</string>
+    <string name="settings_back_content_description">Terug</string>
+
+    <!-- First-run / reauth setup -->
+    <string name="setup_welcome_title">Welkom bij superdash</string>
+    <string name="setup_ha_url_intro">Voer je Home Assistant-URL in om te beginnen</string>
+    <string name="setup_ha_url_label">HA-URL</string>
+    <string name="setup_ha_url_placeholder">homeassistant.local:8123</string>
+    <string name="setup_sign_in_again_button">Opnieuw aanmelden</string>
+    <string name="setup_continue_button">Doorgaan</string>
+    <string name="error_sign_in_failed">Aanmelden bij HA mislukt. Reden: %1$s</string>
+
+    <!-- Connection status -->
+    <string name="connection_status_connected">Verbonden met HA  (v%1$s)</string>
+    <string name="connection_status_connecting">Verbinden…</string>
+    <string name="connection_status_disconnected">Niet verbonden</string>
+    <string name="connection_status_failed">Niet verbonden: %1$s</string>
+    <string name="connection_status_needs_reauth">Opnieuw authenticeren vereist</string>
+    <plurals name="connection_status_entity_count">
+        <item quantity="one">%1$d entiteit</item>
+        <item quantity="other">%1$d entiteiten</item>
+    </plurals>
+
+    <!-- Sidebar overlay -->
+    <string name="sidebar_dismiss_content_description">Zijbalk sluiten</string>
+    <string name="sidebar_unpin_content_description">Zijbalk losmaken</string>
+    <string name="sidebar_pin_content_description">Zijbalk vastzetten</string>
+    <string name="sidebar_item_active_content_description">%1$s, actief</string>
+
+    <!-- Voice overlay -->
+    <string name="voice_overlay_wake_word">Wake word</string>
+    <string name="voice_overlay_listening">Luisteren…</string>
+    <string name="voice_overlay_thinking">Denken…</string>
+    <string name="voice_overlay_done">Klaar</string>
+    <string name="voice_overlay_speaking">Spreken…</string>
+    <string name="voice_overlay_failed">Spraak mislukt</string>
+
+    <!-- Voice service notification -->
+    <string name="notification_voice_channel_name">superdash Spraak</string>
+    <string name="notification_voice_title">superdash spraak</string>
+    <string name="notification_voice_text">Luisteren naar wake word</string>
+
+    <!-- Kiosk keep-alive notification -->
+    <string name="notification_kiosk_channel_name">Kiosk keep-alive</string>
+    <string name="notification_kiosk_channel_description">Houdt superdash actief op apparaten met agressief batterijbeheer.</string>
+    <string name="notification_kiosk_title">superdash</string>
+    <string name="notification_kiosk_text">Dashboard actief</string>
+
+    <!-- Settings view model messages -->
+    <plurals name="settings_immich_refresh_success">
+        <item quantity="one">%1$d item vernieuwd</item>
+        <item quantity="other">%1$d items vernieuwd</item>
+    </plurals>
+    <string name="settings_immich_refresh_failed">Vernieuwen mislukt: %1$s</string>
+</resources>

@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">superdash</string>
+    <string name="settings_general_title">General</string>
+    <string name="settings_general_summary">Language and app-wide preferences</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_system_default">System default</string>
+    <string name="settings_home_assistant_title">Home Assistant</string>
+    <string name="settings_home_assistant_summary">Connection, authentication, and dashboard</string>
+    <string name="settings_kiosk_title">Kiosk</string>
+    <string name="settings_kiosk_summary">Device behavior and launch settings</string>
+    <string name="settings_sidebar_title">Sidebar</string>
+    <string name="settings_sidebar_summary">Quick access rail</string>
+    <string name="settings_voice_title">Voice</string>
+    <string name="settings_voice_summary">Wake word and voice assistant</string>
+    <string name="settings_screensaver_title">Screensaver</string>
+    <string name="settings_screensaver_summary">Idle display, overlays, and photos</string>
+    <string name="settings_doorbell_title">Doorbell</string>
+    <string name="settings_doorbell_summary">Camera overlay triggers</string>
+    <string name="settings_esphome_title">ESPHome</string>
+    <string name="settings_esphome_summary">Home Assistant ESPHome protocol</string>
+    <string name="settings_admin_title">Admin</string>
+    <string name="settings_admin_summary">Diagnostics and maintenance</string>
+    <string name="settings_voice_speech_pipeline_title">Speech pipeline</string>
+    <string name="settings_voice_local_models_title">Local models</string>
+    <string name="settings_voice_command_recording_title">Command recording</string>
+    <string name="settings_voice_advanced_tuning_title">Advanced tuning</string>
+    <string name="settings_immich_photos_title">Immich photos</string>
+
+    <!-- Generic shared action labels -->
+    <string name="settings_action_save">Save</string>
+    <string name="settings_action_cancel">Cancel</string>
+    <string name="settings_action_edit">Edit</string>
+    <string name="settings_action_delete">Delete</string>
+    <string name="settings_action_clear">Clear</string>
+    <string name="settings_action_test">Test</string>
+    <string name="settings_action_selected">Selected</string>
+    <string name="settings_value_not_set">Not set</string>
+    <string name="settings_value_off">Off</string>
+
+    <!-- Doorbell -->
+    <string name="settings_doorbell_trigger_entity">Trigger entity</string>
+    <string name="settings_doorbell_camera_entity">Camera entity</string>
+    <string name="settings_doorbell_camera_entity_or_url">Camera entity or stream URL</string>
+    <string name="settings_doorbell_dialog_add_title">Add doorbell</string>
+    <string name="settings_doorbell_dialog_edit_title">Edit doorbell</string>
+    <string name="settings_doorbell_name_label">Name</string>
+    <string name="settings_doorbell_name_placeholder">Front Door</string>
+    <string name="settings_doorbell_camera_url_hint">Direct URLs (e.g. go2rtc) skip HA and start playback faster.</string>
+    <string name="settings_doorbell_overlay_title">Doorbell overlay</string>
+    <string name="settings_doorbell_overlay_summary">Show camera feed when a doorbell rings</string>
+    <string name="settings_doorbell_auto_close_never">Auto-close: never</string>
+    <string name="settings_doorbell_auto_close_seconds">Auto-close: %1$ds</string>
+    <string name="settings_doorbell_list_title">Doorbells</string>
+    <string name="settings_doorbell_list_empty">Add at least one doorbell.</string>
+    <string name="settings_doorbell_add_button">+ Add doorbell</string>
+    <string name="settings_esphome_enabled_title">Enabled</string>
+    <string name="settings_esphome_enabled_summary">Expose superdash to HA via the ESPHome protocol.</string>
+    <string name="settings_esphome_encryption_key_title">Encryption key (base64)</string>
+    <string name="settings_esphome_encryption_key_placeholder">32-byte key, base64-encoded</string>
+    <string name="settings_esphome_psk_not_set">Not set — plaintext is in use.</string>
+    <string name="settings_esphome_psk_configured">Configured (%1$s). Replace by entering a new value.</string>
+    <string name="settings_esphome_psk_invalid">Key must decode to exactly 32 bytes.</string>
+
+    <!-- HA entity picker -->
+    <string name="settings_ha_entity_id_default">Entity ID</string>
+    <string name="settings_ha_enter_manually_title">Enter manually</string>
+    <string name="settings_ha_search_label">Search</string>
+    <string name="settings_ha_no_entities_loaded">No Home Assistant entities loaded</string>
+    <string name="settings_ha_no_matching_entities">No matching entities</string>
+    <string name="settings_ha_manual_entry_hint">Use manual entry to keep typing an entity ID.</string>
+    <string name="settings_ha_manual_button">Manual</string>
+
+    <!-- Immich -->
+    <string name="settings_immich_url_label">Immich URL</string>
+    <string name="settings_immich_url_dialog_title">Edit Immich URL</string>
+    <string name="settings_immich_api_key_label">Immich API Key</string>
+    <string name="settings_immich_api_key_set">Set</string>
+    <string name="settings_immich_api_key_dialog_title">Edit Immich API key</string>
+    <string name="settings_immich_album_label">Immich album (optional)</string>
+    <string name="settings_immich_album_whole_library">Whole library</string>
+    <string name="settings_immich_album_dialog_title">Edit Immich album</string>
+    <string name="settings_immich_refresh_hours_label">Photo catalog refresh (hours)</string>
+    <string name="settings_immich_refresh_hours_dialog_title">Edit refresh interval (hours)</string>
+    <string name="settings_immich_refresh_button">Refresh photo catalog</string>
+    <string name="settings_immich_test_button">Test Immich connection</string>
+    <string name="settings_immich_refreshing_status">Refreshing…</string>
+    <string name="settings_immich_testing_status">Testing…</string>
+    <string name="settings_immich_test_unreachable">Couldn\'t reach server: %1$s</string>
+    <string name="settings_immich_test_missing_scope">API key missing scope \'%1$s\' (HTTP %2$d). Regenerate the key with all read scopes.</string>
+    <string name="settings_immich_test_no_album_filter">no album filter set</string>
+    <string name="settings_immich_test_album_found">album \'%1$s\' found</string>
+    <plurals name="settings_immich_test_album_not_found">
+        <item quantity="one">album \'%1$s\' not found among %2$d album</item>
+        <item quantity="other">album \'%1$s\' not found among %2$d albums</item>
+    </plurals>
+    <string name="settings_immich_test_thumbnails_ok">thumbnails OK</string>
+    <string name="settings_immich_test_missing_asset_view">MISSING asset.view scope (regenerate key with asset.view)</string>
+    <string name="settings_immich_test_no_assets">no assets to test thumbnail access</string>
+    <plurals name="settings_immich_test_connected">
+        <item quantity="one">Connected. %1$d album. %2$s. %3$s.</item>
+        <item quantity="other">Connected. %1$d albums. %2$s. %3$s.</item>
+    </plurals>
+
+    <!-- Screensaver -->
+    <string name="settings_screensaver_test_button">Test screensaver</string>
+    <string name="settings_screensaver_day_mode_label">Day mode</string>
+    <string name="settings_screensaver_night_mode_label">Night mode</string>
+    <string name="settings_screensaver_mode_picsum">Picsum</string>
+    <string name="settings_screensaver_mode_immich">Immich</string>
+    <string name="settings_screensaver_mode_media_library">Media Library</string>
+    <string name="settings_screensaver_mode_clock">Clock</string>
+    <string name="settings_screensaver_mode_black">Black</string>
+    <string name="settings_screensaver_overlay_bottom_left">Bottom left</string>
+    <string name="settings_screensaver_overlay_bottom_right">Bottom right</string>
+    <string name="settings_screensaver_overlay_top_left">Top left</string>
+    <string name="settings_screensaver_overlay_top_right">Top right</string>
+    <string name="settings_screensaver_overlay_random">Random</string>
+    <string name="settings_screensaver_order_shuffle">Shuffle</string>
+    <string name="settings_screensaver_order_chronological">Chronological</string>
+    <string name="settings_screensaver_idle_timeout_off">Idle timeout: Off</string>
+    <string name="settings_screensaver_idle_timeout">Idle timeout: %1$d min %2$ds</string>
+    <string name="settings_screensaver_weather_entity">Weather entity</string>
+    <string name="settings_screensaver_calendar_entity">Calendar entity</string>
+    <string name="settings_screensaver_power_usage_entity">Power usage entity</string>
+    <string name="settings_screensaver_solar_power_entity">Solar power entity</string>
+    <string name="settings_screensaver_grid_power_entity_label">Grid power entity (+ import / − export)</string>
+    <string name="settings_screensaver_grid_power_entity_title">Grid power entity</string>
+    <string name="settings_screensaver_overlay_position_label">Overlay position</string>
+    <string name="settings_screensaver_picture_spacing">Picture spacing: %1$d dp</string>
+    <string name="settings_screensaver_source_label">Source</string>
+    <string name="settings_screensaver_source_pick">Pick</string>
+    <string name="settings_screensaver_source_change">Change</string>
+    <string name="settings_screensaver_display_order_label">Display order</string>
+    <string name="settings_screensaver_immich_photos_summary">Server, API key, album, and catalog refresh</string>
+
+    <!-- Sidebar -->
+    <string name="settings_sidebar_position_label">Position</string>
+    <string name="settings_sidebar_position_left">Left</string>
+    <string name="settings_sidebar_position_right">Right</string>
+    <string name="settings_sidebar_position_top">Top</string>
+    <string name="settings_sidebar_position_bottom">Bottom</string>
+    <string name="settings_sidebar_pinned_label">Pinned</string>
+    <string name="settings_sidebar_pinned_summary">Pinned sidebars reserve dashboard space.</string>
+    <string name="settings_sidebar_show_labels_label">Show labels</string>
+    <string name="settings_sidebar_show_labels_summary">Shows short text under each sidebar icon.</string>
+    <string name="settings_sidebar_add_shortcut_button">Add shortcut</string>
+    <string name="settings_sidebar_edit_shortcut_title">Edit shortcut</string>
+    <string name="settings_sidebar_add_shortcut_title">Add shortcut</string>
+    <string name="settings_sidebar_move_up">Move up</string>
+    <string name="settings_sidebar_move_down">Move down</string>
+    <string name="settings_sidebar_title_label">Title</string>
+    <string name="settings_sidebar_label_label">Label</string>
+    <string name="settings_sidebar_icon_label">Icon</string>
+    <string name="settings_sidebar_action_label">Action</string>
+    <string name="settings_sidebar_dashboard_path_label">Dashboard path</string>
+    <string name="settings_sidebar_action_settings">Settings</string>
+    <string name="settings_sidebar_action_open_settings">Open settings</string>
+    <string name="settings_sidebar_action_reload_dashboard">Reload dashboard</string>
+    <string name="settings_sidebar_action_show_screensaver">Show screensaver</string>
+    <string name="settings_sidebar_action_dismiss_screensaver">Dismiss screensaver</string>
+    <string name="settings_sidebar_action_night_mode_on">Night mode on</string>
+    <string name="settings_sidebar_action_night_mode_off">Night mode off</string>
+    <string name="settings_sidebar_action_open_dashboard_view">Open dashboard view</string>
+    <string name="settings_sidebar_action_open_dashboard_view_path">Open dashboard view: %1$s</string>
+    <string name="settings_sidebar_icon_moon">Moon</string>
+    <string name="settings_sidebar_icon_sun">Sun</string>
+    <string name="settings_sidebar_icon_refresh">Refresh</string>
+    <string name="settings_sidebar_icon_dashboard">Dashboard</string>
+
+    <!-- Device -->
+    <string name="settings_device_keep_screen_on">Keep screen on</string>
+    <string name="settings_device_launch_on_boot">Launch on boot</string>
+
+    <!-- Voice -->
+    <string name="settings_voice_enabled_title">Voice enabled</string>
+    <string name="settings_voice_enabled_summary">On-device wake word and HA Assist</string>
+    <string name="settings_voice_wake_word_label">Wake word</string>
+    <string name="settings_voice_response_mode_label">Response mode</string>
+    <string name="settings_voice_speech_pipeline_summary">%1$s primary, %2$s secondary</string>
+    <string name="settings_voice_local_models_summary">%1$s, %2$s</string>
+    <string name="settings_voice_command_recording_summary_off">Off</string>
+    <plurals name="settings_voice_command_recording_summary_on">
+        <item quantity="one">Keeping %1$d recording</item>
+        <item quantity="other">Keeping %1$d recordings</item>
+    </plurals>
+    <string name="settings_voice_assist_provider_label">Assist provider</string>
+    <string name="settings_voice_primary_stt_label">Primary STT</string>
+    <string name="settings_voice_secondary_stt_label">Secondary STT</string>
+    <string name="settings_voice_local_intent_recognizer_title">Local intent recognizer</string>
+    <string name="settings_voice_local_intent_recognizer_summary">Try cached entity commands before HA text</string>
+    <string name="settings_voice_stt_model_label">STT model</string>
+    <string name="settings_voice_intent_embedding_model_label">Intent embedding model</string>
+    <string name="settings_voice_save_command_recordings_title">Save command recordings</string>
+    <string name="settings_voice_save_command_recordings_summary">Store real command audio for review and local STT backtesting</string>
+    <string name="settings_voice_keep_recordings">Keep recordings: %1$d</string>
+    <string name="settings_voice_clear_command_recordings_label">Clear command recordings</string>
+    <string name="settings_voice_clear_command_recordings_confirm_title">Clear command recordings?</string>
+    <string name="settings_voice_silence_timeout">Silence timeout: %1$d ms</string>
+    <string name="settings_voice_model_selected">Selected</string>
+    <string name="settings_voice_model_available">Available</string>
+    <string name="settings_voice_model_not_installed">Not installed</string>
+    <string name="settings_voice_model_downloading">Downloading</string>
+    <string name="settings_voice_model_install_failed">Install failed</string>
+    <string name="settings_voice_model_download_content_description">Download %1$s</string>
+    <string name="settings_voice_model_delete_content_description">Delete %1$s</string>
+
+    <!-- Connection / Home Assistant -->
+    <string name="settings_connection_ha_url_label">HA URL</string>
+    <string name="settings_connection_ha_url_dialog_title">Edit HA URL</string>
+    <string name="settings_connection_test_button">Test connection</string>
+    <string name="settings_connection_reauthenticate_button">Reauthenticate HA</string>
+    <string name="settings_connection_reachable">✓ HA reachable</string>
+    <string name="settings_connection_unreachable">✗ Could not reach HA at this URL</string>
+    <string name="settings_connection_pinned_dashboard_label">Pinned dashboard</string>
+    <string name="settings_connection_pinned_dashboard_dialog_title">Edit pinned dashboard</string>
+    <string name="settings_connection_pinned_dashboard_summary">Locks to this dashboard. Leave empty for no lock.</string>
+
+    <!-- Admin -->
+    <string name="settings_admin_battery_help_button">Battery saving help</string>
+    <string name="settings_admin_ws_debug_button">Show WS debug log</string>
+
+    <!-- Settings shell -->
+    <string name="settings_exit_content_description">Exit settings</string>
+    <string name="settings_back_content_description">Back</string>
+
+    <!-- First-run / reauth setup -->
+    <string name="setup_welcome_title">Welcome to superdash</string>
+    <string name="setup_ha_url_intro">Enter your Home Assistant URL to get started</string>
+    <string name="setup_ha_url_label">HA URL</string>
+    <string name="setup_ha_url_placeholder">homeassistant.local:8123</string>
+    <string name="setup_sign_in_again_button">Sign in again</string>
+    <string name="setup_continue_button">Continue</string>
+    <string name="error_sign_in_failed">Couldn\'t sign in to HA. Reason: %1$s</string>
+
+    <!-- Connection status -->
+    <string name="connection_status_connected">Connected to HA  (v%1$s)</string>
+    <string name="connection_status_connecting">Connecting…</string>
+    <string name="connection_status_disconnected">Disconnected</string>
+    <string name="connection_status_failed">Disconnected: %1$s</string>
+    <string name="connection_status_needs_reauth">Re-auth required</string>
+    <plurals name="connection_status_entity_count">
+        <item quantity="one">%1$d entity</item>
+        <item quantity="other">%1$d entities</item>
+    </plurals>
+
+    <!-- Sidebar overlay -->
+    <string name="sidebar_dismiss_content_description">Dismiss sidebar</string>
+    <string name="sidebar_unpin_content_description">Unpin sidebar</string>
+    <string name="sidebar_pin_content_description">Pin sidebar</string>
+    <string name="sidebar_item_active_content_description">%1$s, active</string>
+
+    <!-- Voice overlay -->
+    <string name="voice_overlay_wake_word">Wake word</string>
+    <string name="voice_overlay_listening">Listening…</string>
+    <string name="voice_overlay_thinking">Thinking…</string>
+    <string name="voice_overlay_done">Done</string>
+    <string name="voice_overlay_speaking">Speaking…</string>
+    <string name="voice_overlay_failed">Voice failed</string>
+
+    <!-- Voice service notification -->
+    <string name="notification_voice_channel_name">superdash Voice</string>
+    <string name="notification_voice_title">superdash voice</string>
+    <string name="notification_voice_text">Listening for wake word</string>
+
+    <!-- Kiosk keep-alive notification -->
+    <string name="notification_kiosk_channel_name">Kiosk keep-alive</string>
+    <string name="notification_kiosk_channel_description">Keeps superdash alive on aggressive-battery-management devices.</string>
+    <string name="notification_kiosk_title">superdash</string>
+    <string name="notification_kiosk_text">Dashboard active</string>
+
+    <!-- Settings view model messages -->
+    <plurals name="settings_immich_refresh_success">
+        <item quantity="one">Refreshed %1$d item</item>
+        <item quantity="other">Refreshed %1$d items</item>
+    </plurals>
+    <string name="settings_immich_refresh_failed">Refresh failed: %1$s</string>
+</resources>

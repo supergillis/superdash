@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>superdash kiosk</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: #111;
+}
+iframe#ha {
+    position: fixed;
+    top: 0;
+    left: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: block;
+    background: #111;
+    /* width/height pinned in JS. `width: 100%` resolves against this
+       WebView's broken layout viewport which has block-size 0, and
+       `width: auto` on a replaced iframe falls back to 300x150. */
+}
+</style>
+</head>
+<body>
+<iframe id="ha"
+        src="__SUPERDASH_HA_URL__"
+        allow="microphone; camera; fullscreen; autoplay; encrypted-media"
+        allowfullscreen></iframe>
+<script>
+(function () {
+    "use strict";
+    var iframe = document.getElementById("ha");
+
+    function sizeIframe() {
+        var w = window.innerWidth || document.documentElement.clientWidth;
+        var h = window.innerHeight || document.documentElement.clientHeight;
+        if (w > 0 && h > 0) {
+            iframe.style.width = w + "px";
+            iframe.style.height = h + "px";
+        }
+    }
+    sizeIframe();
+    window.addEventListener("resize", sizeIframe);
+
+    // Relay the WebMessagePort that Kotlin posts to the top-level shell
+    // into the HA iframe. The iframe is same-origin with the shell, so
+    // postMessage targeted at "*" inside this same-origin scope is fine.
+    window.addEventListener("message", function (event) {
+        if (event.data !== "__superdash_init__") {
+            return;
+        }
+        if (!event.ports || !event.ports[0]) {
+            return;
+        }
+        if (event.source === iframe.contentWindow) {
+            return;
+        }
+        var port = event.ports[0];
+        var deliver = function () {
+            try {
+                iframe.contentWindow.postMessage("__superdash_init__", "*", [port]);
+            } catch (e) {
+                iframe.addEventListener("load", deliver, { once: true });
+            }
+        };
+        if (iframe.contentWindow && iframe.contentDocument && iframe.contentDocument.readyState !== "loading") {
+            deliver();
+        } else {
+            iframe.addEventListener("load", deliver, { once: true });
+        }
+    });
+})();
+</script>
+</body>
+</html>

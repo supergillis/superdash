@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screensaver_calendar_now">Nu</string>
+    <string name="screensaver_calendar_today">Vandaag</string>
+    <string name="screensaver_calendar_tomorrow">Morgen</string>
+
+    <!-- Media source picker dialog -->
+    <string name="screensaver_picker_title_default">Kies een bron</string>
+    <string name="screensaver_picker_load_error">Laden mislukt: %1$s</string>
+    <string name="screensaver_picker_retry">Opnieuw proberen</string>
+    <string name="screensaver_picker_back">Terug</string>
+    <string name="screensaver_picker_current_label">Huidig: %1$s</string>
+    <string name="screensaver_picker_selected_label">Geselecteerd: %1$s</string>
+    <string name="screensaver_picker_selected_none">Geen</string>
+    <string name="screensaver_picker_search_label">Zoeken</string>
+    <string name="screensaver_picker_root_label">hoofdmap</string>
+    <string name="screensaver_picker_back_to">Terug naar %1$s</string>
+    <string name="screensaver_picker_this_folder">Deze map</string>
+    <string name="screensaver_picker_no_images">Geen afbeeldingen beschikbaar hier</string>
+    <string name="screensaver_picker_selected_description">Geselecteerd</string>
+    <string name="screensaver_picker_no_matching">Geen overeenkomende media</string>
+    <string name="screensaver_picker_try_different_search">Probeer een andere zoekopdracht.</string>
+    <string name="screensaver_picker_no_media">Geen media in deze map</string>
+    <string name="screensaver_picker_use_folder">Gebruik deze map</string>
+    <string name="screensaver_picker_cancel">Annuleren</string>
+    <string name="screensaver_picker_browse_failed">Media laden mislukt</string>
+</resources>

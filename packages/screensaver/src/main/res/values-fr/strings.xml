@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screensaver_calendar_now">Maintenant</string>
+    <string name="screensaver_calendar_today">Aujourd\'hui</string>
+    <string name="screensaver_calendar_tomorrow">Demain</string>
+
+    <!-- Media source picker dialog -->
+    <string name="screensaver_picker_title_default">Choisir une source</string>
+    <string name="screensaver_picker_load_error">Impossible de charger : %1$s</string>
+    <string name="screensaver_picker_retry">Réessayer</string>
+    <string name="screensaver_picker_back">Retour</string>
+    <string name="screensaver_picker_current_label">Actuel : %1$s</string>
+    <string name="screensaver_picker_selected_label">Sélectionné : %1$s</string>
+    <string name="screensaver_picker_selected_none">Aucun</string>
+    <string name="screensaver_picker_search_label">Rechercher</string>
+    <string name="screensaver_picker_root_label">racine</string>
+    <string name="screensaver_picker_back_to">Retour à %1$s</string>
+    <string name="screensaver_picker_this_folder">Ce dossier</string>
+    <string name="screensaver_picker_no_images">Aucune image disponible ici</string>
+    <string name="screensaver_picker_selected_description">Sélectionné</string>
+    <string name="screensaver_picker_no_matching">Aucun média correspondant</string>
+    <string name="screensaver_picker_try_different_search">Essayez une autre recherche.</string>
+    <string name="screensaver_picker_no_media">Aucun média dans ce dossier</string>
+    <string name="screensaver_picker_use_folder">Utiliser ce dossier</string>
+    <string name="screensaver_picker_cancel">Annuler</string>
+    <string name="screensaver_picker_browse_failed">Impossible de charger le média</string>
+</resources>

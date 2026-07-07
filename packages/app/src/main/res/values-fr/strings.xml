@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">superdash</string>
+    <string name="settings_general_title">Général</string>
+    <string name="settings_general_summary">Langue et préférences générales de l\'application</string>
+    <string name="settings_language_title">Langue</string>
+    <string name="settings_language_system_default">Paramètre système</string>
+    <string name="settings_home_assistant_title">Home Assistant</string>
+    <string name="settings_home_assistant_summary">Connexion, authentification et tableau de bord</string>
+    <string name="settings_kiosk_title">Kiosque</string>
+    <string name="settings_kiosk_summary">Comportement de l\'appareil et paramètres de démarrage</string>
+    <string name="settings_sidebar_title">Barre latérale</string>
+    <string name="settings_sidebar_summary">Barre d\'accès rapide</string>
+    <string name="settings_voice_title">Voix</string>
+    <string name="settings_voice_summary">Mot de réveil et assistant vocal</string>
+    <string name="settings_screensaver_title">Écran de veille</string>
+    <string name="settings_screensaver_summary">Affichage inactif, superpositions et photos</string>
+    <string name="settings_doorbell_title">Sonnette</string>
+    <string name="settings_doorbell_summary">Déclencheurs de superposition caméra</string>
+    <string name="settings_esphome_title">ESPHome</string>
+    <string name="settings_esphome_summary">Protocole ESPHome de Home Assistant</string>
+    <string name="settings_admin_title">Admin</string>
+    <string name="settings_admin_summary">Diagnostics et maintenance</string>
+    <string name="settings_voice_speech_pipeline_title">Chaîne vocale</string>
+    <string name="settings_voice_local_models_title">Modèles locaux</string>
+    <string name="settings_voice_command_recording_title">Enregistrement des commandes</string>
+    <string name="settings_voice_advanced_tuning_title">Réglages avancés</string>
+    <string name="settings_immich_photos_title">Photos Immich</string>
+
+    <!-- Generic shared action labels -->
+    <string name="settings_action_save">Enregistrer</string>
+    <string name="settings_action_cancel">Annuler</string>
+    <string name="settings_action_edit">Modifier</string>
+    <string name="settings_action_delete">Supprimer</string>
+    <string name="settings_action_clear">Effacer</string>
+    <string name="settings_action_test">Tester</string>
+    <string name="settings_action_selected">Sélectionné</string>
+    <string name="settings_value_not_set">Non défini</string>
+    <string name="settings_value_off">Désactivé</string>
+
+    <!-- Doorbell -->
+    <string name="settings_doorbell_trigger_entity">Entité de déclenchement</string>
+    <string name="settings_doorbell_camera_entity">Entité caméra</string>
+    <string name="settings_doorbell_camera_entity_or_url">Entité caméra ou URL de flux</string>
+    <string name="settings_doorbell_dialog_add_title">Ajouter une sonnette</string>
+    <string name="settings_doorbell_dialog_edit_title">Modifier la sonnette</string>
+    <string name="settings_doorbell_name_label">Nom</string>
+    <string name="settings_doorbell_name_placeholder">Porte d\'entrée</string>
+    <string name="settings_doorbell_camera_url_hint">Les URL directes (par ex. go2rtc) contournent HA et démarrent la lecture plus vite.</string>
+    <string name="settings_doorbell_overlay_title">Superposition sonnette</string>
+    <string name="settings_doorbell_overlay_summary">Afficher le flux caméra quand la sonnette retentit</string>
+    <string name="settings_doorbell_auto_close_never">Fermeture automatique : jamais</string>
+    <string name="settings_doorbell_auto_close_seconds">Fermeture automatique : %1$ds</string>
+    <string name="settings_doorbell_list_title">Sonnettes</string>
+    <string name="settings_doorbell_list_empty">Ajoutez au moins une sonnette.</string>
+    <string name="settings_doorbell_add_button">+ Ajouter une sonnette</string>
+    <string name="settings_esphome_enabled_title">Activé</string>
+    <string name="settings_esphome_enabled_summary">Exposer superdash à HA via le protocole ESPHome.</string>
+    <string name="settings_esphome_encryption_key_title">Clé de chiffrement (base64)</string>
+    <string name="settings_esphome_encryption_key_placeholder">Clé de 32 octets, encodée en base64</string>
+    <string name="settings_esphome_psk_not_set">Non définie — texte clair utilisé.</string>
+    <string name="settings_esphome_psk_configured">Configurée (%1$s). Remplacez en saisissant une nouvelle valeur.</string>
+    <string name="settings_esphome_psk_invalid">La clé doit se décoder en exactement 32 octets.</string>
+
+    <!-- HA entity picker -->
+    <string name="settings_ha_entity_id_default">ID d\'entité</string>
+    <string name="settings_ha_enter_manually_title">Saisir manuellement</string>
+    <string name="settings_ha_search_label">Rechercher</string>
+    <string name="settings_ha_no_entities_loaded">Aucune entité Home Assistant chargée</string>
+    <string name="settings_ha_no_matching_entities">Aucune entité correspondante</string>
+    <string name="settings_ha_manual_entry_hint">Utilisez la saisie manuelle pour continuer à taper un ID d\'entité.</string>
+    <string name="settings_ha_manual_button">Manuel</string>
+
+    <!-- Immich -->
+    <string name="settings_immich_url_label">URL Immich</string>
+    <string name="settings_immich_url_dialog_title">Modifier l\'URL Immich</string>
+    <string name="settings_immich_api_key_label">Clé API Immich</string>
+    <string name="settings_immich_api_key_set">Définie</string>
+    <string name="settings_immich_api_key_dialog_title">Modifier la clé API Immich</string>
+    <string name="settings_immich_album_label">Album Immich (facultatif)</string>
+    <string name="settings_immich_album_whole_library">Bibliothèque entière</string>
+    <string name="settings_immich_album_dialog_title">Modifier l\'album Immich</string>
+    <string name="settings_immich_refresh_hours_label">Actualisation du catalogue photo (heures)</string>
+    <string name="settings_immich_refresh_hours_dialog_title">Modifier l\'intervalle d\'actualisation (heures)</string>
+    <string name="settings_immich_refresh_button">Actualiser le catalogue photo</string>
+    <string name="settings_immich_test_button">Tester la connexion Immich</string>
+    <string name="settings_immich_refreshing_status">Actualisation…</string>
+    <string name="settings_immich_testing_status">Test en cours…</string>
+    <string name="settings_immich_test_unreachable">Impossible de joindre le serveur : %1$s</string>
+    <string name="settings_immich_test_missing_scope">Il manque la portée \'%1$s\' à la clé API (HTTP %2$d). Régénérez la clé avec toutes les portées de lecture.</string>
+    <string name="settings_immich_test_no_album_filter">aucun filtre d\'album défini</string>
+    <string name="settings_immich_test_album_found">album \'%1$s\' trouvé</string>
+    <plurals name="settings_immich_test_album_not_found">
+        <item quantity="one">album \'%1$s\' introuvable parmi %2$d album</item>
+        <item quantity="other">album \'%1$s\' introuvable parmi %2$d albums</item>
+    </plurals>
+    <string name="settings_immich_test_thumbnails_ok">vignettes OK</string>
+    <string name="settings_immich_test_missing_asset_view">Portée asset.view MANQUANTE (régénérez la clé avec asset.view)</string>
+    <string name="settings_immich_test_no_assets">aucun élément pour tester l\'accès aux vignettes</string>
+    <plurals name="settings_immich_test_connected">
+        <item quantity="one">Connecté. %1$d album. %2$s. %3$s.</item>
+        <item quantity="other">Connecté. %1$d albums. %2$s. %3$s.</item>
+    </plurals>
+
+    <!-- Screensaver -->
+    <string name="settings_screensaver_test_button">Tester l\'écran de veille</string>
+    <string name="settings_screensaver_day_mode_label">Mode jour</string>
+    <string name="settings_screensaver_night_mode_label">Mode nuit</string>
+    <string name="settings_screensaver_mode_picsum">Picsum</string>
+    <string name="settings_screensaver_mode_immich">Immich</string>
+    <string name="settings_screensaver_mode_media_library">Bibliothèque multimédia</string>
+    <string name="settings_screensaver_mode_clock">Horloge</string>
+    <string name="settings_screensaver_mode_black">Noir</string>
+    <string name="settings_screensaver_overlay_bottom_left">En bas à gauche</string>
+    <string name="settings_screensaver_overlay_bottom_right">En bas à droite</string>
+    <string name="settings_screensaver_overlay_top_left">En haut à gauche</string>
+    <string name="settings_screensaver_overlay_top_right">En haut à droite</string>
+    <string name="settings_screensaver_overlay_random">Aléatoire</string>
+    <string name="settings_screensaver_order_shuffle">Aléatoire</string>
+    <string name="settings_screensaver_order_chronological">Chronologique</string>
+    <string name="settings_screensaver_idle_timeout_off">Délai d\'inactivité : désactivé</string>
+    <string name="settings_screensaver_idle_timeout">Délai d\'inactivité : %1$d min %2$ds</string>
+    <string name="settings_screensaver_weather_entity">Entité météo</string>
+    <string name="settings_screensaver_calendar_entity">Entité calendrier</string>
+    <string name="settings_screensaver_power_usage_entity">Entité de consommation électrique</string>
+    <string name="settings_screensaver_solar_power_entity">Entité de production solaire</string>
+    <string name="settings_screensaver_grid_power_entity_label">Entité de puissance réseau (+ import / − export)</string>
+    <string name="settings_screensaver_grid_power_entity_title">Entité de puissance réseau</string>
+    <string name="settings_screensaver_overlay_position_label">Position de la superposition</string>
+    <string name="settings_screensaver_picture_spacing">Espacement des images : %1$d dp</string>
+    <string name="settings_screensaver_source_label">Source</string>
+    <string name="settings_screensaver_source_pick">Choisir</string>
+    <string name="settings_screensaver_source_change">Changer</string>
+    <string name="settings_screensaver_display_order_label">Ordre d\'affichage</string>
+    <string name="settings_screensaver_immich_photos_summary">Serveur, clé API, album et actualisation du catalogue</string>
+
+    <!-- Sidebar -->
+    <string name="settings_sidebar_position_label">Position</string>
+    <string name="settings_sidebar_position_left">Gauche</string>
+    <string name="settings_sidebar_position_right">Droite</string>
+    <string name="settings_sidebar_position_top">Haut</string>
+    <string name="settings_sidebar_position_bottom">Bas</string>
+    <string name="settings_sidebar_pinned_label">Épinglée</string>
+    <string name="settings_sidebar_pinned_summary">Les barres latérales épinglées réservent de l\'espace au tableau de bord.</string>
+    <string name="settings_sidebar_show_labels_label">Afficher les libellés</string>
+    <string name="settings_sidebar_show_labels_summary">Affiche un court texte sous chaque icône de la barre latérale.</string>
+    <string name="settings_sidebar_add_shortcut_button">Ajouter un raccourci</string>
+    <string name="settings_sidebar_edit_shortcut_title">Modifier le raccourci</string>
+    <string name="settings_sidebar_add_shortcut_title">Ajouter un raccourci</string>
+    <string name="settings_sidebar_move_up">Déplacer vers le haut</string>
+    <string name="settings_sidebar_move_down">Déplacer vers le bas</string>
+    <string name="settings_sidebar_title_label">Titre</string>
+    <string name="settings_sidebar_label_label">Libellé</string>
+    <string name="settings_sidebar_icon_label">Icône</string>
+    <string name="settings_sidebar_action_label">Action</string>
+    <string name="settings_sidebar_dashboard_path_label">Chemin du tableau de bord</string>
+    <string name="settings_sidebar_action_settings">Paramètres</string>
+    <string name="settings_sidebar_action_open_settings">Ouvrir les paramètres</string>
+    <string name="settings_sidebar_action_reload_dashboard">Recharger le tableau de bord</string>
+    <string name="settings_sidebar_action_show_screensaver">Afficher l\'écran de veille</string>
+    <string name="settings_sidebar_action_dismiss_screensaver">Fermer l\'écran de veille</string>
+    <string name="settings_sidebar_action_night_mode_on">Mode nuit activé</string>
+    <string name="settings_sidebar_action_night_mode_off">Mode nuit désactivé</string>
+    <string name="settings_sidebar_action_open_dashboard_view">Ouvrir une vue du tableau de bord</string>
+    <string name="settings_sidebar_action_open_dashboard_view_path">Ouvrir une vue du tableau de bord : %1$s</string>
+    <string name="settings_sidebar_icon_moon">Lune</string>
+    <string name="settings_sidebar_icon_sun">Soleil</string>
+    <string name="settings_sidebar_icon_refresh">Actualiser</string>
+    <string name="settings_sidebar_icon_dashboard">Tableau de bord</string>
+
+    <!-- Device -->
+    <string name="settings_device_keep_screen_on">Garder l\'écran allumé</string>
+    <string name="settings_device_launch_on_boot">Lancer au démarrage</string>
+
+    <!-- Voice -->
+    <string name="settings_voice_enabled_title">Voix activée</string>
+    <string name="settings_voice_enabled_summary">Mot de réveil sur l\'appareil et HA Assist</string>
+    <string name="settings_voice_wake_word_label">Mot de réveil</string>
+    <string name="settings_voice_response_mode_label">Mode de réponse</string>
+    <string name="settings_voice_speech_pipeline_summary">%1$s principal, %2$s secondaire</string>
+    <string name="settings_voice_local_models_summary">%1$s, %2$s</string>
+    <string name="settings_voice_command_recording_summary_off">Désactivé</string>
+    <plurals name="settings_voice_command_recording_summary_on">
+        <item quantity="one">Conservation de %1$d enregistrement</item>
+        <item quantity="other">Conservation de %1$d enregistrements</item>
+    </plurals>
+    <string name="settings_voice_assist_provider_label">Fournisseur Assist</string>
+    <string name="settings_voice_primary_stt_label">STT principal</string>
+    <string name="settings_voice_secondary_stt_label">STT secondaire</string>
+    <string name="settings_voice_local_intent_recognizer_title">Reconnaissance d\'intention locale</string>
+    <string name="settings_voice_local_intent_recognizer_summary">Essayer les commandes d\'entité en cache avant le texte HA</string>
+    <string name="settings_voice_stt_model_label">Modèle STT</string>
+    <string name="settings_voice_intent_embedding_model_label">Modèle d\'embedding d\'intention</string>
+    <string name="settings_voice_save_command_recordings_title">Enregistrer les commandes audio</string>
+    <string name="settings_voice_save_command_recordings_summary">Conserver l\'audio réel des commandes pour révision et rétrotest STT local</string>
+    <string name="settings_voice_keep_recordings">Enregistrements conservés : %1$d</string>
+    <string name="settings_voice_clear_command_recordings_label">Effacer les enregistrements de commandes</string>
+    <string name="settings_voice_clear_command_recordings_confirm_title">Effacer les enregistrements de commandes ?</string>
+    <string name="settings_voice_silence_timeout">Délai de silence : %1$d ms</string>
+    <string name="settings_voice_model_selected">Sélectionné</string>
+    <string name="settings_voice_model_available">Disponible</string>
+    <string name="settings_voice_model_not_installed">Non installé</string>
+    <string name="settings_voice_model_downloading">Téléchargement</string>
+    <string name="settings_voice_model_install_failed">Échec de l\'installation</string>
+    <string name="settings_voice_model_download_content_description">Télécharger %1$s</string>
+    <string name="settings_voice_model_delete_content_description">Supprimer %1$s</string>
+
+    <!-- Connection / Home Assistant -->
+    <string name="settings_connection_ha_url_label">URL HA</string>
+    <string name="settings_connection_ha_url_dialog_title">Modifier l\'URL HA</string>
+    <string name="settings_connection_test_button">Tester la connexion</string>
+    <string name="settings_connection_reauthenticate_button">Réauthentifier HA</string>
+    <string name="settings_connection_reachable">✓ HA joignable</string>
+    <string name="settings_connection_unreachable">✗ Impossible de joindre HA à cette URL</string>
+    <string name="settings_connection_pinned_dashboard_label">Tableau de bord épinglé</string>
+    <string name="settings_connection_pinned_dashboard_dialog_title">Modifier le tableau de bord épinglé</string>
+    <string name="settings_connection_pinned_dashboard_summary">Verrouille sur ce tableau de bord. Laissez vide pour ne pas verrouiller.</string>
+
+    <!-- Admin -->
+    <string name="settings_admin_battery_help_button">Aide pour l\'économie de batterie</string>
+    <string name="settings_admin_ws_debug_button">Afficher le journal de débogage WS</string>
+
+    <!-- Settings shell -->
+    <string name="settings_exit_content_description">Quitter les paramètres</string>
+    <string name="settings_back_content_description">Retour</string>
+
+    <!-- First-run / reauth setup -->
+    <string name="setup_welcome_title">Bienvenue sur superdash</string>
+    <string name="setup_ha_url_intro">Saisissez l\'URL de votre Home Assistant pour commencer</string>
+    <string name="setup_ha_url_label">URL HA</string>
+    <string name="setup_ha_url_placeholder">homeassistant.local:8123</string>
+    <string name="setup_sign_in_again_button">Se reconnecter</string>
+    <string name="setup_continue_button">Continuer</string>
+    <string name="error_sign_in_failed">Impossible de se connecter à HA. Raison : %1$s</string>
+
+    <!-- Connection status -->
+    <string name="connection_status_connected">Connecté à HA  (v%1$s)</string>
+    <string name="connection_status_connecting">Connexion…</string>
+    <string name="connection_status_disconnected">Déconnecté</string>
+    <string name="connection_status_failed">Déconnecté : %1$s</string>
+    <string name="connection_status_needs_reauth">Réauthentification requise</string>
+    <plurals name="connection_status_entity_count">
+        <item quantity="one">%1$d entité</item>
+        <item quantity="other">%1$d entités</item>
+    </plurals>
+
+    <!-- Sidebar overlay -->
+    <string name="sidebar_dismiss_content_description">Fermer la barre latérale</string>
+    <string name="sidebar_unpin_content_description">Désépingler la barre latérale</string>
+    <string name="sidebar_pin_content_description">Épingler la barre latérale</string>
+    <string name="sidebar_item_active_content_description">%1$s, actif</string>
+
+    <!-- Voice overlay -->
+    <string name="voice_overlay_wake_word">Mot de réveil</string>
+    <string name="voice_overlay_listening">Écoute…</string>
+    <string name="voice_overlay_thinking">Réflexion…</string>
+    <string name="voice_overlay_done">Terminé</string>
+    <string name="voice_overlay_speaking">Réponse…</string>
+    <string name="voice_overlay_failed">Échec de la commande vocale</string>
+
+    <!-- Voice service notification -->
+    <string name="notification_voice_channel_name">superdash Voix</string>
+    <string name="notification_voice_title">superdash voix</string>
+    <string name="notification_voice_text">Écoute du mot de réveil</string>
+
+    <!-- Kiosk keep-alive notification -->
+    <string name="notification_kiosk_channel_name">Maintien actif du kiosque</string>
+    <string name="notification_kiosk_channel_description">Maintient superdash actif sur les appareils à gestion de batterie agressive.</string>
+    <string name="notification_kiosk_title">superdash</string>
+    <string name="notification_kiosk_text">Tableau de bord actif</string>
+
+    <!-- Settings view model messages -->
+    <plurals name="settings_immich_refresh_success">
+        <item quantity="one">%1$d élément actualisé</item>
+        <item quantity="other">%1$d éléments actualisés</item>
+    </plurals>
+    <string name="settings_immich_refresh_failed">Échec de l\'actualisation : %1$s</string>
+</resources>

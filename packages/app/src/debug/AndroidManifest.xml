@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver
+            android:name=".voice.WakeWordTestReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.superdash.DEBUG_WAKE_TEST" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".voice.AssistPipelineTestReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.superdash.DEBUG_ASSIST_TEST" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".voice.WakeAssistPipelineTestReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.superdash.DEBUG_WAKE_ASSIST_TEST" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".voice.DebugVoiceSettingsReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.superdash.DEBUG_VOICE_SETTINGS" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

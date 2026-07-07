@@ -69,6 +69,12 @@ fun SidebarSettingsSection(
         onCheckedChange = actions.onShowLabelsChange,
         supportingText = stringResource(R.string.settings_sidebar_show_labels_summary),
     )
+    SettingsSwitchRow(
+        label = stringResource(R.string.settings_sidebar_edge_handle_label),
+        checked = state.edgeHandle,
+        onCheckedChange = actions.onEdgeHandleChange,
+        supportingText = stringResource(R.string.settings_sidebar_edge_handle_summary),
+    )
     state.shortcuts.forEachIndexed { index, shortcut ->
         val isSettingsShortcut = shortcut.action is SidebarAction.OpenSettings
         val previousShortcut = state.shortcuts.getOrNull(index - 1)

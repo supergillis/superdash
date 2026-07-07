@@ -314,7 +314,9 @@ private fun MainContent(
         SidebarRailLayout(
             position = state.sidebar.position,
             pinned = state.sidebar.pinned,
+            edgeHandle = state.sidebar.edgeHandle,
             open = sidebarOpen,
+            idle = state.isIdle,
             showLabels = state.sidebar.showLabels,
             nightModeActive = state.nightModeActive,
             shortcuts = state.sidebar.shortcuts,

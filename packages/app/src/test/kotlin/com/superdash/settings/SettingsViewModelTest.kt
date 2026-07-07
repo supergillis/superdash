@@ -510,6 +510,7 @@ class SettingsViewModelTest {
                     shortcutsFlow = MutableStateFlow(SidebarSettingsDefaults.shortcuts.take(2)),
                 )
             sidebar.showLabelsValue.value = true
+            sidebar.edgeHandleValue.value = false
             val viewModel = buildViewModel(sidebar = sidebar)
             backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -517,6 +518,7 @@ class SettingsViewModelTest {
             assertEquals(SidebarPosition.Top, viewModel.uiState.value.sidebar.position)
             assertEquals(true, viewModel.uiState.value.sidebar.pinned)
             assertEquals(true, viewModel.uiState.value.sidebar.showLabels)
+            assertEquals(false, viewModel.uiState.value.sidebar.edgeHandle)
             assertEquals(SidebarSettingsDefaults.shortcuts.take(2), viewModel.uiState.value.sidebar.shortcuts)
         }
 
@@ -546,6 +548,18 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(true, sidebar.lastShowLabels)
+        }
+
+    @Test
+    fun `setSidebarEdgeHandle delegates to sidebar settings`() =
+        runTest {
+            val sidebar = FakeSidebarSettings()
+            val viewModel = buildViewModel(sidebar = sidebar)
+
+            viewModel.setSidebarEdgeHandle(false)
+            advanceUntilIdle()
+
+            assertEquals(false, sidebar.lastEdgeHandle)
         }
 
     private class FakeKioskSettings(
@@ -582,15 +596,18 @@ class SettingsViewModelTest {
         shortcutsFlow: MutableStateFlow<List<SidebarShortcut>> = MutableStateFlow(SidebarSettingsDefaults.shortcuts),
     ) : SidebarSettings {
         val showLabelsValue = MutableStateFlow(false)
+        val edgeHandleValue = MutableStateFlow(true)
 
         override val position: Flow<SidebarPosition> = positionFlow.asStateFlow()
         override val pinned: Flow<Boolean> = pinnedFlow.asStateFlow()
         override val showLabels: Flow<Boolean> = showLabelsValue
+        override val edgeHandle: Flow<Boolean> = edgeHandleValue
         override val shortcuts: Flow<List<SidebarShortcut>> = shortcutsFlow.asStateFlow()
 
         var lastPosition: SidebarPosition? = null
         var lastPinned: Boolean? = null
         var lastShowLabels: Boolean? = null
+        var lastEdgeHandle: Boolean? = null
         var lastShortcuts: List<SidebarShortcut>? = null
 
         override suspend fun setPosition(value: SidebarPosition) {
@@ -604,6 +621,11 @@ class SettingsViewModelTest {
         override suspend fun setShowLabels(value: Boolean) {
             lastShowLabels = value
             showLabelsValue.value = value
+        }
+
+        override suspend fun setEdgeHandle(value: Boolean) {
+            lastEdgeHandle = value
+            edgeHandleValue.value = value
         }
 
         override suspend fun setShortcuts(value: List<SidebarShortcut>) {

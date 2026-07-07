@@ -67,6 +67,7 @@ class MainViewModelTest {
         val sidebarPinned = MutableStateFlow(false)
         val sidebarShowLabels = MutableStateFlow(false)
         val sidebarShortcuts = MutableStateFlow(SidebarSettingsDefaults.shortcuts)
+        val sidebarEdgeHandle = MutableStateFlow(SidebarSettingsDefaults.edgeHandle)
 
         val viewModel =
             MainViewModel(
@@ -86,6 +87,7 @@ class MainViewModelTest {
                 sidebarPinnedFlow = sidebarPinned,
                 sidebarShowLabelsFlow = sidebarShowLabels,
                 sidebarShortcutsFlow = sidebarShortcuts,
+                sidebarEdgeHandleFlow = sidebarEdgeHandle,
             )
 
         return viewModel to Inputs(haUrl, tokens, haState, voiceEnabled, doorbellState)
@@ -234,6 +236,7 @@ class MainViewModelTest {
             val sidebarPinned = MutableStateFlow(true)
             val sidebarShowLabels = MutableStateFlow(true)
             val sidebarShortcuts = MutableStateFlow(SidebarSettingsDefaults.shortcuts.take(1))
+            val sidebarEdgeHandle = MutableStateFlow(false)
             val viewModel =
                 MainViewModel(
                     haUrlFlow = haUrl,
@@ -252,6 +255,7 @@ class MainViewModelTest {
                     sidebarPinnedFlow = sidebarPinned,
                     sidebarShowLabelsFlow = sidebarShowLabels,
                     sidebarShortcutsFlow = sidebarShortcuts,
+                    sidebarEdgeHandleFlow = sidebarEdgeHandle,
                 )
 
             backgroundScope.launch { viewModel.uiState.collect {} }
@@ -261,5 +265,6 @@ class MainViewModelTest {
             assertEquals(true, viewModel.uiState.value.sidebar.pinned)
             assertEquals(true, viewModel.uiState.value.sidebar.showLabels)
             assertEquals(SidebarSettingsDefaults.shortcuts.take(1), viewModel.uiState.value.sidebar.shortcuts)
+            assertEquals(false, viewModel.uiState.value.sidebar.edgeHandle)
         }
 }

@@ -81,6 +81,7 @@ internal fun testSettingsActions(): SettingsActions =
                 onPositionChange = {},
                 onPinnedChange = {},
                 onShowLabelsChange = {},
+                onEdgeHandleChange = {},
                 onShortcutsChange = {},
             ),
         admin =

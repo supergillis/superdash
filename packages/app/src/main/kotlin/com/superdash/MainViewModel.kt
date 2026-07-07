@@ -36,6 +36,7 @@ class MainViewModel(
     sidebarPinnedFlow: Flow<Boolean>,
     sidebarShowLabelsFlow: Flow<Boolean>,
     sidebarShortcutsFlow: Flow<List<SidebarShortcut>>,
+    sidebarEdgeHandleFlow: Flow<Boolean>,
 ) : ViewModel() {
     private val connectionFlow =
         combine(haUrlFlow, dashboardPathFlow, tokensFlow, haStateFlow) { haUrl, dashboardPath, tokens, haState ->
@@ -78,11 +79,13 @@ class MainViewModel(
             sidebarPinnedFlow,
             sidebarShowLabelsFlow,
             sidebarShortcutsFlow,
-        ) { position, pinned, showLabels, shortcuts ->
+            sidebarEdgeHandleFlow,
+        ) { position, pinned, showLabels, shortcuts, edgeHandle ->
             SidebarUiState(
                 position = position,
                 pinned = pinned,
                 showLabels = showLabels,
+                edgeHandle = edgeHandle,
                 shortcuts = shortcuts.toImmutableList(),
             )
         }
@@ -177,6 +180,7 @@ class MainViewModel(
                 sidebarPinnedFlow = graph.sidebarSettings.pinned,
                 sidebarShowLabelsFlow = graph.sidebarSettings.showLabels,
                 sidebarShortcutsFlow = graph.sidebarSettings.shortcuts,
+                sidebarEdgeHandleFlow = graph.sidebarSettings.edgeHandle,
             ) as T
     }
 }

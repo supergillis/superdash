@@ -22,22 +22,30 @@ import org.junit.runner.RunWith
 class SettingsContentTest {
     @get:Rule val composeRule = createComposeRule()
 
+    // LocaleManager is API 33+; below that these tests rely on the test device
+    // being set to English. An app-chosen AppCompat locale cannot interfere
+    // below 33: createComposeRule hosts content in a plain ComponentActivity,
+    // which AppCompat locale wrapping never touches.
     @Before
     fun forceEnglish() {
-        androidx.test.platform.app.InstrumentationRegistry
-            .getInstrumentation()
-            .targetContext
-            .getSystemService(android.app.LocaleManager::class.java)
-            .applicationLocales = android.os.LocaleList.forLanguageTags("en")
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+                .getSystemService(android.app.LocaleManager::class.java)
+                .applicationLocales = android.os.LocaleList.forLanguageTags("en")
+        }
     }
 
     @After
     fun resetLocale() {
-        androidx.test.platform.app.InstrumentationRegistry
-            .getInstrumentation()
-            .targetContext
-            .getSystemService(android.app.LocaleManager::class.java)
-            .applicationLocales = android.os.LocaleList.getEmptyLocaleList()
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+                .getSystemService(android.app.LocaleManager::class.java)
+                .applicationLocales = android.os.LocaleList.getEmptyLocaleList()
+        }
     }
 
     @Test

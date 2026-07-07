@@ -25,7 +25,7 @@ This is for installing a released build on a tablet. To build it yourself, see
 
 ### Requirements
 
-- **Android 15 or newer (API level 35). This is a hard requirement. The app
+- **Android 11 or newer (API level 30). This is a hard requirement. The app
   will not install on older Android versions.**
 - An arm64 (64-bit) tablet. The APK ships arm64-v8a only.
 - A running Home Assistant instance reachable from the tablet's network.
@@ -92,6 +92,7 @@ Open Settings by swiping in from the screen edge. Top-level sections:
   rings.
 - `ESPHome`: turn on `Enabled` to expose superdash to Home Assistant over the
   ESPHome protocol so HA can read and control the kiosk.
+- `General`: pick the app language.
 
 ## Status & Disclaimers
 

@@ -36,9 +36,6 @@ class KioskService : LifecycleService() {
     }
 
     private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT < 26) {
-            return
-        }
         val mgr = getSystemService<NotificationManager>() ?: return
         if (mgr.getNotificationChannel(CHANNEL) != null) {
             return
@@ -81,12 +78,7 @@ class KioskService : LifecycleService() {
         private const val REQ_OPEN = 100
 
         fun start(context: Context) {
-            val intent = Intent(context, KioskService::class.java)
-            if (Build.VERSION.SDK_INT >= 26) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            context.startForegroundService(Intent(context, KioskService::class.java))
         }
     }
 }

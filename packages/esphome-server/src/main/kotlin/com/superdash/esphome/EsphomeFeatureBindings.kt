@@ -97,6 +97,7 @@ data class EsphomeCameraBindings(
     val setMotionClearDelaySec: suspend (Float) -> Unit,
     val wakeOnMotion: Flow<Boolean>,
     val setWakeOnMotion: suspend (Boolean) -> Unit,
+    val cameraStatus: Flow<String>,
     val jpegFrames: Flow<ByteArray>,
     val latestJpeg: suspend () -> ByteArray?,
 )

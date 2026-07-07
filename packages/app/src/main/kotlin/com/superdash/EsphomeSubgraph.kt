@@ -200,6 +200,10 @@ class EsphomeSubgraph(
             setMotionClearDelaySec = { value -> cameraSettings.setMotionClearDelaySec(value.toInt()) },
             wakeOnMotion = cameraSettings.wakeOnMotion,
             setWakeOnMotion = { value -> cameraSettings.setWakeOnMotion(value) },
+            cameraStatus =
+                cameraController.availability
+                    .map { it::class.simpleName.orEmpty() }
+                    .distinctUntilChanged(),
             jpegFrames = cameraController.jpegFrames,
             latestJpeg = { cameraController.latestJpeg() },
         )

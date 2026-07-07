@@ -405,6 +405,11 @@ internal fun esphomeEntities(
             unitOfMeasurement = "s",
             onCommand = camera.setMotionClearDelaySec,
         ),
+        textSensorEntity(
+            objectId = "camera_status",
+            name = "Camera Status",
+            state = camera.cameraStatus,
+        ),
         EsphomeEntity.Camera(
             key = keyFromObjectId("camera"),
             objectId = "camera",

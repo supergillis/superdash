@@ -84,6 +84,7 @@ The camera module exposes:
 - `camera_enabled` and `wake_on_motion` switches to control capture and screensaver wake.
 - `motion_detection_mode` select to choose between `off`, `motion`, and `person` (ML Kit).
 - `motion_sensitivity` and `motion_clear_delay_sec` numbers to tune detection and event hold.
+- `camera_status` text sensor reporting the pipeline state (`Off`, `Running`, `PermissionMissing`, `Error`).
 
 The JPEG stream is chunked to 15 KiB frames to fit under the 16 KiB Noise frame cap. A rolling ~5 second window is refreshed at several fps; Home Assistant polls the picture entity to fetch the latest frame.
 

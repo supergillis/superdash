@@ -8,6 +8,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import org.esphome.api.BinarySensorStateResponse
 import org.esphome.api.ButtonCommandRequest
@@ -67,6 +69,7 @@ internal class EsphomeConnection(
     private var helloDone = false
     private var stateJobs: List<Job> = emptyList()
     private var cameraStreamJob: Job? = null
+    private val cameraSendMutex = Mutex()
 
     @Volatile private var cameraStreamDeadlineNanos = Long.MIN_VALUE
 
@@ -452,8 +455,10 @@ internal class EsphomeConnection(
         key: Int,
         jpeg: ByteArray,
     ) {
-        for (chunk in cameraImageChunks(key, jpeg)) {
-            transport.writeFrame(EsphomeMessageType.CAMERA_IMAGE_RESPONSE, chunk.toByteArray())
+        cameraSendMutex.withLock {
+            for (chunk in cameraImageChunks(key, jpeg)) {
+                transport.writeFrame(EsphomeMessageType.CAMERA_IMAGE_RESPONSE, chunk.toByteArray())
+            }
         }
     }
 }

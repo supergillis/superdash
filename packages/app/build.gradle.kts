@@ -13,8 +13,8 @@ android {
         applicationId = "com.superdash"
         minSdk = 30
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
 
         // Ship arm64-v8a only: modern tablets and Apple Silicon emulators.
         // Filters both the CMake-built libs and the prebuilt AAR native libs.

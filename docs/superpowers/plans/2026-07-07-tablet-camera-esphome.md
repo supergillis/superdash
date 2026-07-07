@@ -12,7 +12,10 @@
 
 ## Global Constraints
 
-- Android 15+ (API 35) only; arm64 only. JDK 17.
+- App minSdk 30, targetSdk 35 (library modules minSdk 26); arm64 only. JDK 17.
+  Guard any API-31+ platform calls with `Build.VERSION.SDK_INT` checks
+  (`ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA` exists since API 30 and needs
+  no guard).
 - Every commit must pass `./gradlew ktlintCheck` — run `./gradlew ktlintFormat` before each commit.
 - kotlinx-coroutines version is 1.9.0 (inline versions in `gradle/libs.versions.toml`).
 - Protobuf classes are generated from `src/main/proto-pristine/api.proto` with the lite runtime into package `org.esphome.api`. Do NOT edit the pristine proto.

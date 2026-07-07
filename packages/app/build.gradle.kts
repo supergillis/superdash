@@ -13,8 +13,13 @@ android {
         applicationId = "com.superdash"
         minSdk = 35
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionName = "0.1.0" // x-release-please-version
+        // Derived so release-please only manages versionName. Monotonic
+        // while minor and patch stay below 100.
+        versionCode =
+            versionName!!.split(".").map { it.toInt() }.let { (major, minor, patch) ->
+                major * 10000 + minor * 100 + patch
+            }
 
         // Ship arm64-v8a only: modern tablets and Apple Silicon emulators.
         // Filters both the CMake-built libs and the prebuilt AAR native libs.

@@ -68,8 +68,6 @@ class SettingsViewModelTest {
 
     private val fakeLocaleController =
         object : LocaleSettingsController {
-            override fun isPerAppLanguageSupported(): Boolean = true
-
             override fun currentLanguage(): SupportedLanguage? = null
 
             override fun setLanguage(language: SupportedLanguage?) = Unit
@@ -88,14 +86,11 @@ class SettingsViewModelTest {
 
     private class FakeLocaleController(
         private val language: SupportedLanguage? = null,
-        private val perAppLanguageSupported: Boolean = true,
     ) : LocaleSettingsController {
         var lastSetLanguage: SupportedLanguage? = null
             private set
         var setLanguageCallCount = 0
             private set
-
-        override fun isPerAppLanguageSupported(): Boolean = perAppLanguageSupported
 
         override fun currentLanguage(): SupportedLanguage? = language
 
@@ -259,17 +254,6 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(SupportedLanguage.FRENCH, viewModel.uiState.value.general.currentLanguage)
-        }
-
-    @Test
-    fun `languagePickerAvailable follows localeController support`() =
-        runTest {
-            val localeController = FakeLocaleController(perAppLanguageSupported = false)
-            val viewModel = buildViewModel(localeController = localeController)
-            backgroundScope.launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            assertEquals(false, viewModel.uiState.value.general.languagePickerAvailable)
         }
 
     @Test

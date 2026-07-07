@@ -319,11 +319,7 @@ class SettingsViewModel(
                 immich = features.immich,
                 sidebar = features.sidebar,
                 overlay = core.overlay,
-                general =
-                    GeneralSettingsState(
-                        currentLanguage = language,
-                        languagePickerAvailable = localeController.isPerAppLanguageSupported(),
-                    ),
+                general = GeneralSettingsState(currentLanguage = language),
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState.empty())
 
@@ -587,9 +583,6 @@ class SettingsViewModel(
                     },
                 localeController =
                     object : LocaleSettingsController {
-                        override fun isPerAppLanguageSupported(): Boolean =
-                            graph.localeController.isPerAppLanguageSupported()
-
                         override fun currentLanguage(): SupportedLanguage? =
                             graph.localeController.currentLanguage()
 

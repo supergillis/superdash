@@ -1,7 +1,5 @@
 package com.superdash.settings.ui
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.superdash.R
@@ -16,14 +14,6 @@ fun GeneralSettingsSection(
     state: GeneralSettingsState,
     actions: GeneralSettingsActions,
 ) {
-    if (!state.languagePickerAvailable) {
-        Text(
-            text = stringResource(R.string.settings_language_unavailable),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        return
-    }
-
     val choices =
         listOf(
             SettingsChoice<SupportedLanguage?>(

@@ -92,8 +92,7 @@ Open Settings by swiping in from the screen edge. Top-level sections:
   rings.
 - `ESPHome`: turn on `Enabled` to expose superdash to Home Assistant over the
   ESPHome protocol so HA can read and control the kiosk.
-- `General`: pick the app language (requires Android 13 or newer; on older
-  Android the app follows the system language).
+- `General`: pick the app language.
 
 ## Status & Disclaimers
 

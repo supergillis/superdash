@@ -16,6 +16,7 @@ ESPHome native API, so HA can read and control the kiosk.
 - **Hands-free voice** — On-device wake word detection sends your speech straight to Home Assistant Assist.
 - **Ambient screensaver** — Photo slideshow (Immich), clock overlay, and a night mode for idle hours.
 - **Doorbell overlays** — A live camera feed pops up when a doorbell rings.
+- **Camera & motion sensing** — Exposes the tablet camera and an on-device motion sensor to Home Assistant, and can wake the screen when someone approaches.
 - **Two-way with Home Assistant** — Exposes the tablet back to HA over the ESPHome native API, so HA can read and control the kiosk.
 - **Customizable sidebar** — A rail of shortcuts (settings, reload, sleep/wake, night mode, jump to any dashboard view) pinned to any screen edge.
 
@@ -125,6 +126,7 @@ kiosk product.
 | Package | Purpose |
 |---|---|
 | `packages/app` | Android app, UI, wiring, services, settings. |
+| `packages/camera` | Tablet camera pipeline and motion detection for the ESPHome camera entity. |
 | `packages/core` | Shared logging and small utilities. |
 | `packages/ha-client` | Home Assistant OAuth, tokens, WebSocket, Assist, media source. |
 | `packages/voice` | Wake word, on-device STT (Whisper/Moonshine), local intents. |

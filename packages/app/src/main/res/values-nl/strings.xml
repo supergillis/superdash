@@ -5,6 +5,7 @@
     <string name="settings_general_summary">Taal en algemene app-voorkeuren</string>
     <string name="settings_language_title">Taal</string>
     <string name="settings_language_system_default">Systeemstandaard</string>
+    <string name="settings_language_unavailable">Een taal kiezen in de app vereist Android 13 of nieuwer. superdash volgt de systeemtaal.</string>
     <string name="settings_home_assistant_title">Home Assistant</string>
     <string name="settings_home_assistant_summary">Verbinding, authenticatie en dashboard</string>
     <string name="settings_kiosk_title">Kiosk</string>

@@ -84,6 +84,7 @@ data class SettingsUiState(
 @Immutable
 data class GeneralSettingsState(
     val currentLanguage: SupportedLanguage? = null,
+    val languagePickerAvailable: Boolean = true,
 )
 
 @Immutable

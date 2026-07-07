@@ -7,6 +7,8 @@ import com.superdash.core.locale.SupportedLanguage
  * [SettingsViewModel] can be unit tested without a real Android [android.content.Context].
  */
 interface LocaleSettingsController {
+    fun isPerAppLanguageSupported(): Boolean
+
     fun currentLanguage(): SupportedLanguage?
 
     fun setLanguage(language: SupportedLanguage?)

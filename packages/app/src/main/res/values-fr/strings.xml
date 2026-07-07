@@ -5,6 +5,7 @@
     <string name="settings_general_summary">Langue et préférences générales de l\'application</string>
     <string name="settings_language_title">Langue</string>
     <string name="settings_language_system_default">Paramètre système</string>
+    <string name="settings_language_unavailable">Le choix de la langue dans l’application nécessite Android 13 ou plus récent. superdash suit la langue du système.</string>
     <string name="settings_home_assistant_title">Home Assistant</string>
     <string name="settings_home_assistant_summary">Connexion, authentification et tableau de bord</string>
     <string name="settings_kiosk_title">Kiosque</string>

@@ -5,6 +5,7 @@
     <string name="settings_general_summary">Language and app-wide preferences</string>
     <string name="settings_language_title">Language</string>
     <string name="settings_language_system_default">System default</string>
+    <string name="settings_language_unavailable">Choosing a language in the app needs Android 13 or newer. superdash follows the system language.</string>
     <string name="settings_home_assistant_title">Home Assistant</string>
     <string name="settings_home_assistant_summary">Connection, authentication, and dashboard</string>
     <string name="settings_kiosk_title">Kiosk</string>

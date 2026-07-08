@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -235,8 +236,7 @@ class ImmichApiClientTest {
             assertEquals(2, pageIndex)
             capturedPaths.forEach { assertEquals("/api/search/metadata", it) }
             capturedBodies.forEach { body ->
-                assertTrue("album request must carry albumIds filter: $body", body.contains("\"albumIds\""))
-                assertTrue("album request must reference the album id: $body", body.contains("alb-1"))
+                assertTrue("album request must carry exact albumIds filter: $body", body.contains("\"albumIds\":[\"alb-1\"]"))
             }
         }
 
@@ -302,6 +302,69 @@ class ImmichApiClientTest {
             val asset = client.getAsset("some-id")
             assertEquals("name.jpg", asset.originalFileName)
             assertEquals("Paris", asset.exifInfo?.city)
+        }
+
+    @Test
+    fun `canViewAsset returns null when the album has no assets`() =
+        runTest {
+            val engine =
+                MockEngine {
+                    respond(
+                        content = """{"assets":{"items":[],"nextPage":null}}""",
+                        headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                    )
+                }
+            val client =
+                ImmichApiClient(HttpClient(engine) { install(ContentNegotiation) { json() } }, "http://immich", "key")
+
+            assertNull(client.canViewAsset("alb-1"))
+        }
+
+    @Test
+    fun `canViewAsset returns true on a 2xx thumbnail HEAD and probes one asset via albumIds`() =
+        runTest {
+            var searchBody = ""
+            val engine =
+                MockEngine { request ->
+                    if (request.url.encodedPath == "/api/search/metadata") {
+                        searchBody = request.body.toByteArray().decodeToString()
+                        respond(
+                            content = """{"assets":{"items":[{"id":"a","type":"IMAGE","originalFileName":"a.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":null}}""",
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    } else {
+                        // thumbnail HEAD
+                        respond("", status = HttpStatusCode.OK)
+                    }
+                }
+            val client =
+                ImmichApiClient(HttpClient(engine) { install(ContentNegotiation) { json() } }, "http://immich", "key")
+
+            assertEquals(true, client.canViewAsset("alb-1"))
+            // The probe filters to the album and fetches a single asset without EXIF.
+            assertTrue("probe must filter by album: $searchBody", searchBody.contains("\"albumIds\":[\"alb-1\"]"))
+            assertTrue("probe must request a single asset: $searchBody", searchBody.contains("\"size\":1"))
+            assertFalse("probe must not request EXIF: $searchBody", searchBody.contains("\"withExif\":true"))
+        }
+
+    @Test
+    fun `canViewAsset returns false when the thumbnail HEAD is forbidden`() =
+        runTest {
+            val engine =
+                MockEngine { request ->
+                    if (request.url.encodedPath == "/api/search/metadata") {
+                        respond(
+                            content = """{"assets":{"items":[{"id":"a","type":"IMAGE","originalFileName":"a.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":null}}""",
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    } else {
+                        respond("forbidden", status = HttpStatusCode.Forbidden)
+                    }
+                }
+            val client =
+                ImmichApiClient(HttpClient(engine) { install(ContentNegotiation) { json() } }, "http://immich", "key")
+
+            assertEquals(false, client.canViewAsset("alb-1"))
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)

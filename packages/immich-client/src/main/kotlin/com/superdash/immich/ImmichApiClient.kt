@@ -37,13 +37,18 @@ class ImmichApiClient(
      *
      *  Album assets go through search/metadata (not `GET /api/albums/{id}`) because
      *  Immich v3 dropped the inline `assets` array from the album-details response;
-     *  the `albumIds` search filter works on both v2 and v3. */
+     *  the `albumIds` search filter works on both v2 and v3.
+     *
+     *  Caveat vs the old album-details payload: search/metadata scopes results to
+     *  the authenticated user (plus partners) and omits archived assets, so a
+     *  shared album containing another user's uploads — or archived photos — can
+     *  return a subset of what `GET /api/albums/{id}` used to. */
     suspend fun listCatalog(albumId: String? = null): List<ImmichCatalogEntry> =
         paginate(albumId)
             .filter { it.type == IMMICH_IMAGE || it.type == IMMICH_VIDEO }
             .map { it.toCatalogEntry() }
 
-    private suspend fun paginate(albumId: String? = null): List<ImmichAsset> {
+    private suspend fun paginate(albumId: String?): List<ImmichAsset> {
         val out = mutableListOf<ImmichAsset>()
         var page: String? = "1"
         var pagesFetched = 0
@@ -87,6 +92,8 @@ class ImmichApiClient(
     private suspend fun fetchSearchPage(
         page: String,
         albumId: String?,
+        size: Int = CATALOG_PAGE_SIZE,
+        withExif: Boolean = true,
     ): ImmichSearchPage {
         val response: HttpResponse =
             httpClient.post {
@@ -96,8 +103,8 @@ class ImmichApiClient(
                 setBody(
                     buildJsonObject {
                         put("page", page.toInt())
-                        put("size", 1000)
-                        put("withExif", true)
+                        put("size", size)
+                        put("withExif", withExif)
                         if (albumId != null) {
                             putJsonArray("albumIds") { add(albumId) }
                         }
@@ -168,8 +175,12 @@ class ImmichApiClient(
      *  correct on Immich v3 (which no longer inlines assets in album details). */
     suspend fun canViewAsset(albumId: String): Boolean? {
         val firstAsset =
-            runCatching { fetchSearchPage(page = "1", albumId = albumId).assets.items.firstOrNull()?.id }
-                .getOrNull()
+            runCatching {
+                fetchSearchPage(page = "1", albumId = albumId, size = 1, withExif = false)
+                    .assets.items
+                    .firstOrNull()
+                    ?.id
+            }.getOrNull()
                 ?: return null
         return runCatching { authHead("/api/assets/$firstAsset/thumbnail?size=preview").status.value in 200..299 }
             .getOrElse { false }
@@ -190,6 +201,7 @@ class ImmichApiClient(
     private companion object {
         const val IMMICH_IMAGE = "IMAGE"
         const val IMMICH_VIDEO = "VIDEO"
+        const val CATALOG_PAGE_SIZE = 1000
         const val CATALOG_PAGE_ATTEMPTS = 3
         const val CATALOG_PAGE_RETRY_DELAY_MS = 1_000L
 

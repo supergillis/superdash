@@ -30,14 +30,15 @@ class CameraServiceController(
 ) {
     init {
         scope.launch {
-            enabled.distinctUntilChanged().collect { isEnabled ->
-                if (!isEnabled) stop()
-            }
-        }
-        scope.launch {
-            combine(enabled, screenOn) { isEnabled, isScreenOn -> isEnabled && isScreenOn }
+            combine(enabled, screenOn) { isEnabled, isScreenOn -> isEnabled to isScreenOn }
                 .distinctUntilChanged()
-                .collect { active -> if (active) start() }
+                .collect { (isEnabled, isScreenOn) ->
+                    if (!isEnabled) {
+                        stop()
+                    } else if (isScreenOn) {
+                        start()
+                    }
+                }
         }
     }
 }

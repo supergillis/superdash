@@ -194,6 +194,8 @@ class CameraXPipeline(
                     "code" to state.error?.code,
                     "type" to state.type,
                 )
+                availabilityState.value =
+                    CameraAvailability.Error(state.error?.code?.toString() ?: "camera disconnected")
                 scheduleRetry()
             }
         }

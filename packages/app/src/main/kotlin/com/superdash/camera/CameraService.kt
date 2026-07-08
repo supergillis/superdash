@@ -108,32 +108,40 @@ class CameraService : LifecycleService() {
             .build()
 
     companion object {
-        fun start(
-            context: Context,
-            shouldRun: Boolean,
-        ) {
+        fun start(context: Context) {
             val hasCameraPermission =
                 ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
                     PackageManager.PERMISSION_GRANTED
-            val shouldRequestStart =
-                ForegroundServiceStartPolicy.shouldRequestStart(
-                    shouldRun = shouldRun,
+            if (!ForegroundServiceStartPolicy.shouldRequestStart(
+                    shouldRun = true,
                     permissionGranted = hasCameraPermission,
                 )
-            if (!shouldRequestStart) {
-                val reason =
-                    ForegroundServiceStartPolicy.skipStartReason(
-                        shouldRun = shouldRun,
-                        permissionGranted = hasCameraPermission,
-                    )
+            ) {
                 log.w(
                     "camera service start skipped",
                     null,
-                    "reason" to reason,
+                    "reason" to
+                        ForegroundServiceStartPolicy.skipStartReason(
+                            shouldRun = true,
+                            permissionGranted = hasCameraPermission,
+                        ),
                 )
                 return
             }
-            context.startForegroundService(Intent(context, CameraService::class.java))
+            // startForegroundService throws ForegroundServiceStartNotAllowedException
+            // (an IllegalStateException, API 31+) or SecurityException at the CALLER
+            // if the process is in the background — the in-service tryStartForeground
+            // guard does not cover this. The controller only calls start() while the
+            // screen is on, but a residual background-start (e.g. screen on while our
+            // app is not foreground) must fail gracefully, not crash-loop the sticky
+            // kiosk process.
+            try {
+                context.startForegroundService(Intent(context, CameraService::class.java))
+            } catch (e: IllegalStateException) {
+                log.w("camera service start rejected by system", e)
+            } catch (e: SecurityException) {
+                log.w("camera service start rejected by system", e)
+            }
         }
 
         fun stop(context: Context) {

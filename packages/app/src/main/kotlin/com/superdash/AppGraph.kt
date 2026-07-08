@@ -5,6 +5,8 @@ import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.superdash.camera.CameraController
+import com.superdash.camera.CameraService
+import com.superdash.camera.CameraServiceController
 import com.superdash.camera.CameraSettings
 import com.superdash.camera.CameraXPipeline
 import com.superdash.camera.FrameDiffMotionDetector
@@ -218,6 +220,16 @@ class AppGraph(
 
     val screenStateProvider: ScreenStateProvider =
         ScreenStateProvider(application.applicationContext)
+
+    @Suppress("unused")
+    private val cameraServiceController: CameraServiceController =
+        CameraServiceController(
+            enabled = cameraSettings.enabled,
+            screenOn = screenStateProvider.state,
+            scope = scope,
+            start = { CameraService.start(application.applicationContext) },
+            stop = { CameraService.stop(application.applicationContext) },
+        )
 
     val haConnectivityController: HaConnectivityController =
         HaConnectivityController(

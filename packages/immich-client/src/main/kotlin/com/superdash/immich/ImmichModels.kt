@@ -84,13 +84,6 @@ data class ImmichAlbum(
 )
 
 @Serializable
-data class ImmichAlbumDetails(
-    val id: String,
-    val albumName: String,
-    val assets: List<ImmichAsset> = emptyList(),
-)
-
-@Serializable
 data class ImmichPingResponse(
     val res: String,
 )

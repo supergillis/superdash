@@ -86,24 +86,6 @@ class ImmichSlideshowSourceTest {
                             headers = headersOf("Content-Type", "application/json"),
                         )
                     }
-                    path.startsWith("/api/albums/") -> {
-                        val albumId = path.removePrefix("/api/albums/")
-                        if (albumId == mockAlbumId) {
-                            respond(
-                                content =
-                                    Json.encodeToString(
-                                        com.superdash.immich.ImmichAlbumDetails(
-                                            id = mockAlbumId,
-                                            albumName = mockAlbumName,
-                                            assets = assets,
-                                        ),
-                                    ),
-                                headers = headersOf("Content-Type", "application/json"),
-                            )
-                        } else {
-                            respond("[]", headers = headersOf("Content-Type", "application/json"))
-                        }
-                    }
                     path.startsWith("/api/assets/") && !path.contains("/thumbnail") && !path.contains("/video") -> {
                         val id = path.removePrefix("/api/assets/")
                         val asset = byId[id]
@@ -555,15 +537,11 @@ class ImmichSlideshowSourceTest {
                                 content = Json.encodeToString(listOf(ImmichAlbum(id = mockAlbumId, albumName = "TEST"))),
                                 headers = headersOf("Content-Type", "application/json"),
                             )
-                        path.startsWith("/api/albums/") ->
+                        path == "/api/search/metadata" ->
                             respond(
                                 content =
                                     Json.encodeToString(
-                                        com.superdash.immich.ImmichAlbumDetails(
-                                            id = mockAlbumId,
-                                            albumName = "TEST",
-                                            assets = listOf(asset("a")),
-                                        ),
+                                        ImmichSearchPage(ImmichSearchAssetsBucket(items = listOf(asset("a")), nextPage = null)),
                                     ),
                                 headers = headersOf("Content-Type", "application/json"),
                             )
@@ -705,16 +683,12 @@ class ImmichSlideshowSourceTest {
                                 content = Json.encodeToString(listOf(ImmichAlbum(id = mockAlbumId, albumName = mockAlbumName))),
                                 headers = headersOf("Content-Type", "application/json"),
                             )
-                        path.startsWith("/api/albums/") -> {
+                        path == "/api/search/metadata" -> {
                             fetchCount++
                             respond(
                                 content =
                                     Json.encodeToString(
-                                        com.superdash.immich.ImmichAlbumDetails(
-                                            id = mockAlbumId,
-                                            albumName = mockAlbumName,
-                                            assets = listOf(asset("a")),
-                                        ),
+                                        ImmichSearchPage(ImmichSearchAssetsBucket(items = listOf(asset("a")), nextPage = null)),
                                     ),
                                 headers = headersOf("Content-Type", "application/json"),
                             )
@@ -774,15 +748,11 @@ class ImmichSlideshowSourceTest {
                                 content = Json.encodeToString(listOf(ImmichAlbum(id = mockAlbumId, albumName = mockAlbumName))),
                                 headers = headersOf("Content-Type", "application/json"),
                             )
-                        path.startsWith("/api/albums/") ->
+                        path == "/api/search/metadata" ->
                             respond(
                                 content =
                                     Json.encodeToString(
-                                        com.superdash.immich.ImmichAlbumDetails(
-                                            id = mockAlbumId,
-                                            albumName = mockAlbumName,
-                                            assets = items,
-                                        ),
+                                        ImmichSearchPage(ImmichSearchAssetsBucket(items = items, nextPage = null)),
                                     ),
                                 headers = headersOf("Content-Type", "application/json"),
                             )

@@ -13,8 +13,10 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.delay
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 
 private val log = Log("ImmichApi")
 
@@ -27,23 +29,26 @@ class ImmichApiClient(
     private val baseUrl: String = serverUrl.trimEnd('/')
 
     /** Paginate Immich search/metadata to build a slim catalog of every asset
-     *  the slideshow can show. When [albumId] is non-null, fetches that album's
-     *  assets directly (no pagination). Otherwise performs a single paginated
-     *  pass with no `type` filter — Immich returns IMAGE + VIDEO + AUDIO + OTHER
-     *  in one mixed stream — and filters AUDIO/OTHER out client-side. */
-    suspend fun listCatalog(albumId: String? = null): List<ImmichCatalogEntry> {
-        val assets = if (albumId != null) getAlbumAssets(albumId) else paginate()
-        return assets
+     *  the slideshow can show. When [albumId] is non-null, the same paginated pass
+     *  carries an `albumIds` filter so the server returns only that album's assets;
+     *  otherwise it returns the whole library. Either way there is no `type` filter —
+     *  Immich returns IMAGE + VIDEO + AUDIO + OTHER in one mixed stream — and
+     *  AUDIO/OTHER are filtered out client-side.
+     *
+     *  Album assets go through search/metadata (not `GET /api/albums/{id}`) because
+     *  Immich v3 dropped the inline `assets` array from the album-details response;
+     *  the `albumIds` search filter works on both v2 and v3. */
+    suspend fun listCatalog(albumId: String? = null): List<ImmichCatalogEntry> =
+        paginate(albumId)
             .filter { it.type == IMMICH_IMAGE || it.type == IMMICH_VIDEO }
             .map { it.toCatalogEntry() }
-    }
 
-    private suspend fun paginate(): List<ImmichAsset> {
+    private suspend fun paginate(albumId: String? = null): List<ImmichAsset> {
         val out = mutableListOf<ImmichAsset>()
         var page: String? = "1"
         var pagesFetched = 0
         while (page != null) {
-            val response = fetchPageWithRetry(page) ?: break
+            val response = fetchPageWithRetry(page, albumId) ?: break
             out += response.assets.items
             pagesFetched++
             // Guard against a misbehaving server that returns a non-null nextPage
@@ -58,11 +63,14 @@ class ImmichApiClient(
         return out
     }
 
-    private suspend fun fetchPageWithRetry(page: String): ImmichSearchPage? {
+    private suspend fun fetchPageWithRetry(
+        page: String,
+        albumId: String?,
+    ): ImmichSearchPage? {
         var lastError: Exception? = null
         repeat(CATALOG_PAGE_ATTEMPTS) { attempt ->
             try {
-                return fetchSearchPage(page)
+                return fetchSearchPage(page, albumId)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -76,7 +84,10 @@ class ImmichApiClient(
         return null
     }
 
-    private suspend fun fetchSearchPage(page: String): ImmichSearchPage {
+    private suspend fun fetchSearchPage(
+        page: String,
+        albumId: String?,
+    ): ImmichSearchPage {
         val response: HttpResponse =
             httpClient.post {
                 url("$baseUrl/api/search/metadata")
@@ -87,6 +98,9 @@ class ImmichApiClient(
                         put("page", page.toInt())
                         put("size", 1000)
                         put("withExif", true)
+                        if (albumId != null) {
+                            putJsonArray("albumIds") { add(albumId) }
+                        }
                     },
                 )
             }
@@ -104,9 +118,6 @@ class ImmichApiClient(
 
     suspend fun getAlbumByName(name: String): ImmichAlbum? =
         listAlbums().find { it.albumName.equals(name, ignoreCase = true) }
-
-    suspend fun getAlbumAssets(albumId: String): List<ImmichAsset> =
-        authGet("/api/albums/$albumId").body<ImmichAlbumDetails>().assets
 
     /** Builds the thumbnail URL. Auth is supplied via the `x-api-key` header at
      *  request time by the Coil OkHttp interceptor (see SuperdashApp), not via a
@@ -152,10 +163,13 @@ class ImmichApiClient(
     }
 
     /** Probes whether the API key has `asset.view` by HEAD-ing one asset's
-     *  thumbnail. Returns null if the album has no assets. */
+     *  thumbnail. Returns null if the album has no assets. Resolves the first
+     *  asset via the same albumIds-filtered search the catalog uses, so it stays
+     *  correct on Immich v3 (which no longer inlines assets in album details). */
     suspend fun canViewAsset(albumId: String): Boolean? {
         val firstAsset =
-            runCatching { getAlbumAssets(albumId).firstOrNull()?.id }.getOrNull()
+            runCatching { fetchSearchPage(page = "1", albumId = albumId).assets.items.firstOrNull()?.id }
+                .getOrNull()
                 ?: return null
         return runCatching { authHead("/api/assets/$firstAsset/thumbnail?size=preview").status.value in 200..299 }
             .getOrElse { false }

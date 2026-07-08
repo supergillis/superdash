@@ -199,32 +199,45 @@ class ImmichApiClientTest {
         }
 
     @Test
-    fun `listCatalog for album returns every asset without pagination`() =
+    fun `listCatalog for album fetches via search-metadata with albumIds filter and paginates`() =
         runTest {
+            // Immich v3 dropped the inline assets array from GET /api/albums/{id}, so the album
+            // fetch goes through POST /api/search/metadata with an albumIds filter — the same
+            // paginated path used for the whole library, and one that works on both v2 and v3.
+            val responses =
+                listOf(
+                    """{"assets":{"items":[{"id":"a","type":"IMAGE","originalFileName":"a.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"},{"id":"b","type":"VIDEO","originalFileName":"b.mp4","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":"2"}}""",
+                    """{"assets":{"items":[{"id":"c","type":"IMAGE","originalFileName":"c.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":null}}""",
+                )
+            var pageIndex = 0
+            val capturedPaths = mutableListOf<String>()
+            val capturedBodies = mutableListOf<String>()
             val engine =
                 MockEngine { request ->
-                    val path = request.url.encodedPath
-                    val body =
-                        if (path == "/api/albums/alb-1") {
-                            """{"id":"alb-1","albumName":"X","assets":[
-                    {"id":"a","type":"IMAGE","originalFileName":"a.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"},
-                    {"id":"b","type":"VIDEO","originalFileName":"b.mp4","fileCreatedAt":"1970-01-01T00:00:00Z"}
-                ]}"""
-                        } else {
-                            "[]"
-                        }
-                    respond(content = body, headers = headersOf("Content-Type", ContentType.Application.Json.toString()))
+                    capturedPaths += request.url.encodedPath
+                    capturedBodies += request.body.toByteArray().decodeToString()
+                    respond(
+                        content = responses[pageIndex++],
+                        headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                    )
                 }
             val client =
                 ImmichApiClient(
                     HttpClient(engine) { install(ContentNegotiation) { json() } },
                     "http://immich",
                     "key",
+                    sleep = {},
                 )
 
             val catalog = client.listCatalog(albumId = "alb-1")
 
-            assertEquals(listOf("a", "b"), catalog.map { it.id })
+            assertEquals(listOf("a", "b", "c"), catalog.map { it.id })
+            assertEquals(2, pageIndex)
+            capturedPaths.forEach { assertEquals("/api/search/metadata", it) }
+            capturedBodies.forEach { body ->
+                assertTrue("album request must carry albumIds filter: $body", body.contains("\"albumIds\""))
+                assertTrue("album request must reference the album id: $body", body.contains("alb-1"))
+            }
         }
 
     @Test
@@ -260,6 +273,11 @@ class ImmichApiClientTest {
             assertFalse(
                 "request body must not contain \"type\" field: ${capturedBodies[0]}",
                 capturedBodies[0].contains("\"type\""),
+            )
+            // Whole-library pass must not carry an album filter.
+            assertFalse(
+                "whole-library request must not contain albumIds: ${capturedBodies[0]}",
+                capturedBodies[0].contains("albumIds"),
             )
         }
 

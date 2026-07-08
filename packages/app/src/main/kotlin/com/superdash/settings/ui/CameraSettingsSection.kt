@@ -43,6 +43,13 @@ fun CameraSettingsSection(
             )
         },
     )
+    if (state.enabled && !state.cameraPermissionGranted) {
+        SettingsActionRow(
+            label = stringResource(R.string.settings_camera_permission_required_title),
+            supportingText = stringResource(R.string.settings_camera_permission_required_summary),
+            onClick = actions.onRequestCameraEnable,
+        )
+    }
     if (state.enabled) {
         SettingsChoiceRow(
             label = stringResource(R.string.settings_camera_facing_label),

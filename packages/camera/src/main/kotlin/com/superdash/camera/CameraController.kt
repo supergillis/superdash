@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -75,6 +76,9 @@ class CameraController(
      *  pipeline runs; encoding is skipped when nobody collects. */
     val jpegFrames: Flow<ByteArray> = jpegFramesFlow.asSharedFlow()
 
+    private val restartRequests =
+        MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
     private val clearDelaySec: StateFlow<Int> =
         settings.motionClearDelaySec.stateIn(scope, SharingStarted.Eagerly, 15)
 
@@ -87,21 +91,33 @@ class CameraController(
     suspend fun latestJpeg(): ByteArray? =
         latestFrame.value?.let { frame -> pipeline.encodeJpeg(frame, JPEG_QUALITY) }
 
+    /** Forces the pipeline to re-run its start with the current settings, even
+     *  though no setting changed. Used to recover capture after the CAMERA
+     *  permission is granted while the camera is already enabled — a same-value
+     *  settings write is filtered by distinctUntilChanged, so nothing else
+     *  re-attempts the start. No-op while the camera is disabled. */
+    fun requestRestart() {
+        restartRequests.tryEmit(Unit)
+    }
+
     private suspend fun runPipelineControl() {
-        combine(settings.enabled, settings.resolution, settings.facing) { enabled, resolution, facing ->
-            Triple(enabled, resolution, facing)
-        }.distinctUntilChanged().collect { (enabled, resolution, facing) ->
-            if (enabled) {
-                val (width, height) = parseResolution(resolution)
-                pipelineWanted = true
-                pipeline.start(CameraPipelineConfig(width, height, facingFront = facing != "back"))
-            } else {
-                pipelineWanted = false
-                pipeline.stop()
-                latestFrame.value = null
-                motionActiveState.value = false
+        val config =
+            combine(settings.enabled, settings.resolution, settings.facing) { enabled, resolution, facing ->
+                Triple(enabled, resolution, facing)
+            }.distinctUntilChanged()
+        combine(config, restartRequests.onStart { emit(Unit) }) { current, _ -> current }
+            .collect { (enabled, resolution, facing) ->
+                if (enabled) {
+                    val (width, height) = parseResolution(resolution)
+                    pipelineWanted = true
+                    pipeline.start(CameraPipelineConfig(width, height, facingFront = facing != "back"))
+                } else {
+                    pipelineWanted = false
+                    pipeline.stop()
+                    latestFrame.value = null
+                    motionActiveState.value = false
+                }
             }
-        }
     }
 
     private suspend fun cacheAndEncodeFrames() {

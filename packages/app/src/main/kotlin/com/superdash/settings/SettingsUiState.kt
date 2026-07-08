@@ -181,6 +181,7 @@ data class CameraSettingsState(
     val motionSensitivity: Int,
     val wakeOnMotion: Boolean,
     val allowRemoteEnable: Boolean,
+    val cameraPermissionGranted: Boolean,
 ) {
     companion object {
         fun empty(): CameraSettingsState =
@@ -192,6 +193,7 @@ data class CameraSettingsState(
                 motionSensitivity = 50,
                 wakeOnMotion = false,
                 allowRemoteEnable = true,
+                cameraPermissionGranted = true,
             )
     }
 }

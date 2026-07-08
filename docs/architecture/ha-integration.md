@@ -86,6 +86,8 @@ The camera module exposes:
 - `motion_sensitivity` and `motion_clear_delay_sec` numbers to tune detection and event hold.
 - `camera_status` text sensor reporting the pipeline state (`Off`, `Running`, `PermissionMissing`, `Error`).
 
+If the camera is enabled but Android's camera permission is not granted (for example after a reinstall, or after enabling it remotely over ESPHome), the `camera_status` sensor reports `PermissionMissing` and the tablet's Settings screen shows a "Camera permission required — tap to grant" row; granting it restarts capture automatically.
+
 The JPEG stream is chunked to 15 KiB frames to fit under the 16 KiB Noise frame cap. A rolling ~5 second window is refreshed at several fps; Home Assistant polls the picture entity to fetch the latest frame.
 
 Enabling the camera also starts a `camera`-type foreground service so capture keeps running while the tablet screen is off. Android blocks starting a foreground service from the background, so if the camera is enabled over ESPHome while the tablet is asleep the stream does not come up immediately — it starts automatically the next time the tablet's screen turns on.

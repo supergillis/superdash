@@ -49,6 +49,38 @@ internal const val DEFAULT_IDLE_TIMEOUT_MS = 90_000L
  *  refreshes the window with repeated stream requests while a client watches. */
 internal const val CAMERA_STREAM_WINDOW_NANOS = 5_000_000_000L
 
+/** True when [throwable] (or any cause in its chain) is a normal client
+ *  disconnect — a closed channel, an EOF, or an IOException whose message
+ *  indicates a broken pipe / connection reset / closed socket. HA closing a
+ *  camera live-view surfaces this way (as a broken-pipe IOException rethrown
+ *  from the frame-writer child coroutine); it is not a fault worth a stack
+ *  trace. `java.io.EOFException` extends IOException, so the message branch is
+ *  reached for it too, but it is matched by type first for clarity. */
+internal fun isExpectedDisconnect(throwable: Throwable): Boolean {
+    var cause: Throwable? = throwable
+    while (cause != null) {
+        if (cause is java.nio.channels.ClosedChannelException ||
+            cause is kotlinx.coroutines.channels.ClosedReceiveChannelException ||
+            cause is kotlinx.coroutines.channels.ClosedSendChannelException ||
+            cause is java.io.EOFException
+        ) {
+            return true
+        }
+        if (cause is java.io.IOException) {
+            val message = cause.message?.lowercase().orEmpty()
+            if (message.contains("broken pipe") ||
+                message.contains("connection reset") ||
+                message.contains("connection abort") ||
+                message.contains("closed")
+            ) {
+                return true
+            }
+        }
+        cause = cause.cause
+    }
+    return false
+}
+
 internal data class EsphomeDeviceInfo(
     val name: String,
     val macAddress: String,
@@ -80,7 +112,11 @@ internal class EsphomeConnection(
             } catch (timeout: TimeoutCancellationException) {
                 log.i("idle client timed out", "afterMs" to idleTimeoutMs)
             } catch (throwable: Throwable) {
-                log.w("connection ended", throwable)
+                if (isExpectedDisconnect(throwable)) {
+                    log.i("client disconnected")
+                } else {
+                    log.w("connection ended", throwable)
+                }
             } finally {
                 stateJobs.forEach { it.cancel() }
                 cameraStreamJob?.cancel()

@@ -1,6 +1,8 @@
 package com.superdash
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.KeyEvent
@@ -20,11 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.superdash.camera.CameraAvailability
 import com.superdash.core.log.Log
 import com.superdash.ha.HaOAuthInterceptor
 import com.superdash.ha.JsBridge
@@ -187,6 +191,16 @@ class MainActivity : AppCompatActivity() {
         val launchedFromBoot = intent.getBooleanExtra(BootLauncher.EXTRA_LAUNCHED_FROM_BOOT, false)
         lifecycleScope.launch {
             kioskWindow.apply(launchedFromBoot, graph.settings.snapshot())
+        }
+        // Recover camera capture if the user granted the CAMERA permission from the
+        // OS app-info screen and returned to the kiosk screen directly (not Settings).
+        val cameraGranted =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        if (cameraGranted &&
+            graph.cameraController.availability.value is CameraAvailability.PermissionMissing
+        ) {
+            graph.restartCameraCapture()
         }
     }
 

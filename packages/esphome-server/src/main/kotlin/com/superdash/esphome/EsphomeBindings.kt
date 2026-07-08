@@ -4,6 +4,7 @@ import android.content.Context
 import com.superdash.core.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -13,6 +14,7 @@ private val primarySttOptions = listOf("ha_assist", "whisper", "moonshine")
 private val secondarySttOptions = listOf("none", "ha_assist", "whisper", "moonshine")
 private val voiceAssistOptions = listOf("ha_assist", "whisper", "moonshine")
 private val mediaLibraryOrderOptions = listOf("shuffle", "chronological")
+private val motionModeOptions = listOf("off", "motion", "person")
 private val log = Log("EsphomeBindings")
 
 internal fun switchEntity(
@@ -33,12 +35,14 @@ internal fun binarySensorEntity(
     objectId: String,
     name: String,
     state: Flow<Boolean>,
+    deviceClass: String = "",
 ): EsphomeEntity.BinarySensor =
     EsphomeEntity.BinarySensor(
         key = keyFromObjectId(objectId),
         objectId = objectId,
         name = name,
         state = state,
+        deviceClass = deviceClass,
     )
 
 internal fun sensorEntity(
@@ -128,6 +132,7 @@ internal fun esphomeEntities(
     doorbell: EsphomeDoorbellBindings,
     nightMode: EsphomeNightModeBindings,
     ha: EsphomeHaBindings,
+    camera: EsphomeCameraBindings,
 ): List<EsphomeEntity> =
     listOf(
         switchEntity(
@@ -356,6 +361,69 @@ internal fun esphomeEntities(
             name = "Stop Screensaver",
             onPress = screensaver.stopScreensaver,
         ),
+        switchEntity(
+            objectId = "camera_enabled",
+            name = "Camera Enabled",
+            state = camera.cameraEnabled,
+            onCommand = { value ->
+                if (value && !camera.allowRemoteEnable.first()) {
+                    log.w("remote camera enable blocked by local setting")
+                } else {
+                    camera.setCameraEnabled(value)
+                }
+            },
+        ),
+        switchEntity(
+            objectId = "wake_on_motion",
+            name = "Wake On Motion",
+            state = camera.wakeOnMotion,
+            onCommand = camera.setWakeOnMotion,
+        ),
+        binarySensorEntity(
+            objectId = "motion",
+            name = "Motion",
+            state = camera.motionDetected,
+            deviceClass = "motion",
+        ),
+        selectEntity(
+            objectId = "motion_detection_mode",
+            name = "Motion Detection Mode",
+            state = camera.motionMode,
+            options = motionModeOptions,
+            onCommand = camera.setMotionMode,
+        ),
+        numberEntity(
+            objectId = "motion_sensitivity",
+            name = "Motion Sensitivity",
+            state = camera.motionSensitivity,
+            minValue = 0f,
+            maxValue = 100f,
+            step = 5f,
+            unitOfMeasurement = "%",
+            onCommand = camera.setMotionSensitivity,
+        ),
+        numberEntity(
+            objectId = "motion_clear_delay_sec",
+            name = "Motion Clear Delay",
+            state = camera.motionClearDelaySec,
+            minValue = 0f,
+            maxValue = 120f,
+            step = 5f,
+            unitOfMeasurement = "s",
+            onCommand = camera.setMotionClearDelaySec,
+        ),
+        textSensorEntity(
+            objectId = "camera_status",
+            name = "Camera Status",
+            state = camera.cameraStatus,
+        ),
+        EsphomeEntity.Camera(
+            key = keyFromObjectId("camera"),
+            objectId = "camera",
+            name = "Camera",
+            frames = camera.jpegFrames,
+            latestJpeg = camera.latestJpeg,
+        ),
     )
 
 /** Owns the ESPHome stack and binds it to host-provided sources and sinks. */
@@ -371,6 +439,7 @@ class EsphomeBindings(
     doorbell: EsphomeDoorbellBindings,
     nightMode: EsphomeNightModeBindings,
     ha: EsphomeHaBindings,
+    camera: EsphomeCameraBindings,
 ) {
     private val deviceInfo: EsphomeDeviceInfo =
         EsphomeDeviceInfo(
@@ -402,6 +471,7 @@ class EsphomeBindings(
                     doorbell = doorbell,
                     nightMode = nightMode,
                     ha = ha,
+                    camera = camera,
                 )
             },
             noiseConfig = { currentConfig },

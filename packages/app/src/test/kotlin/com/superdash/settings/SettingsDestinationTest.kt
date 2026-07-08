@@ -16,6 +16,7 @@ class SettingsDestinationTest {
                 R.string.settings_voice_title,
                 R.string.settings_screensaver_title,
                 R.string.settings_doorbell_title,
+                R.string.settings_camera_title,
                 R.string.settings_esphome_title,
                 R.string.settings_admin_title,
             ),

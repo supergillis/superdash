@@ -26,6 +26,7 @@ internal sealed class EsphomeEntity {
         override val objectId: String,
         override val name: String,
         val state: Flow<Boolean>,
+        val deviceClass: String = "",
     ) : EsphomeEntity()
 
     data class Sensor(
@@ -75,6 +76,18 @@ internal sealed class EsphomeEntity {
         override val objectId: String,
         override val name: String,
         val onPress: suspend () -> Unit,
+    ) : EsphomeEntity()
+
+    /** ESPHome camera. HA pulls JPEGs via CameraImageRequest: `single` sends
+     *  the latest cached frame once; `stream` opens a ~5s window (refreshed by
+     *  repeated requests) during which every frame from [frames] is pushed.
+     *  Images are chunked into ≤15KiB CameraImageResponse messages. */
+    data class Camera(
+        override val key: Int,
+        override val objectId: String,
+        override val name: String,
+        val frames: Flow<ByteArray>,
+        val latestJpeg: suspend () -> ByteArray?,
     ) : EsphomeEntity()
 }
 

@@ -1,5 +1,6 @@
 package com.superdash.esphome
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -90,6 +91,24 @@ class EsphomeBindingsTest {
                         haEntityCount = MutableStateFlow(0f),
                         haConnectionState = MutableStateFlow("Disconnected"),
                     ),
+                camera =
+                    EsphomeCameraBindings(
+                        cameraEnabled = MutableStateFlow(false),
+                        setCameraEnabled = {},
+                        allowRemoteEnable = MutableStateFlow(true),
+                        motionDetected = MutableStateFlow(false),
+                        motionMode = MutableStateFlow("off"),
+                        setMotionMode = {},
+                        motionSensitivity = MutableStateFlow(50f),
+                        setMotionSensitivity = {},
+                        motionClearDelaySec = MutableStateFlow(15f),
+                        setMotionClearDelaySec = {},
+                        wakeOnMotion = MutableStateFlow(false),
+                        setWakeOnMotion = {},
+                        cameraStatus = MutableStateFlow("Off"),
+                        jpegFrames = MutableStateFlow(ByteArray(0)),
+                        latestJpeg = { null },
+                    ),
             )
 
         assertEquals(
@@ -130,6 +149,14 @@ class EsphomeBindingsTest {
                 "restart_app",
                 "start_screensaver",
                 "stop_screensaver",
+                "camera_enabled",
+                "wake_on_motion",
+                "motion",
+                "motion_detection_mode",
+                "motion_sensitivity",
+                "motion_clear_delay_sec",
+                "camera_status",
+                "camera",
             ),
             entities.map { entity -> entity.objectId },
         )
@@ -198,4 +225,159 @@ class EsphomeBindingsTest {
 
             assertEquals(emptyList<String>(), received)
         }
+
+    @Test
+    fun `camera_enabled onCommand(true) is blocked when remote enable is disallowed`() =
+        kotlinx.coroutines.test.runTest {
+            val received = mutableListOf<Boolean>()
+            val entity =
+                cameraEnabledEntity(
+                    setCameraEnabled = { value -> received.add(value) },
+                    allowRemoteEnable = MutableStateFlow(false),
+                )
+
+            entity.onCommand(true)
+
+            assertEquals(emptyList<Boolean>(), received)
+        }
+
+    @Test
+    fun `camera_enabled onCommand(false) still disables even when remote enable is disallowed`() =
+        kotlinx.coroutines.test.runTest {
+            val received = mutableListOf<Boolean>()
+            val entity =
+                cameraEnabledEntity(
+                    setCameraEnabled = { value -> received.add(value) },
+                    allowRemoteEnable = MutableStateFlow(false),
+                )
+
+            entity.onCommand(false)
+
+            assertEquals(listOf(false), received)
+        }
+
+    @Test
+    fun `camera_enabled onCommand(true) is allowed when remote enable is allowed`() =
+        kotlinx.coroutines.test.runTest {
+            val received = mutableListOf<Boolean>()
+            val entity =
+                cameraEnabledEntity(
+                    setCameraEnabled = { value -> received.add(value) },
+                    allowRemoteEnable = MutableStateFlow(true),
+                )
+
+            entity.onCommand(true)
+
+            assertEquals(listOf(true), received)
+        }
+
+    /** Builds just the `camera_enabled` switch entity from the full catalog, with dummy
+     *  bindings for everything else, so the remote-enable guard can be exercised directly. */
+    private fun cameraEnabledEntity(
+        setCameraEnabled: suspend (Boolean) -> Unit,
+        allowRemoteEnable: Flow<Boolean>,
+    ): EsphomeEntity.Switch {
+        val entities =
+            esphomeEntities(
+                device =
+                    EsphomeDeviceMetadata(
+                        stableDeviceId = "android-id",
+                        deviceModel = "Pixel",
+                        deviceManufacturer = "Google",
+                        friendlyName = "superdash",
+                        appVersionName = "1.0",
+                        appVersion = MutableStateFlow("1.0"),
+                    ),
+                kiosk =
+                    EsphomeKioskBindings(
+                        keepScreenOn = MutableStateFlow(true),
+                        setKeepScreenOn = {},
+                        startOnBoot = MutableStateFlow(true),
+                        setStartOnBoot = {},
+                        launchOnWake = MutableStateFlow(false),
+                        setLaunchOnWake = {},
+                        screenOn = MutableStateFlow(true),
+                        refreshWebView = {},
+                        restartApp = {},
+                    ),
+                voice =
+                    EsphomeVoiceBindings(
+                        voiceEnabled = MutableStateFlow(false),
+                        setVoiceEnabled = {},
+                        voiceActive = MutableStateFlow(false),
+                        voiceState = MutableStateFlow("Idle"),
+                        activeWakeWordState = MutableStateFlow("hey_jarvis"),
+                        activeWakeWord = MutableStateFlow("hey_jarvis"),
+                        setActiveWakeWord = {},
+                        vadSilenceMs = MutableStateFlow(500f),
+                        setVadSilenceMs = {},
+                        primarySttProvider = MutableStateFlow("ha_assist"),
+                        setPrimarySttProvider = {},
+                        secondarySttProvider = MutableStateFlow("none"),
+                        setSecondarySttProvider = {},
+                        voiceAssistProvider = MutableStateFlow("ha_assist"),
+                        setVoiceAssistProvider = {},
+                    ),
+                screensaver =
+                    EsphomeScreensaverBindings(
+                        inScreensaver = MutableStateFlow(false),
+                        dayScreensaverMode = MutableStateFlow("photos"),
+                        setDayScreensaverMode = {},
+                        nightScreensaverMode = MutableStateFlow("black"),
+                        setNightScreensaverMode = {},
+                        dayScreensaverModeState = MutableStateFlow("photos"),
+                        nightScreensaverModeState = MutableStateFlow("black"),
+                        weatherEntityId = MutableStateFlow("weather.home"),
+                        mediaLibrarySourceTitle = MutableStateFlow(""),
+                        mediaLibraryOrder = MutableStateFlow("shuffle"),
+                        setMediaLibraryOrder = {},
+                        overlayPosition = MutableStateFlow("bottom_left"),
+                        setOverlayPosition = {},
+                        idleTimeoutSec = MutableStateFlow(300f),
+                        setIdleTimeoutSec = {},
+                        pictureSpacingDp = MutableStateFlow(8f),
+                        setPictureSpacingDp = {},
+                        startScreensaver = {},
+                        stopScreensaver = {},
+                    ),
+                doorbell =
+                    EsphomeDoorbellBindings(
+                        doorbellEnabled = MutableStateFlow(false),
+                        setDoorbellEnabled = {},
+                        doorbellRinging = MutableStateFlow(false),
+                        doorbellCount = MutableStateFlow(0f),
+                        doorbellAutoCloseSec = MutableStateFlow(60f),
+                        setDoorbellAutoCloseSec = {},
+                    ),
+                nightMode =
+                    EsphomeNightModeBindings(
+                        nightMode = MutableStateFlow(false),
+                        setNightMode = {},
+                    ),
+                ha =
+                    EsphomeHaBindings(
+                        haEntityCount = MutableStateFlow(0f),
+                        haConnectionState = MutableStateFlow("Disconnected"),
+                    ),
+                camera =
+                    EsphomeCameraBindings(
+                        cameraEnabled = MutableStateFlow(false),
+                        setCameraEnabled = setCameraEnabled,
+                        allowRemoteEnable = allowRemoteEnable,
+                        motionDetected = MutableStateFlow(false),
+                        motionMode = MutableStateFlow("off"),
+                        setMotionMode = {},
+                        motionSensitivity = MutableStateFlow(50f),
+                        setMotionSensitivity = {},
+                        motionClearDelaySec = MutableStateFlow(15f),
+                        setMotionClearDelaySec = {},
+                        wakeOnMotion = MutableStateFlow(false),
+                        setWakeOnMotion = {},
+                        cameraStatus = MutableStateFlow("Off"),
+                        jpegFrames = MutableStateFlow(ByteArray(0)),
+                        latestJpeg = { null },
+                    ),
+            )
+        return entities.single { entity -> entity.objectId == "camera_enabled" } as EsphomeEntity.Switch
+    }
 }

@@ -4,6 +4,13 @@ import android.app.Application
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
+import com.superdash.camera.CameraController
+import com.superdash.camera.CameraService
+import com.superdash.camera.CameraServiceController
+import com.superdash.camera.CameraSettings
+import com.superdash.camera.CameraXPipeline
+import com.superdash.camera.FrameDiffMotionDetector
+import com.superdash.camera.PersonMotionDetector
 import com.superdash.core.persistence.DataStoreKeyValueStore
 import com.superdash.core.persistence.KeyValueStore
 import com.superdash.core.resources.AndroidStringProvider
@@ -31,12 +38,14 @@ import com.superdash.immich.okhttp.ImmichAuthInterceptor
 import com.superdash.kiosk.KioskSettings
 import com.superdash.kiosk.SidebarSettings
 import com.superdash.kiosk.bus.ActivityCommandQueue
+import com.superdash.kiosk.bus.KioskEvent
 import com.superdash.kiosk.bus.KioskEventBus
 import com.superdash.locale.LocaleController
 import com.superdash.screensaver.ScreensaverIdleController
 import com.superdash.screensaver.ScreensaverSettings
 import com.superdash.settings.AeadSecretString
 import com.superdash.settings.SettingsRepository
+import com.superdash.settings.SettingsRepositoryCameraSettings
 import com.superdash.settings.SettingsRepositoryDoorbellSettings
 import com.superdash.settings.SettingsRepositoryImmichSettings
 import com.superdash.settings.SettingsRepositoryKioskSettings
@@ -57,7 +66,12 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 
 class AppGraph(
@@ -74,6 +88,8 @@ class AppGraph(
     val strings: StringProvider = AndroidStringProvider(application)
 
     val doorbellSettings: DoorbellSettings = SettingsRepositoryDoorbellSettings(keyValueStore)
+
+    val cameraSettings: CameraSettings = SettingsRepositoryCameraSettings(keyValueStore)
 
     val immichSettings: ImmichSettings =
         SettingsRepositoryImmichSettings(
@@ -109,6 +125,21 @@ class AppGraph(
     val immichClient: StateFlow<ImmichApiClient?> get() = immich.client
 
     val eventBus: KioskEventBus = KioskEventBus()
+
+    private val cameraSensitivity: StateFlow<Int> =
+        cameraSettings.motionSensitivity.stateIn(scope, SharingStarted.Eagerly, 50)
+
+    val cameraController: CameraController =
+        CameraController(
+            pipeline = CameraXPipeline(application.applicationContext),
+            settings = cameraSettings,
+            detectorFactories =
+                mapOf(
+                    "motion" to { FrameDiffMotionDetector(sensitivityPercent = { cameraSensitivity.value }) },
+                    "person" to { PersonMotionDetector() },
+                ),
+            scope = scope,
+        )
 
     val activityCommandQueue: ActivityCommandQueue = ActivityCommandQueue()
 
@@ -190,6 +221,16 @@ class AppGraph(
     val screenStateProvider: ScreenStateProvider =
         ScreenStateProvider(application.applicationContext)
 
+    @Suppress("unused")
+    private val cameraServiceController: CameraServiceController =
+        CameraServiceController(
+            enabled = cameraSettings.enabled,
+            screenOn = screenStateProvider.state,
+            scope = scope,
+            start = { CameraService.start(application.applicationContext) },
+            stop = { CameraService.stop(application.applicationContext) },
+        )
+
     val haConnectivityController: HaConnectivityController =
         HaConnectivityController(
             context = application,
@@ -215,9 +256,23 @@ class AppGraph(
             voiceCoordinator = voiceCoordinator,
             haClient = haClient,
             noisePsk = esphomePskStore.psk,
+            cameraSettings = cameraSettings,
+            cameraController = cameraController,
         )
 
     val esphome: EsphomeBindings get() = esphomeSubgraph.bindings
+
+    init {
+        scope.launch {
+            cameraController.motionActive
+                .filter { it }
+                .collect {
+                    if (cameraSettings.wakeOnMotion.first()) {
+                        eventBus.emit(KioskEvent.UserTouched)
+                    }
+                }
+        }
+    }
 
     fun shutdown() {
         // closeAll() is suspending; this only runs on Application.onTerminate

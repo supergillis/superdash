@@ -17,6 +17,8 @@
     <string name="settings_screensaver_summary">Inactief scherm, overlays en foto\'s</string>
     <string name="settings_doorbell_title">Deurbel</string>
     <string name="settings_doorbell_summary">Camera-overlay triggers</string>
+    <string name="settings_camera_title">Camera</string>
+    <string name="settings_camera_summary">Tabletcamera en bewegingssensor</string>
     <string name="settings_esphome_title">ESPHome</string>
     <string name="settings_esphome_summary">Home Assistant ESPHome-protocol</string>
     <string name="settings_admin_title">Beheer</string>
@@ -54,6 +56,22 @@
     <string name="settings_doorbell_list_title">Deurbellen</string>
     <string name="settings_doorbell_list_empty">Voeg minstens één deurbel toe.</string>
     <string name="settings_doorbell_add_button">+ Deurbel toevoegen</string>
+    <!-- Camera -->
+    <string name="settings_camera_enabled_title">Camera</string>
+    <string name="settings_camera_enabled_summary">Maak de tabletcamera en bewegingssensor zichtbaar voor Home Assistant</string>
+    <string name="settings_camera_facing_label">Camerarichting</string>
+    <string name="settings_camera_facing_front">Voor</string>
+    <string name="settings_camera_facing_back">Achter</string>
+    <string name="settings_camera_resolution_label">Resolutie</string>
+    <string name="settings_camera_motion_mode_label">Bewegingsdetectie</string>
+    <string name="settings_camera_motion_mode_off">Uit</string>
+    <string name="settings_camera_motion_mode_motion">Elke beweging</string>
+    <string name="settings_camera_motion_mode_person">Alleen personen</string>
+    <string name="settings_camera_sensitivity_label">Detectiegevoeligheid</string>
+    <string name="settings_camera_wake_on_motion_title">Scherm wekken bij beweging</string>
+    <string name="settings_camera_wake_on_motion_summary">Screensaver afsluiten wanneer beweging wordt gedetecteerd</string>
+    <string name="settings_camera_allow_remote_enable_title">Op afstand inschakelen</string>
+    <string name="settings_camera_allow_remote_enable_summary">Home Assistant toestaan de camera in te schakelen. Op afstand uitschakelen blijft altijd mogelijk.</string>
     <string name="settings_esphome_enabled_title">Ingeschakeld</string>
     <string name="settings_esphome_enabled_summary">Maak superdash via het ESPHome-protocol zichtbaar voor HA.</string>
     <string name="settings_esphome_encryption_key_title">Versleutelingssleutel (base64)</string>
@@ -262,6 +280,11 @@
     <string name="notification_voice_channel_name">superdash Spraak</string>
     <string name="notification_voice_title">superdash spraak</string>
     <string name="notification_voice_text">Luisteren naar wake word</string>
+
+    <!-- Camera service notification -->
+    <string name="notification_camera_channel_name">Camera</string>
+    <string name="notification_camera_title">Camera actief</string>
+    <string name="notification_camera_text">Bewaakt op beweging</string>
 
     <!-- Kiosk keep-alive notification -->
     <string name="notification_kiosk_channel_name">Kiosk keep-alive</string>

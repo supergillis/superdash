@@ -27,6 +27,7 @@ data class SettingsUiState(
     val device: DeviceSettingsState,
     val voice: VoiceSettingsState,
     val doorbell: DoorbellSettingsState,
+    val camera: CameraSettingsState,
     val esphome: EsphomeSettingsState,
     val screensaver: ScreensaverSettingsState,
     val immich: ImmichSettingsState,
@@ -71,6 +72,7 @@ data class SettingsUiState(
                 device = DeviceSettingsState.empty(),
                 voice = VoiceSettingsState.empty(),
                 doorbell = DoorbellSettingsState.empty(),
+                camera = CameraSettingsState.empty(),
                 esphome = EsphomeSettingsState.empty(),
                 screensaver = ScreensaverSettingsState.empty(),
                 immich = ImmichSettingsState.empty(),
@@ -166,6 +168,30 @@ data class DoorbellSettingsState(
                 enabled = false,
                 configs = persistentListOf(),
                 autoCloseSec = 60,
+            )
+    }
+}
+
+@Immutable
+data class CameraSettingsState(
+    val enabled: Boolean,
+    val facing: String,
+    val resolution: String,
+    val motionMode: String,
+    val motionSensitivity: Int,
+    val wakeOnMotion: Boolean,
+    val allowRemoteEnable: Boolean,
+) {
+    companion object {
+        fun empty(): CameraSettingsState =
+            CameraSettingsState(
+                enabled = false,
+                facing = "front",
+                resolution = "1280x720",
+                motionMode = "motion",
+                motionSensitivity = 50,
+                wakeOnMotion = false,
+                allowRemoteEnable = true,
             )
     }
 }

@@ -6,16 +6,21 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import org.esphome.api.BinarySensorStateResponse
 import org.esphome.api.ButtonCommandRequest
+import org.esphome.api.CameraImageRequest
 import org.esphome.api.DeviceInfoResponse
 import org.esphome.api.DisconnectResponse
 import org.esphome.api.HelloRequest
 import org.esphome.api.HelloResponse
 import org.esphome.api.ListEntitiesBinarySensorResponse
 import org.esphome.api.ListEntitiesButtonResponse
+import org.esphome.api.ListEntitiesCameraResponse
 import org.esphome.api.ListEntitiesDoneResponse
 import org.esphome.api.ListEntitiesNumberResponse
 import org.esphome.api.ListEntitiesSelectResponse
@@ -40,6 +45,10 @@ private val log = Log("EsphomeConnection")
  *  reconnect storms. */
 internal const val DEFAULT_IDLE_TIMEOUT_MS = 90_000L
 
+/** How long a CameraImageRequest(stream) keeps the frame push alive. HA
+ *  refreshes the window with repeated stream requests while a client watches. */
+internal const val CAMERA_STREAM_WINDOW_NANOS = 5_000_000_000L
+
 internal data class EsphomeDeviceInfo(
     val name: String,
     val macAddress: String,
@@ -55,9 +64,14 @@ internal class EsphomeConnection(
     private val deviceInfo: EsphomeDeviceInfo,
     private val entities: List<EsphomeEntity>,
     private val idleTimeoutMs: Long = DEFAULT_IDLE_TIMEOUT_MS,
+    private val nanoTime: () -> Long = System::nanoTime,
 ) {
     private var helloDone = false
     private var stateJobs: List<Job> = emptyList()
+    private var cameraStreamJob: Job? = null
+    private val cameraSendMutex = Mutex()
+
+    @Volatile private var cameraStreamDeadlineNanos = Long.MIN_VALUE
 
     suspend fun run() =
         coroutineScope {
@@ -69,6 +83,7 @@ internal class EsphomeConnection(
                 log.w("connection ended", throwable)
             } finally {
                 stateJobs.forEach { it.cancel() }
+                cameraStreamJob?.cancel()
             }
         }
 
@@ -116,6 +131,7 @@ internal class EsphomeConnection(
                 EsphomeMessageType.NUMBER_COMMAND_REQUEST -> handleNumberCommand(frame.payload)
                 EsphomeMessageType.SELECT_COMMAND_REQUEST -> handleSelectCommand(frame.payload)
                 EsphomeMessageType.BUTTON_COMMAND_REQUEST -> handleButtonCommand(frame.payload)
+                EsphomeMessageType.CAMERA_IMAGE_REQUEST -> handleCameraImageRequest(frame.payload, scope)
                 else -> log.w("ignoring unhandled message type", null, "type" to frame.messageType)
             }
         }
@@ -172,6 +188,7 @@ internal class EsphomeConnection(
                             .setObjectId(entity.objectId)
                             .setKey(entity.key)
                             .setName(entity.name)
+                            .setDeviceClass(entity.deviceClass)
                             .build()
                     transport.writeFrame(EsphomeMessageType.LIST_ENTITIES_BINARY_SENSOR_RESPONSE, msg.toByteArray())
                 }
@@ -234,6 +251,16 @@ internal class EsphomeConnection(
                             .build()
                     transport.writeFrame(EsphomeMessageType.LIST_ENTITIES_BUTTON_RESPONSE, msg.toByteArray())
                 }
+                is EsphomeEntity.Camera -> {
+                    val msg =
+                        ListEntitiesCameraResponse
+                            .newBuilder()
+                            .setObjectId(entity.objectId)
+                            .setKey(entity.key)
+                            .setName(entity.name)
+                            .build()
+                    transport.writeFrame(EsphomeMessageType.LIST_ENTITIES_CAMERA_RESPONSE, msg.toByteArray())
+                }
             }
         }
         transport.writeFrame(
@@ -278,6 +305,7 @@ internal class EsphomeConnection(
                         }
                     }
                 is EsphomeEntity.Button -> null
+                is EsphomeEntity.Camera -> null
                 is EsphomeEntity.Sensor ->
                     scope.launch {
                         entity.state.distinctUntilChanged().collect { value ->
@@ -387,5 +415,50 @@ internal class EsphomeConnection(
         }
         runCatching { target.onPress() }
             .onFailure { log.w("button press failed", it, "key" to request.key) }
+    }
+
+    private suspend fun handleCameraImageRequest(
+        payload: ByteArray,
+        scope: CoroutineScope,
+    ) {
+        val request = CameraImageRequest.parseFrom(payload)
+        val camera = entities.filterIsInstance<EsphomeEntity.Camera>().firstOrNull()
+        if (camera == null) {
+            log.w("camera image request but no camera entity")
+            return
+        }
+        if (request.single) {
+            val jpeg =
+                runCatching { camera.latestJpeg() }
+                    .onFailure { log.w("latestJpeg failed", it) }
+                    .getOrNull()
+            if (jpeg == null) {
+                log.i("no camera frame available for single request")
+            } else {
+                sendCameraImage(camera.key, jpeg)
+            }
+        }
+        if (request.stream) {
+            cameraStreamDeadlineNanos = nanoTime() + CAMERA_STREAM_WINDOW_NANOS
+            if (cameraStreamJob?.isActive != true) {
+                cameraStreamJob =
+                    scope.launch {
+                        camera.frames
+                            .takeWhile { nanoTime() < cameraStreamDeadlineNanos }
+                            .collect { jpeg -> sendCameraImage(camera.key, jpeg) }
+                    }
+            }
+        }
+    }
+
+    private suspend fun sendCameraImage(
+        key: Int,
+        jpeg: ByteArray,
+    ) {
+        cameraSendMutex.withLock {
+            for (chunk in cameraImageChunks(key, jpeg)) {
+                transport.writeFrame(EsphomeMessageType.CAMERA_IMAGE_RESPONSE, chunk.toByteArray())
+            }
+        }
     }
 }

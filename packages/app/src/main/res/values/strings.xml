@@ -17,6 +17,8 @@
     <string name="settings_screensaver_summary">Idle display, overlays, and photos</string>
     <string name="settings_doorbell_title">Doorbell</string>
     <string name="settings_doorbell_summary">Camera overlay triggers</string>
+    <string name="settings_camera_title">Camera</string>
+    <string name="settings_camera_summary">Tablet camera and motion sensor</string>
     <string name="settings_esphome_title">ESPHome</string>
     <string name="settings_esphome_summary">Home Assistant ESPHome protocol</string>
     <string name="settings_admin_title">Admin</string>
@@ -54,6 +56,23 @@
     <string name="settings_doorbell_list_title">Doorbells</string>
     <string name="settings_doorbell_list_empty">Add at least one doorbell.</string>
     <string name="settings_doorbell_add_button">+ Add doorbell</string>
+    <!-- Camera -->
+    <string name="settings_camera_enabled_title">Camera</string>
+    <string name="settings_camera_enabled_summary">Expose the tablet camera and motion sensor to Home Assistant</string>
+    <string name="settings_camera_facing_label">Camera facing</string>
+    <string name="settings_camera_facing_front">Front</string>
+    <string name="settings_camera_facing_back">Back</string>
+    <string name="settings_camera_resolution_label">Resolution</string>
+    <string name="settings_camera_motion_mode_label">Motion detection</string>
+    <string name="settings_camera_motion_mode_off">Off</string>
+    <string name="settings_camera_motion_mode_motion">Any motion</string>
+    <string name="settings_camera_motion_mode_person">Person only</string>
+    <string name="settings_camera_sensitivity_label">Motion sensitivity</string>
+    <string name="settings_camera_wake_on_motion_title">Wake screen on motion</string>
+    <string name="settings_camera_wake_on_motion_summary">Exit the screensaver when motion is detected</string>
+    <string name="settings_camera_allow_remote_enable_title">Allow remote enable</string>
+    <string name="settings_camera_allow_remote_enable_summary">Let Home Assistant turn the camera on. Turning the camera off remotely is always allowed.</string>
+
     <string name="settings_esphome_enabled_title">Enabled</string>
     <string name="settings_esphome_enabled_summary">Expose superdash to HA via the ESPHome protocol.</string>
     <string name="settings_esphome_encryption_key_title">Encryption key (base64)</string>
@@ -265,6 +284,11 @@
     <string name="notification_voice_channel_name">superdash Voice</string>
     <string name="notification_voice_title">superdash voice</string>
     <string name="notification_voice_text">Listening for wake word</string>
+
+    <!-- Camera service notification -->
+    <string name="notification_camera_channel_name">Camera</string>
+    <string name="notification_camera_title">Camera active</string>
+    <string name="notification_camera_text">Watching for motion</string>
 
     <!-- Kiosk keep-alive notification -->
     <string name="notification_kiosk_channel_name">Kiosk keep-alive</string>

@@ -17,6 +17,8 @@
     <string name="settings_screensaver_summary">Affichage inactif, superpositions et photos</string>
     <string name="settings_doorbell_title">Sonnette</string>
     <string name="settings_doorbell_summary">Déclencheurs de superposition caméra</string>
+    <string name="settings_camera_title">Caméra</string>
+    <string name="settings_camera_summary">Caméra de la tablette et détection de mouvement</string>
     <string name="settings_esphome_title">ESPHome</string>
     <string name="settings_esphome_summary">Protocole ESPHome de Home Assistant</string>
     <string name="settings_admin_title">Admin</string>
@@ -54,6 +56,22 @@
     <string name="settings_doorbell_list_title">Sonnettes</string>
     <string name="settings_doorbell_list_empty">Ajoutez au moins une sonnette.</string>
     <string name="settings_doorbell_add_button">+ Ajouter une sonnette</string>
+    <!-- Camera -->
+    <string name="settings_camera_enabled_title">Caméra</string>
+    <string name="settings_camera_enabled_summary">Exposer la caméra de la tablette et le détecteur de mouvement à Home Assistant</string>
+    <string name="settings_camera_facing_label">Orientation de la caméra</string>
+    <string name="settings_camera_facing_front">Avant</string>
+    <string name="settings_camera_facing_back">Arrière</string>
+    <string name="settings_camera_resolution_label">Résolution</string>
+    <string name="settings_camera_motion_mode_label">Détection de mouvement</string>
+    <string name="settings_camera_motion_mode_off">Désactivée</string>
+    <string name="settings_camera_motion_mode_motion">Tout mouvement</string>
+    <string name="settings_camera_motion_mode_person">Personne uniquement</string>
+    <string name="settings_camera_sensitivity_label">Sensibilité de détection</string>
+    <string name="settings_camera_wake_on_motion_title">Réveiller l\'écran en cas de mouvement</string>
+    <string name="settings_camera_wake_on_motion_summary">Quitter l\'écran de veille lorsqu\'un mouvement est détecté</string>
+    <string name="settings_camera_allow_remote_enable_title">Activation à distance</string>
+    <string name="settings_camera_allow_remote_enable_summary">Autoriser Home Assistant à activer la caméra. La désactivation à distance reste toujours possible.</string>
     <string name="settings_esphome_enabled_title">Activé</string>
     <string name="settings_esphome_enabled_summary">Exposer superdash à HA via le protocole ESPHome.</string>
     <string name="settings_esphome_encryption_key_title">Clé de chiffrement (base64)</string>
@@ -262,6 +280,11 @@
     <string name="notification_voice_channel_name">superdash Voix</string>
     <string name="notification_voice_title">superdash voix</string>
     <string name="notification_voice_text">Écoute du mot de réveil</string>
+
+    <!-- Camera service notification -->
+    <string name="notification_camera_channel_name">Caméra</string>
+    <string name="notification_camera_title">Caméra active</string>
+    <string name="notification_camera_text">Surveillance des mouvements</string>
 
     <!-- Kiosk keep-alive notification -->
     <string name="notification_kiosk_channel_name">Maintien actif du kiosque</string>

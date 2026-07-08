@@ -63,6 +63,9 @@ object SettingsLayout {
             SettingsDestination.TopLevel.Doorbell -> {
                 "settings_nav_doorbell"
             }
+            SettingsDestination.TopLevel.Camera -> {
+                "settings_nav_camera"
+            }
             SettingsDestination.TopLevel.Esphome -> {
                 "settings_nav_esphome"
             }

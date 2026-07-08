@@ -9,7 +9,9 @@ import android.graphics.YuvImage
 import android.os.Handler
 import android.os.Looper
 import android.util.Size
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraState
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -126,9 +128,14 @@ class CameraXPipeline(
                         CameraSelector.DEFAULT_BACK_CAMERA
                     }
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(owner, selector, analysis)
+                val camera = cameraProvider.bindToLifecycle(owner, selector, analysis)
                 owner.moveTo(Lifecycle.State.RESUMED)
                 availabilityState.value = CameraAvailability.Running
+                // A recovery rebind that reaches Running is a success, so reset the
+                // backoff — otherwise the next disconnect (hours later) would wait
+                // the accumulated max delay before its first retry.
+                retryDelayMs = INITIAL_RETRY_DELAY_MS
+                observeCameraState(camera, owner)
                 log.i("camera started", "w" to config.width, "h" to config.height, "front" to config.facingFront)
             } catch (throwable: Throwable) {
                 log.w("camera start failed", throwable)
@@ -144,6 +151,52 @@ class CameraXPipeline(
         lifecycleOwner?.moveTo(Lifecycle.State.DESTROYED)
         lifecycleOwner = null
         availabilityState.value = CameraAvailability.Off
+    }
+
+    /** Re-open the camera if it closes with an error while still wanted.
+     *  A system-forced disconnect (e.g. the device dozing while no camera
+     *  foreground service holds access) closes the camera and CameraX does
+     *  not reopen it on its own, leaving the stream permanently dead. The
+     *  CameraState error signal drives a re-bind through the existing backoff.
+     *
+     *  Guards, in order:
+     *  - `sawOpen`: [CameraInfo.getCameraState] is a LiveData cached per camera
+     *    id that replays its last value to a new observer, so a recovery rebind
+     *    would otherwise fire synchronously with the PREVIOUS disconnect's
+     *    CLOSED(error) and tear the freshly-opened camera down again. Only act
+     *    on an error once this bind has actually reached OPEN.
+     *  - `scheduled`: at most one retry per bind, so a CLOSING(err)→CLOSED(err)
+     *    pair doesn't queue two rebinds.
+     *  - `wantedConfig != null`: don't recover after an intentional stop.
+     *  - generation guard: ignore a stale observer whose bind was superseded.
+     *  The observer is tied to [owner]; stopOnMain() destroys the owner, which
+     *  removes it. */
+    private fun observeCameraState(
+        camera: Camera,
+        owner: PipelineLifecycleOwner,
+    ) {
+        val boundGeneration = startGeneration
+        var sawOpen = false
+        var scheduled = false
+        camera.cameraInfo.cameraState.observe(owner) { state ->
+            if (startGeneration != boundGeneration || wantedConfig == null) {
+                return@observe
+            }
+            if (state.type == CameraState.Type.OPEN) {
+                sawOpen = true
+                return@observe
+            }
+            if (sawOpen && !scheduled && state.error != null) {
+                scheduled = true
+                log.w(
+                    "camera disconnected; scheduling recovery",
+                    null,
+                    "code" to state.error?.code,
+                    "type" to state.type,
+                )
+                scheduleRetry()
+            }
+        }
     }
 
     private fun onFrame(imageProxy: ImageProxy) {

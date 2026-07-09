@@ -116,7 +116,11 @@ internal class EsphomeServer(
                         } catch (timeout: TimeoutCancellationException) {
                             log.w("client setup timed out", null, "afterMs" to DEFAULT_IDLE_TIMEOUT_MS)
                         } catch (t: Throwable) {
-                            log.w("client setup failed", t)
+                            if (isExpectedDisconnect(t)) {
+                                log.i("client disconnected")
+                            } else {
+                                log.w("client setup failed", t)
+                            }
                         } finally {
                             runCatching { socket.close() }
                             runCatching { output.close() }

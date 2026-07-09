@@ -211,6 +211,12 @@ class SettingsViewModel(
             )
         }
 
+    private val cameraPermissionGranted = MutableStateFlow(true)
+
+    fun setCameraPermissionGranted(granted: Boolean) {
+        cameraPermissionGranted.value = granted
+    }
+
     private val cameraUiStateFlow: Flow<CameraSettingsState> =
         combine(
             combine(
@@ -228,7 +234,8 @@ class SettingsViewModel(
             ) { motionSensitivity, wakeOnMotion, allowRemoteEnable ->
                 CameraTail(motionSensitivity, wakeOnMotion, allowRemoteEnable)
             },
-        ) { core, tail ->
+            cameraPermissionGranted,
+        ) { core, tail, permissionGranted ->
             CameraSettingsState(
                 enabled = core.enabled,
                 facing = core.facing,
@@ -237,6 +244,7 @@ class SettingsViewModel(
                 motionSensitivity = tail.motionSensitivity,
                 wakeOnMotion = tail.wakeOnMotion,
                 allowRemoteEnable = tail.allowRemoteEnable,
+                cameraPermissionGranted = permissionGranted,
             )
         }
 

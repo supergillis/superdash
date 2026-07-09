@@ -634,6 +634,20 @@ class SettingsViewModelTest {
             assertEquals(false, camera.lastAllowRemoteEnable)
         }
 
+    @Test
+    fun `camera permission flag defaults granted and reflects setter`() =
+        runTest {
+            val camera = FakeCameraSettings()
+            val viewModel = buildViewModel(camera = camera)
+            backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+            assertEquals(true, viewModel.uiState.value.camera.cameraPermissionGranted)
+
+            viewModel.setCameraPermissionGranted(false)
+            advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.camera.cameraPermissionGranted)
+        }
+
     private class FakeKioskSettings(
         keepScreenOnFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
         startOnBootFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),

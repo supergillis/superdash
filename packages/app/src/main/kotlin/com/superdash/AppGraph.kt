@@ -231,6 +231,16 @@ class AppGraph(
             stop = { CameraService.stop(application.applicationContext) },
         )
 
+    /** Re-attempt camera capture after the CAMERA permission is granted while
+     *  the camera is already enabled. Starts the camera foreground service
+     *  (its own permission check now passes) and forces the pipeline to re-run
+     *  its start. Safe to call when already running (idempotent FGS start +
+     *  a brief pipeline re-bind). */
+    fun restartCameraCapture() {
+        CameraService.start(application.applicationContext)
+        cameraController.requestRestart()
+    }
+
     val haConnectivityController: HaConnectivityController =
         HaConnectivityController(
             context = application,

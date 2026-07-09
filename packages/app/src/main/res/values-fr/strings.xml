@@ -72,6 +72,8 @@
     <string name="settings_camera_wake_on_motion_summary">Quitter l\'écran de veille lorsqu\'un mouvement est détecté</string>
     <string name="settings_camera_allow_remote_enable_title">Activation à distance</string>
     <string name="settings_camera_allow_remote_enable_summary">Autoriser Home Assistant à activer la caméra. La désactivation à distance reste toujours possible.</string>
+    <string name="settings_camera_permission_required_title">Autorisation caméra requise</string>
+    <string name="settings_camera_permission_required_summary">La caméra est activée mais Android n\'a pas accordé l\'accès à la caméra. Appuyez pour autoriser.</string>
     <string name="settings_esphome_enabled_title">Activé</string>
     <string name="settings_esphome_enabled_summary">Exposer superdash à HA via le protocole ESPHome.</string>
     <string name="settings_esphome_encryption_key_title">Clé de chiffrement (base64)</string>

@@ -23,6 +23,7 @@ import com.superdash.AppGraph
 import com.superdash.MainActivity
 import com.superdash.R
 import com.superdash.SuperdashApp
+import com.superdash.camera.CameraAvailability
 import com.superdash.core.locale.SupportedLanguage
 import com.superdash.core.util.UrlNormalizer
 import com.superdash.doorbell.DoorbellConfig
@@ -195,7 +196,10 @@ class SettingsActivity : AppCompatActivity() {
         registerForActivityResult(
             ActivityResultContracts.RequestPermission(),
         ) { granted ->
-            settingsViewModel.setCameraEnabled(granted)
+            if (granted) {
+                settingsViewModel.setCameraEnabled(true)
+            }
+            refreshCameraPermissionState()
         }
 
     fun requestCameraAndEnable() {
@@ -207,6 +211,26 @@ class SettingsActivity : AppCompatActivity() {
         } else {
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
+    }
+
+    private fun refreshCameraPermissionState() {
+        val granted =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        settingsViewModel.setCameraPermissionGranted(granted)
+        if (granted) {
+            val graph = (application as SuperdashApp).graph
+            // Only nudge when capture wanted to run but could not (permission was
+            // missing); avoids a needless re-bind on every resume.
+            if (graph.cameraController.availability.value is CameraAvailability.PermissionMissing) {
+                graph.restartCameraCapture()
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshCameraPermissionState()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

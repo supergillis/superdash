@@ -72,6 +72,8 @@
     <string name="settings_camera_wake_on_motion_summary">Screensaver afsluiten wanneer beweging wordt gedetecteerd</string>
     <string name="settings_camera_allow_remote_enable_title">Op afstand inschakelen</string>
     <string name="settings_camera_allow_remote_enable_summary">Home Assistant toestaan de camera in te schakelen. Op afstand uitschakelen blijft altijd mogelijk.</string>
+    <string name="settings_camera_permission_required_title">Cameratoestemming vereist</string>
+    <string name="settings_camera_permission_required_summary">De camera is ingeschakeld maar Android heeft geen cameratoegang verleend. Tik om toe te staan.</string>
     <string name="settings_esphome_enabled_title">Ingeschakeld</string>
     <string name="settings_esphome_enabled_summary">Maak superdash via het ESPHome-protocol zichtbaar voor HA.</string>
     <string name="settings_esphome_encryption_key_title">Versleutelingssleutel (base64)</string>

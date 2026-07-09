@@ -99,6 +99,13 @@ class SidebarRailTest {
             }
         }
 
+        // The dismiss scrim appears on first composition of the open sidebar.
+        // createComposeRule (v1) runs on an immediate dispatcher, and on rare
+        // first runs the assertion raced the scrim's initial composition
+        // ("node not found"). Wait for the node to settle before asserting.
+        composeRule.waitUntil {
+            composeRule.onAllNodesWithContentDescription("Dismiss sidebar").fetchSemanticsNodes().size == 1
+        }
         composeRule.onNodeWithContentDescription("Dismiss sidebar").assertHasClickAction()
         composeRule.onAllNodesWithContentDescription("Dismiss sidebar").assertCountEquals(1)
     }

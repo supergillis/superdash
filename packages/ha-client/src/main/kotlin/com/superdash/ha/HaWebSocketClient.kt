@@ -291,8 +291,17 @@ class HaWebSocketClient(
                     val pingJob =
                         launch {
                             runPingLoop(
-                                sendPing = { pingId -> session.sendCommand(PingCommand(pingId)) },
-                                awaitPong = { pingId -> pongs.first { it == pingId } },
+                                // The ping is sent from awaitPong's onSubscription so the
+                                // pong collector is attached before the ping goes out. Sending
+                                // in sendPing (before subscribing) lets a fast pong land while
+                                // pongs has replay=0 and no collector, causing a spurious
+                                // timeout/disconnect. Mirrors runPingLoopForTest.
+                                sendPing = { /* sent via onSubscription below */ },
+                                awaitPong = { pingId ->
+                                    pongs
+                                        .onSubscription { session.sendCommand(PingCommand(pingId)) }
+                                        .first { it == pingId }
+                                },
                                 onTimeout = { pingId ->
                                     log.w("ping timed out; closing websocket", null, "pingId" to pingId)
                                     session.cancel(CancellationException("HA websocket ping timed out"))
@@ -521,7 +530,11 @@ class HaWebSocketClient(
                 runCatching { json.decodeFromString<HaWsFrame>(text) }.getOrNull()
                     ?: continue
             when (parsed) {
-                is EventFrame -> _entities.update { applyEntityEvent(it, parsed.event) }
+                is EventFrame ->
+                    // A single malformed event (e.g. a state payload we can't decode)
+                    // must not tear down the whole connection. Log and skip it.
+                    runCatching { _entities.update { applyEntityEvent(it, parsed.event) } }
+                        .onFailure { t -> log.w("failed to apply state_changed event; skipping", t) }
                 is Pong -> pongs.tryEmit(parsed.id)
                 else -> { /* ignored */ }
             }
@@ -547,9 +560,10 @@ class HaWebSocketClient(
     }
 
     private fun recordRecent(line: String) {
+        val redacted = redactSecrets(line)
         val snapshot =
             synchronized(recentEventsLock) {
-                recentEventsBuffer.addFirst(line)
+                recentEventsBuffer.addFirst(redacted)
                 while (recentEventsBuffer.size > RECENT_EVENTS_CAP) {
                     recentEventsBuffer.removeLast()
                 }
@@ -559,6 +573,19 @@ class HaWebSocketClient(
     }
 
     internal val scopeForTest: CoroutineScope get() = scope
+
+    private companion object {
+        // Mask the access token in any frame we record for the debug screen so the
+        // long-lived HA token never shows up in recentEvents. The outbound auth
+        // frame is the obvious source, but redacting by field name catches the
+        // token wherever it appears regardless of direction. The value pattern
+        // consumes JSON escapes (\" \\ …) so a token containing an escaped quote
+        // is fully masked instead of leaking its tail.
+        private val ACCESS_TOKEN_REGEX = Regex("(\"access_token\"\\s*:\\s*\")(?:\\\\.|[^\"\\\\])*\"")
+
+        fun redactSecrets(line: String): String =
+            ACCESS_TOKEN_REGEX.replace(line) { match -> "${match.groupValues[1]}<redacted>\"" }
+    }
 
     internal val isAnyJobRefActiveForTest: Boolean
         get() = pingJobRef.get()?.isActive == true || runConnectionJobRef.get()?.isActive == true
@@ -589,6 +616,8 @@ class HaWebSocketClient(
     internal fun deliverPongForTest(pingId: Int) {
         pongs.tryEmit(pingId)
     }
+
+    internal fun redactSecretsForTest(line: String): String = redactSecrets(line)
 
     internal class NotAuthenticatedExceptionWrapper(
         cause: Throwable,

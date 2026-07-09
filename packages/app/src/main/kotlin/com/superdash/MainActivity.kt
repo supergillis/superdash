@@ -206,6 +206,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         if (ev != null) {
+            // Reset the idle timer on any touch interaction. The GestureDetector
+            // only fires on tap/long-press, so swipes and scrolls would otherwise
+            // let the screensaver start mid-interaction. ACTION_DOWN begins every
+            // gesture, so resetting here covers them all.
+            if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+                graph.idleController.touch()
+            }
             tapDetector.onTouchEvent(ev)
         }
         return super.dispatchTouchEvent(ev)

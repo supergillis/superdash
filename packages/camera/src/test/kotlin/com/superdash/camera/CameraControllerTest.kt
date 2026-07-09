@@ -23,6 +23,7 @@ private class FakePipeline : CameraPipeline {
     override val availability: StateFlow<CameraAvailability> = availabilityState.asStateFlow()
     var started: CameraPipelineConfig? = null
     var stopCount = 0
+    var startCount = 0
 
     /** Simulates [CameraXPipeline.stop] posting the unbind asynchronously: when
      *  true, [stop] leaves [availabilityState] at Running instead of flipping
@@ -32,6 +33,7 @@ private class FakePipeline : CameraPipeline {
 
     override fun start(config: CameraPipelineConfig) {
         started = config
+        startCount++
         availabilityState.value = CameraAvailability.Running
     }
 
@@ -410,5 +412,44 @@ class CameraControllerTest {
             now = 150L
             pipeline.framesFlow.emit(testFrame())
             assertEquals(2, received.size)
+        }
+
+    @Test
+    fun `requestRestart re-invokes pipeline start while enabled`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.enabledState.value = true
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = emptyMap(),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+            val startsAfterEnable = pipeline.startCount
+            assertTrue(startsAfterEnable >= 1)
+
+            controller.requestRestart()
+
+            assertEquals(startsAfterEnable + 1, pipeline.startCount)
+        }
+
+    @Test
+    fun `requestRestart does nothing while disabled`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.enabledState.value = false
+            CameraController(
+                pipeline = pipeline,
+                settings = settings,
+                detectorFactories = emptyMap(),
+                scope = backgroundScope,
+                nowMs = { 0L },
+            ).requestRestart()
+
+            assertEquals(0, pipeline.startCount)
         }
 }

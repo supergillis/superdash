@@ -19,6 +19,7 @@ class CameraPipelineConfig(
     val width: Int,
     val height: Int,
     val facingFront: Boolean,
+    val maxFps: Int,
 )
 
 /** Frame source abstraction so [CameraController] is testable without

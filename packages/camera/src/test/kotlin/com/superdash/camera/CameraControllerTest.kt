@@ -155,6 +155,50 @@ class CameraControllerTest {
         }
 
     @Test
+    fun `maxFps propagates into the pipeline config`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.maxFpsState.value = 7
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = emptyMap(),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+
+            settings.enabledState.value = true
+
+            assertEquals(7, pipeline.started?.maxFps)
+            assertEquals(CameraAvailability.Running, controller.availability.value)
+        }
+
+    @Test
+    fun `changing maxFps restarts the pipeline`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = emptyMap(),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+            settings.enabledState.value = true
+            assertEquals(1, pipeline.startCount)
+
+            settings.maxFpsState.value = 5
+
+            assertEquals(2, pipeline.startCount)
+            assertEquals(5, pipeline.started?.maxFps)
+            assertEquals(CameraAvailability.Running, controller.availability.value)
+        }
+
+    @Test
     fun `motion detection drives motionActive with clear-delay hold`() =
         runTest(UnconfinedTestDispatcher()) {
             var now = 0L

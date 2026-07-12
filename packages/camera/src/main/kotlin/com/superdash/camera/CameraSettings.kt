@@ -28,6 +28,9 @@ interface CameraSettings {
      *  Remote OFF is always allowed regardless of this setting. */
     val allowRemoteEnable: Flow<Boolean>
 
+    /** Upper bound on the capture frame rate, 1..30. */
+    val maxFps: Flow<Int>
+
     suspend fun setEnabled(value: Boolean)
 
     suspend fun setFacing(value: String)
@@ -43,4 +46,6 @@ interface CameraSettings {
     suspend fun setWakeOnMotion(value: Boolean)
 
     suspend fun setAllowRemoteEnable(value: Boolean)
+
+    suspend fun setMaxFps(value: Int)
 }

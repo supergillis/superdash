@@ -231,8 +231,9 @@ class SettingsViewModel(
                 cameraSettings.motionSensitivity,
                 cameraSettings.wakeOnMotion,
                 cameraSettings.allowRemoteEnable,
-            ) { motionSensitivity, wakeOnMotion, allowRemoteEnable ->
-                CameraTail(motionSensitivity, wakeOnMotion, allowRemoteEnable)
+                cameraSettings.maxFps,
+            ) { motionSensitivity, wakeOnMotion, allowRemoteEnable, maxFps ->
+                CameraTail(motionSensitivity, wakeOnMotion, allowRemoteEnable, maxFps)
             },
             cameraPermissionGranted,
         ) { core, tail, permissionGranted ->
@@ -242,6 +243,7 @@ class SettingsViewModel(
                 resolution = core.resolution,
                 motionMode = core.motionMode,
                 motionSensitivity = tail.motionSensitivity,
+                maxFps = tail.maxFps,
                 wakeOnMotion = tail.wakeOnMotion,
                 allowRemoteEnable = tail.allowRemoteEnable,
                 cameraPermissionGranted = permissionGranted,
@@ -404,6 +406,7 @@ class SettingsViewModel(
         val motionSensitivity: Int,
         val wakeOnMotion: Boolean,
         val allowRemoteEnable: Boolean,
+        val maxFps: Int,
     )
 
     private data class VoiceCore(
@@ -552,6 +555,8 @@ class SettingsViewModel(
     fun setCameraMotionMode(value: String) = launch { cameraSettings.setMotionMode(value) }
 
     fun setCameraMotionSensitivity(value: Int) = launch { cameraSettings.setMotionSensitivity(value) }
+
+    fun setCameraMaxFps(value: Int) = launch { cameraSettings.setMaxFps(value) }
 
     fun setCameraWakeOnMotion(value: Boolean) = launch { cameraSettings.setWakeOnMotion(value) }
 

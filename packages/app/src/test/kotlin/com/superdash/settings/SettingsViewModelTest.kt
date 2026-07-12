@@ -576,6 +576,7 @@ class SettingsViewModelTest {
                     motionModeFlow = MutableStateFlow("person"),
                     motionSensitivityFlow = MutableStateFlow(80),
                     wakeOnMotionFlow = MutableStateFlow(true),
+                    maxFpsFlow = MutableStateFlow(24),
                 )
             val viewModel = buildViewModel(camera = camera)
             backgroundScope.launch { viewModel.uiState.collect {} }
@@ -587,6 +588,7 @@ class SettingsViewModelTest {
             assertEquals("person", viewModel.uiState.value.camera.motionMode)
             assertEquals(80, viewModel.uiState.value.camera.motionSensitivity)
             assertEquals(true, viewModel.uiState.value.camera.wakeOnMotion)
+            assertEquals(24, viewModel.uiState.value.camera.maxFps)
         }
 
     @Test
@@ -601,6 +603,7 @@ class SettingsViewModelTest {
             viewModel.setCameraMotionMode("off")
             viewModel.setCameraMotionSensitivity(10)
             viewModel.setCameraWakeOnMotion(true)
+            viewModel.setCameraMaxFps(5)
             advanceUntilIdle()
 
             assertEquals(true, camera.lastEnabled)
@@ -609,6 +612,7 @@ class SettingsViewModelTest {
             assertEquals("off", camera.lastMotionMode)
             assertEquals(10, camera.lastMotionSensitivity)
             assertEquals(true, camera.lastWakeOnMotion)
+            assertEquals(5, camera.lastMaxFps)
         }
 
     @Test
@@ -824,6 +828,7 @@ class SettingsViewModelTest {
         motionClearDelaySecFlow: MutableStateFlow<Int> = MutableStateFlow(15),
         wakeOnMotionFlow: MutableStateFlow<Boolean> = MutableStateFlow(false),
         allowRemoteEnableFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
+        maxFpsFlow: MutableStateFlow<Int> = MutableStateFlow(10),
     ) : CameraSettings {
         override val enabled: Flow<Boolean> = enabledFlow.asStateFlow()
         override val facing: Flow<String> = facingFlow.asStateFlow()
@@ -833,6 +838,7 @@ class SettingsViewModelTest {
         override val motionClearDelaySec: Flow<Int> = motionClearDelaySecFlow.asStateFlow()
         override val wakeOnMotion: Flow<Boolean> = wakeOnMotionFlow.asStateFlow()
         override val allowRemoteEnable: Flow<Boolean> = allowRemoteEnableFlow.asStateFlow()
+        override val maxFps: Flow<Int> = maxFpsFlow.asStateFlow()
 
         var lastEnabled: Boolean? = null
         var lastFacing: String? = null
@@ -842,6 +848,7 @@ class SettingsViewModelTest {
         var lastMotionClearDelaySec: Int? = null
         var lastWakeOnMotion: Boolean? = null
         var lastAllowRemoteEnable: Boolean? = null
+        var lastMaxFps: Int? = null
 
         override suspend fun setEnabled(value: Boolean) {
             lastEnabled = value
@@ -873,6 +880,10 @@ class SettingsViewModelTest {
 
         override suspend fun setAllowRemoteEnable(value: Boolean) {
             lastAllowRemoteEnable = value
+        }
+
+        override suspend fun setMaxFps(value: Int) {
+            lastMaxFps = value
         }
     }
 

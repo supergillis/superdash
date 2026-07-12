@@ -103,6 +103,8 @@ class EsphomeBindingsTest {
                         setMotionSensitivity = {},
                         motionClearDelaySec = MutableStateFlow(15f),
                         setMotionClearDelaySec = {},
+                        maxFps = MutableStateFlow(10f),
+                        setMaxFps = {},
                         wakeOnMotion = MutableStateFlow(false),
                         setWakeOnMotion = {},
                         cameraStatus = MutableStateFlow("Off"),
@@ -155,6 +157,7 @@ class EsphomeBindingsTest {
                 "motion_detection_mode",
                 "motion_sensitivity",
                 "motion_clear_delay_sec",
+                "camera_max_fps",
                 "camera_status",
                 "camera",
             ),
@@ -163,6 +166,11 @@ class EsphomeBindingsTest {
         assertEquals(
             listOf("shuffle", "chronological"),
             (entities.single { entity -> entity.objectId == "media_library_order" } as EsphomeEntity.Select).options,
+        )
+        val maxFps = entities.single { entity -> entity.objectId == "camera_max_fps" } as EsphomeEntity.Number
+        assertEquals(
+            listOf(1f, 30f, 1f),
+            listOf(maxFps.minValue, maxFps.maxValue, maxFps.step),
         )
     }
 
@@ -231,10 +239,10 @@ class EsphomeBindingsTest {
         kotlinx.coroutines.test.runTest {
             val received = mutableListOf<Boolean>()
             val entity =
-                cameraEnabledEntity(
+                cameraEntities(
                     setCameraEnabled = { value -> received.add(value) },
                     allowRemoteEnable = MutableStateFlow(false),
-                )
+                ).single { entity -> entity.objectId == "camera_enabled" } as EsphomeEntity.Switch
 
             entity.onCommand(true)
 
@@ -246,10 +254,10 @@ class EsphomeBindingsTest {
         kotlinx.coroutines.test.runTest {
             val received = mutableListOf<Boolean>()
             val entity =
-                cameraEnabledEntity(
+                cameraEntities(
                     setCameraEnabled = { value -> received.add(value) },
                     allowRemoteEnable = MutableStateFlow(false),
-                )
+                ).single { entity -> entity.objectId == "camera_enabled" } as EsphomeEntity.Switch
 
             entity.onCommand(false)
 
@@ -261,22 +269,36 @@ class EsphomeBindingsTest {
         kotlinx.coroutines.test.runTest {
             val received = mutableListOf<Boolean>()
             val entity =
-                cameraEnabledEntity(
+                cameraEntities(
                     setCameraEnabled = { value -> received.add(value) },
                     allowRemoteEnable = MutableStateFlow(true),
-                )
+                ).single { entity -> entity.objectId == "camera_enabled" } as EsphomeEntity.Switch
 
             entity.onCommand(true)
 
             assertEquals(listOf(true), received)
         }
 
-    /** Builds just the `camera_enabled` switch entity from the full catalog, with dummy
-     *  bindings for everything else, so the remote-enable guard can be exercised directly. */
-    private fun cameraEnabledEntity(
-        setCameraEnabled: suspend (Boolean) -> Unit,
-        allowRemoteEnable: Flow<Boolean>,
-    ): EsphomeEntity.Switch {
+    @Test
+    fun `camera_max_fps command rounds to a whole fps and reaches the setter`() =
+        kotlinx.coroutines.test.runTest {
+            val received = mutableListOf<Float>()
+            val entity =
+                cameraEntities(setMaxFps = { value -> received.add(value) })
+                    .single { entity -> entity.objectId == "camera_max_fps" } as EsphomeEntity.Number
+
+            entity.onCommand(12.4f)
+
+            assertEquals(listOf(12f), received)
+        }
+
+    /** Builds the full entity catalog with dummy bindings, letting individual
+     *  camera bindings be injected so command handling can be exercised. */
+    private fun cameraEntities(
+        setCameraEnabled: suspend (Boolean) -> Unit = {},
+        allowRemoteEnable: Flow<Boolean> = MutableStateFlow(true),
+        setMaxFps: suspend (Float) -> Unit = {},
+    ): List<EsphomeEntity> {
         val entities =
             esphomeEntities(
                 device =
@@ -371,6 +393,8 @@ class EsphomeBindingsTest {
                         setMotionSensitivity = {},
                         motionClearDelaySec = MutableStateFlow(15f),
                         setMotionClearDelaySec = {},
+                        maxFps = MutableStateFlow(10f),
+                        setMaxFps = setMaxFps,
                         wakeOnMotion = MutableStateFlow(false),
                         setWakeOnMotion = {},
                         cameraStatus = MutableStateFlow("Off"),
@@ -378,6 +402,6 @@ class EsphomeBindingsTest {
                         latestJpeg = { null },
                     ),
             )
-        return entities.single { entity -> entity.objectId == "camera_enabled" } as EsphomeEntity.Switch
+        return entities
     }
 }

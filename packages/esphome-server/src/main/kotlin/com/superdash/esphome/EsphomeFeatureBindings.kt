@@ -96,6 +96,8 @@ data class EsphomeCameraBindings(
     val setMotionSensitivity: suspend (Float) -> Unit,
     val motionClearDelaySec: Flow<Float>,
     val setMotionClearDelaySec: suspend (Float) -> Unit,
+    val maxFps: Flow<Float>,
+    val setMaxFps: suspend (Float) -> Unit,
     val wakeOnMotion: Flow<Boolean>,
     val setWakeOnMotion: suspend (Boolean) -> Unit,
     val cameraStatus: Flow<String>,

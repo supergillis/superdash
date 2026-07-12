@@ -412,6 +412,16 @@ internal fun esphomeEntities(
             unitOfMeasurement = "s",
             onCommand = camera.setMotionClearDelaySec,
         ),
+        numberEntity(
+            objectId = "camera_max_fps",
+            name = "Camera Max FPS",
+            state = camera.maxFps,
+            minValue = 1f,
+            maxValue = 30f,
+            step = 1f,
+            unitOfMeasurement = "fps",
+            onCommand = camera.setMaxFps,
+        ),
         textSensorEntity(
             objectId = "camera_status",
             name = "Camera Status",

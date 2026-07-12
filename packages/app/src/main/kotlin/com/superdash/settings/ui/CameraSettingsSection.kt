@@ -97,6 +97,16 @@ fun CameraSettingsSection(
             },
         )
         ListItem(
+            headlineContent = { Text(stringResource(R.string.settings_camera_max_fps_label)) },
+            supportingContent = {
+                Slider(
+                    value = state.maxFps.toFloat(),
+                    onValueChange = { value -> actions.onMaxFpsChange(value.toInt()) },
+                    valueRange = 1f..30f,
+                )
+            },
+        )
+        ListItem(
             headlineContent = { Text(stringResource(R.string.settings_camera_wake_on_motion_title)) },
             supportingContent = { Text(stringResource(R.string.settings_camera_wake_on_motion_summary)) },
             trailingContent = {

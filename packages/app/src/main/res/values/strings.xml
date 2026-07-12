@@ -68,6 +68,7 @@
     <string name="settings_camera_motion_mode_motion">Any motion</string>
     <string name="settings_camera_motion_mode_person">Person only</string>
     <string name="settings_camera_sensitivity_label">Motion sensitivity</string>
+    <string name="settings_camera_max_fps_label">Max frame rate (fps)</string>
     <string name="settings_camera_wake_on_motion_title">Wake screen on motion</string>
     <string name="settings_camera_wake_on_motion_summary">Exit the screensaver when motion is detected</string>
     <string name="settings_camera_allow_remote_enable_title">Allow remote enable</string>

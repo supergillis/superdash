@@ -576,6 +576,7 @@ class SettingsViewModelTest {
                     motionModeFlow = MutableStateFlow("person"),
                     motionSensitivityFlow = MutableStateFlow(80),
                     wakeOnMotionFlow = MutableStateFlow(true),
+                    maxFpsFlow = MutableStateFlow(24),
                 )
             val viewModel = buildViewModel(camera = camera)
             backgroundScope.launch { viewModel.uiState.collect {} }
@@ -587,6 +588,7 @@ class SettingsViewModelTest {
             assertEquals("person", viewModel.uiState.value.camera.motionMode)
             assertEquals(80, viewModel.uiState.value.camera.motionSensitivity)
             assertEquals(true, viewModel.uiState.value.camera.wakeOnMotion)
+            assertEquals(24, viewModel.uiState.value.camera.maxFps)
         }
 
     @Test
@@ -601,6 +603,7 @@ class SettingsViewModelTest {
             viewModel.setCameraMotionMode("off")
             viewModel.setCameraMotionSensitivity(10)
             viewModel.setCameraWakeOnMotion(true)
+            viewModel.setCameraMaxFps(5)
             advanceUntilIdle()
 
             assertEquals(true, camera.lastEnabled)
@@ -609,6 +612,7 @@ class SettingsViewModelTest {
             assertEquals("off", camera.lastMotionMode)
             assertEquals(10, camera.lastMotionSensitivity)
             assertEquals(true, camera.lastWakeOnMotion)
+            assertEquals(5, camera.lastMaxFps)
         }
 
     @Test

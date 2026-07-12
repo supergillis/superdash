@@ -5,6 +5,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.superdash.R
 import com.superdash.settings.CameraSettingsActions
@@ -99,9 +103,11 @@ fun CameraSettingsSection(
         ListItem(
             headlineContent = { Text(stringResource(R.string.settings_camera_max_fps_label)) },
             supportingContent = {
+                var draftMaxFps by remember(state.maxFps) { mutableFloatStateOf(state.maxFps.toFloat()) }
                 Slider(
-                    value = state.maxFps.toFloat(),
-                    onValueChange = { value -> actions.onMaxFpsChange(value.toInt()) },
+                    value = draftMaxFps,
+                    onValueChange = { value -> draftMaxFps = value },
+                    onValueChangeFinished = { actions.onMaxFpsChange(draftMaxFps.toInt()) },
                     valueRange = 1f..30f,
                 )
             },

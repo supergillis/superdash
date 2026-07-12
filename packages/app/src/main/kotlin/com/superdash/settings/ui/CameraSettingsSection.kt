@@ -109,6 +109,7 @@ fun CameraSettingsSection(
                     onValueChange = { value -> draftMaxFps = value },
                     onValueChangeFinished = { actions.onMaxFpsChange(draftMaxFps.toInt()) },
                     valueRange = 1f..30f,
+                    steps = 28,
                 )
             },
         )

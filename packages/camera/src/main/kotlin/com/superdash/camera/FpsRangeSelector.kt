@@ -19,3 +19,13 @@ internal fun selectAeFpsRange(
         .filter { (_, upper) -> upper == bestUpper }
         .minByOrNull { (lower, _) -> lower }
 }
+
+/** Ranges advertised by every camera in [perCamera]. CameraX picks its own
+ *  camera for a lens facing, which may differ from the id we queried, so only
+ *  a range that every camera of that facing supports is safe to request.
+ *  Order follows the first camera's list. */
+internal fun intersectFpsRanges(perCamera: List<List<Pair<Int, Int>>>): List<Pair<Int, Int>> {
+    val first = perCamera.firstOrNull() ?: return emptyList()
+    val common = perCamera.map { ranges -> ranges.toSet() }.reduce { acc, set -> acc intersect set }
+    return first.filter { range -> range in common }
+}

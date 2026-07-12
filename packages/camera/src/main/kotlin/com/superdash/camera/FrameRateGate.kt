@@ -1,19 +1,24 @@
 package com.superdash.camera
 
-/** Admits at most [maxFps] frames per second: a frame passes only when at
- *  least 1000/maxFps ms elapsed since the last admitted frame. Not
- *  thread-safe; call from a single thread. */
+/** Caps admitted frames at [maxFps] on average: admissions are scheduled
+ *  1000/maxFps ms apart, and a frame is admitted once the schedule comes due.
+ *  When arrivals are quantized more coarsely than the schedule (for example a
+ *  15 fps sensor under a 10 fps cap), the next slot is measured from the
+ *  previous due time rather than the admitted frame, so the average rate
+ *  stays at the cap instead of undershooting. After a gap longer than one
+ *  interval the schedule resets to the arrival time. Not thread-safe; call
+ *  from a single thread. */
 internal class FrameRateGate(
     maxFps: Int,
 ) {
     private val minIntervalMs: Long = 1000L / maxFps.coerceAtLeast(1)
-    private var lastAdmittedMs = Long.MIN_VALUE / 2
+    private var dueMs = Long.MIN_VALUE / 2
 
     fun admit(nowMs: Long): Boolean {
-        if (nowMs - lastAdmittedMs < minIntervalMs) {
+        if (nowMs < dueMs) {
             return false
         }
-        lastAdmittedMs = nowMs
+        dueMs = if (nowMs - dueMs >= minIntervalMs) nowMs + minIntervalMs else dueMs + minIntervalMs
         return true
     }
 }

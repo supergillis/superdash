@@ -40,4 +40,36 @@ class FpsRangeSelectorTest {
         val ranges = listOf(15 to 15, 15 to 30, 30 to 30)
         assertEquals(15 to 15, selectAeFpsRange(ranges, 10))
     }
+
+    @Test
+    fun `cap at 30 picks the fastest range with the widest lower bound`() {
+        val ranges = listOf(15 to 15, 15 to 30, 30 to 30)
+        assertEquals(15 to 30, selectAeFpsRange(ranges, 30))
+    }
+
+    @Test
+    fun `intersect of no cameras is empty`() {
+        assertEquals(emptyList<Pair<Int, Int>>(), intersectFpsRanges(emptyList()))
+    }
+
+    @Test
+    fun `intersect of a single camera keeps its ranges in order`() {
+        val ranges = listOf(15 to 15, 15 to 30, 30 to 30)
+        assertEquals(ranges, intersectFpsRanges(listOf(ranges)))
+    }
+
+    @Test
+    fun `intersect keeps only ranges every camera supports`() {
+        val wide = listOf(7 to 30, 15 to 30, 30 to 30)
+        val tele = listOf(15 to 30, 30 to 30, 24 to 24)
+        assertEquals(listOf(15 to 30, 30 to 30), intersectFpsRanges(listOf(wide, tele)))
+    }
+
+    @Test
+    fun `disjoint cameras intersect to empty`() {
+        assertEquals(
+            emptyList<Pair<Int, Int>>(),
+            intersectFpsRanges(listOf(listOf(15 to 15), listOf(30 to 30))),
+        )
+    }
 }

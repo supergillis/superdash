@@ -83,7 +83,7 @@ The camera module exposes:
 - A motion binary sensor (device class `motion`) from frame-diff and ML Kit person detectors.
 - `camera_enabled` and `wake_on_motion` switches to control capture and screensaver wake.
 - `motion_detection_mode` select to choose between `off`, `motion`, and `person` (ML Kit).
-- `motion_sensitivity`, `motion_clear_delay_sec`, and `camera_max_fps` numbers to tune detection, event hold, and the capture frame-rate cap (1-30 fps, default 10).
+- `motion_sensitivity`, `motion_clear_delay_sec`, and `camera_max_fps` numbers to tune detection, event hold, and the capture frame-rate cap (1-30 fps, default 10). Lowering the frame-rate cap widens the interval between compared frames, so gradual changes such as lighting shifts register as motion more easily at the same sensitivity.
 - `camera_status` text sensor reporting the pipeline state (`Off`, `Running`, `PermissionMissing`, `Error`).
 
 If the camera is enabled but Android's camera permission is not granted (for example after a reinstall, or after enabling it remotely over ESPHome), the `camera_status` sensor reports `PermissionMissing` and the tablet's Settings screen shows a "Camera permission required — tap to grant" row; granting it restarts capture automatically.

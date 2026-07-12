@@ -11,6 +11,7 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Range
 import android.util.Size
 import androidx.camera.camera2.interop.Camera2Interop
@@ -197,15 +198,17 @@ class CameraXPipeline(
             } else {
                 CameraCharacteristics.LENS_FACING_BACK
             }
-        val cameraId =
-            manager.cameraIdList.firstOrNull { id ->
-                manager.getCameraCharacteristics(id).get(CameraCharacteristics.LENS_FACING) == wanted
-            } ?: return emptyList()
-        val ranges =
-            manager
-                .getCameraCharacteristics(cameraId)
-                .get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
-        return ranges?.map { range -> range.lower to range.upper }.orEmpty()
+        val perCamera =
+            manager.cameraIdList.mapNotNull { id ->
+                val characteristics = manager.getCameraCharacteristics(id)
+                if (characteristics.get(CameraCharacteristics.LENS_FACING) != wanted) {
+                    return@mapNotNull null
+                }
+                characteristics
+                    .get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                    ?.map { range -> range.lower to range.upper }
+            }
+        return intersectFpsRanges(perCamera)
     }
 
     /** Re-open the camera if it closes with an error while still wanted.
@@ -261,7 +264,7 @@ class CameraXPipeline(
         gate: FrameRateGate,
     ) {
         try {
-            if (!gate.admit(System.currentTimeMillis())) {
+            if (!gate.admit(SystemClock.elapsedRealtime())) {
                 return
             }
             val nv21 = imageProxy.toNv21()

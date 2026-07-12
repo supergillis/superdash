@@ -19,6 +19,7 @@ internal class SettingsRepositoryCameraSettings(
     override val motionClearDelaySec: Flow<Int> = store.observe(MOTION_CLEAR_DELAY_SEC)
     override val wakeOnMotion: Flow<Boolean> = store.observe(WAKE_ON_MOTION)
     override val allowRemoteEnable: Flow<Boolean> = store.observe(ALLOW_REMOTE_ENABLE)
+    override val maxFps: Flow<Int> = store.observe(MAX_FPS)
 
     override suspend fun setEnabled(value: Boolean) = store.write(ENABLED, value)
 
@@ -36,6 +37,8 @@ internal class SettingsRepositoryCameraSettings(
 
     override suspend fun setAllowRemoteEnable(value: Boolean) = store.write(ALLOW_REMOTE_ENABLE, value)
 
+    override suspend fun setMaxFps(value: Int) = store.write(MAX_FPS, value)
+
     private companion object {
         val ENABLED = Setting(key = "camera_enabled", default = false)
         val FACING = Setting(key = "camera_facing", default = "front")
@@ -47,5 +50,6 @@ internal class SettingsRepositoryCameraSettings(
             Setting(key = "camera_motion_clear_delay_sec", default = 15, write = { it.coerceIn(0, 120) })
         val WAKE_ON_MOTION = Setting(key = "camera_wake_on_motion", default = false)
         val ALLOW_REMOTE_ENABLE = Setting(key = "camera_allow_remote_enable", default = true)
+        val MAX_FPS = Setting(key = "camera_max_fps", default = 10, write = { it.coerceIn(1, 30) })
     }
 }

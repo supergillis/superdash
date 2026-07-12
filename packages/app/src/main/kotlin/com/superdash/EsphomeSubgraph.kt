@@ -199,6 +199,11 @@ class EsphomeSubgraph(
                     .map { value -> value.toFloat() }
                     .distinctUntilChanged(),
             setMotionClearDelaySec = { value -> cameraSettings.setMotionClearDelaySec(value.toInt()) },
+            maxFps =
+                cameraSettings.maxFps
+                    .map { value -> value.toFloat() }
+                    .distinctUntilChanged(),
+            setMaxFps = { value -> cameraSettings.setMaxFps(value.toInt()) },
             wakeOnMotion = cameraSettings.wakeOnMotion,
             setWakeOnMotion = { value -> cameraSettings.setWakeOnMotion(value) },
             cameraStatus =

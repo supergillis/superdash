@@ -49,4 +49,40 @@ class FeedConfigTest {
         assertTrue(b.id.isNotEmpty())
         assertEquals(true, a.id != b.id)
     }
+
+    @Test
+    fun `stored pre-rename payload decodes with momentary defaults`() {
+        val stored =
+            """
+            [{"id":"a","name":"Front","triggerEntity":"binary_sensor.front","cameraEntity":"camera.front"}]
+            """.trimIndent()
+
+        val decoded = FeedConfig.decodeList(stored)
+
+        assertEquals(1, decoded.size)
+        val config = decoded.first()
+        assertEquals(FeedTrigger.Momentary, config.trigger)
+        assertEquals(60, config.autoCloseSec)
+        assertEquals(true, config.wakeScreen)
+        assertEquals(0, config.order)
+    }
+
+    @Test
+    fun `sustained trigger survives an encode decode round trip`() {
+        val config =
+            FeedConfig(
+                id = "b",
+                name = "Nursery",
+                triggerEntity = "input_boolean.baby_monitor",
+                cameraEntity = "camera.nursery",
+                trigger = FeedTrigger.Sustained(activeStates = listOf("on", "streaming")),
+                autoCloseSec = 0,
+                wakeScreen = false,
+                order = 5,
+            )
+
+        val decoded = FeedConfig.decodeList(FeedConfig.encodeList(listOf(config)))
+
+        assertEquals(listOf(config), decoded)
+    }
 }

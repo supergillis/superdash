@@ -14,6 +14,12 @@ data class FeedConfig(
      *  direct stream URL (passed straight to ExoPlayer). [parseCameraSource]
      *  decides which at playback time. */
     val cameraEntity: String,
+    val trigger: FeedTrigger = FeedTrigger.Momentary,
+    /** Seconds before the feed closes itself. 0 keeps it open until closed. */
+    val autoCloseSec: Int = 60,
+    val wakeScreen: Boolean = true,
+    /** Higher wins when several feeds are active at once. */
+    val order: Int = 0,
 ) {
     companion object {
         private val listSerializer = ListSerializer(serializer())

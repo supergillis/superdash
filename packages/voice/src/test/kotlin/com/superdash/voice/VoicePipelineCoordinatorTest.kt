@@ -46,7 +46,7 @@ class VoicePipelineCoordinatorTest {
             val coordinator = buildCoordinator(bus = bus, dispatcher = StandardTestDispatcher(testScheduler))
             coordinator.onWake(testRunContext("feed"), neverEndingAudio())
             advanceUntilIdle()
-            bus.emit(KioskEvent.FeedActivated("a", 0L))
+            bus.emit(KioskEvent.FeedActivated("a", 0L, wakeScreen = true))
             advanceUntilIdle()
             assertEquals(VoiceState.Idle, coordinator.state.value)
         }

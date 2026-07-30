@@ -103,7 +103,7 @@ class SleepControllerTest {
             )
             advanceUntilIdle()
             bus.emit(KioskEvent.WakeWordDetected("hey_jarvis"))
-            bus.emit(KioskEvent.FeedActivated("a", 0L))
+            bus.emit(KioskEvent.FeedActivated("a", 0L, wakeScreen = true))
             advanceUntilIdle()
             assertEquals(2, touchCount)
         }
@@ -130,9 +130,57 @@ class SleepControllerTest {
             assertEquals(0, touchCount)
         }
 
+    @Test
+    fun `feed activation with wakeScreen touches the idle controller`() =
+        runTest {
+            val bus = KioskEventBus()
+            val idle = RecordingTouchable()
+            SleepController(
+                nightModeActiveFlow = flowOf(true),
+                setNightModeActive = { },
+                bus = bus,
+                idleController = idle,
+                scope = TestScope(testScheduler),
+            )
+            advanceUntilIdle()
+
+            bus.emit(KioskEvent.FeedActivated("door", 1L, wakeScreen = true))
+            advanceUntilIdle()
+
+            assertEquals(1, idle.touchCount)
+        }
+
+    @Test
+    fun `feed activation without wakeScreen leaves the tablet asleep`() =
+        runTest {
+            val bus = KioskEventBus()
+            val idle = RecordingTouchable()
+            SleepController(
+                nightModeActiveFlow = flowOf(true),
+                setNightModeActive = { },
+                bus = bus,
+                idleController = idle,
+                scope = TestScope(testScheduler),
+            )
+            advanceUntilIdle()
+
+            bus.emit(KioskEvent.FeedActivated("baby", 1L, wakeScreen = false))
+            advanceUntilIdle()
+
+            assertEquals(0, idle.touchCount)
+        }
+
     private class NoopIdleController : Touchable {
         override fun touch() {
             // no-op
+        }
+    }
+
+    private class RecordingTouchable : Touchable {
+        var touchCount = 0
+
+        override fun touch() {
+            touchCount += 1
         }
     }
 }

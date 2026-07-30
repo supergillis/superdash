@@ -76,7 +76,7 @@ class FeedOverlayControllerTest {
             val controller = controller(bus = bus, activeFeeds = activeFeeds, scope = TestScope(testScheduler))
             runCurrent()
 
-            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            bus.emit(KioskEvent.FeedActivated("door", 200L, wakeScreen = true))
             runCurrent()
 
             assertEquals(doorbell, showingConfig(controller.state.value))
@@ -109,7 +109,7 @@ class FeedOverlayControllerTest {
             val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
             val controller = controller(bus = bus, activeFeeds = activeFeeds, scope = TestScope(testScheduler))
             runCurrent()
-            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            bus.emit(KioskEvent.FeedActivated("door", 200L, wakeScreen = true))
             runCurrent()
 
             controller.close()
@@ -154,7 +154,7 @@ class FeedOverlayControllerTest {
             val bus = KioskEventBus()
             val controller = controller(bus = bus, scope = TestScope(testScheduler))
             runCurrent()
-            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            bus.emit(KioskEvent.FeedActivated("door", 200L, wakeScreen = true))
             runCurrent()
             assertTrue(controller.state.value is FeedState.Showing)
 
@@ -174,7 +174,7 @@ class FeedOverlayControllerTest {
             val configs = MutableStateFlow(listOf(doorbell, monitor))
             val controller = controller(bus = bus, configs = configs, scope = TestScope(testScheduler))
             runCurrent()
-            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            bus.emit(KioskEvent.FeedActivated("door", 200L, wakeScreen = true))
             runCurrent()
             assertTrue(controller.state.value is FeedState.Showing)
 
@@ -216,13 +216,13 @@ class FeedOverlayControllerTest {
             val bus = KioskEventBus()
             val controller = controller(bus = bus, scope = TestScope(testScheduler))
             runCurrent()
-            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            bus.emit(KioskEvent.FeedActivated("door", 200L, wakeScreen = true))
             runCurrent()
             advanceTimeBy(61_000L)
             runCurrent()
             assertEquals(FeedState.Idle, controller.state.value)
 
-            bus.emit(KioskEvent.FeedActivated("door", 400L))
+            bus.emit(KioskEvent.FeedActivated("door", 400L, wakeScreen = true))
             runCurrent()
 
             assertEquals(doorbell, showingConfig(controller.state.value))
@@ -268,7 +268,7 @@ class FeedOverlayControllerTest {
             val controller = controller(bus = bus, scope = TestScope(testScheduler))
             runCurrent()
 
-            bus.emit(KioskEvent.FeedActivated("does_not_exist", 1L))
+            bus.emit(KioskEvent.FeedActivated("does_not_exist", 1L, wakeScreen = true))
             runCurrent()
 
             assertEquals(FeedState.Idle, controller.state.value)
@@ -321,7 +321,7 @@ class FeedOverlayControllerTest {
             // The doorbell actually rings later. Without suppressed feeding back into
             // the re-arm collector, this activation would still find "door" suppressed
             // from the close() above and never show again.
-            bus.emit(KioskEvent.FeedActivated("door", 700L))
+            bus.emit(KioskEvent.FeedActivated("door", 700L, wakeScreen = true))
             runCurrent()
 
             assertEquals(doorbell, showingConfig(controller.state.value))

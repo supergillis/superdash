@@ -533,6 +533,34 @@ class FeedWatcherTest {
         }
 
     @Test
+    fun `activation carries the feed's wakeScreen flag`() =
+        runTest {
+            val triggerStateFlow = MutableStateFlow<EntityState?>(booleanEntity("off"))
+            val bus = KioskEventBus()
+            val received = mutableListOf<KioskEvent>()
+            val collectJob = launch { bus.events.toList(received) }
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(sustainedConfig.copy(wakeScreen = false))),
+                    enabledFlow = flowOf(true),
+                    observeEntity = { _ -> triggerStateFlow },
+                    bus = bus,
+                    nowEpochMs = { 77L },
+                )
+            watcher.start()
+            advanceUntilIdle()
+
+            triggerStateFlow.value = booleanEntity("on")
+            advanceUntilIdle()
+
+            val events = received.filterIsInstance<KioskEvent.FeedActivated>()
+            assertEquals(1, events.size)
+            assertEquals(false, events.first().wakeScreen)
+            collectJob.cancel()
+        }
+
+    @Test
     fun `disabling the master toggle clears activeFeeds`() =
         runTest {
             val triggerStateFlow = MutableStateFlow<EntityState?>(booleanEntity("on"))

@@ -38,10 +38,15 @@ class SleepController(
                 when (event) {
                     is KioskEvent.UserTouched,
                     is KioskEvent.WakeWordDetected,
-                    is KioskEvent.FeedActivated,
                     -> {
                         log.i("wake event → idle touch", "event" to event::class.simpleName)
                         idleController.touch()
+                    }
+                    is KioskEvent.FeedActivated -> {
+                        if (event.wakeScreen) {
+                            log.i("feed activation → idle touch", "feedId" to event.feedId)
+                            idleController.touch()
+                        }
                     }
                 }
             }

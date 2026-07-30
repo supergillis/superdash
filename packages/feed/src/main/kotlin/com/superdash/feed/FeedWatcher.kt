@@ -130,7 +130,7 @@ class FeedWatcher(
             }
         if (fireAt != null) {
             log.i("ring", "feed" to config.id, "name" to config.name)
-            bus.emit(KioskEvent.FeedActivated(config.id, fireAt))
+            bus.emit(KioskEvent.FeedActivated(config.id, fireAt, config.wakeScreen))
         }
     }
 
@@ -156,7 +156,7 @@ class FeedWatcher(
             }
         if (activatedAt != null) {
             log.i("sustained active", "feed" to config.id, "name" to config.name)
-            bus.emit(KioskEvent.FeedActivated(config.id, activatedAt))
+            bus.emit(KioskEvent.FeedActivated(config.id, activatedAt, config.wakeScreen))
         }
     }
 

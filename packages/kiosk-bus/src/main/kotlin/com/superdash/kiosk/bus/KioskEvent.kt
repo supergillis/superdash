@@ -6,9 +6,9 @@ package com.superdash.kiosk.bus
  *  Past-tense / noun-event signals that 0..N independent components may care about:
  *  - [UserTouched]: user interacted with the kiosk (touch, key, esphome stop-screensaver).
  *  - [WakeWordDetected]: wake-word fired; carries the detected phrase.
- *  - [FeedActivated]: a configured feed activated; carries the feed id
- *    and the activation timestamp. Consumers that need the typed config resolve it from
- *    their own settings flow.
+ *  - [FeedActivated]: a configured feed became active; carries the feed id, the
+ *    activation timestamp, and whether the feed should wake the screen. Consumers
+ *    that need the typed config resolve it from their own settings flow.
  *
  *  ## What does NOT belong here
  *  - **Activity-targeted commands**: `RefreshWebView`, `RestartApp`. These are
@@ -39,5 +39,6 @@ sealed class KioskEvent {
     data class FeedActivated(
         val feedId: String,
         val timestampMs: Long,
+        val wakeScreen: Boolean,
     ) : KioskEvent()
 }

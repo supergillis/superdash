@@ -41,6 +41,7 @@ class FeedOverlayControllerTest {
         configs: MutableStateFlow<List<FeedConfig>> = MutableStateFlow(listOf(doorbell, monitor)),
         activeFeeds: MutableStateFlow<Map<String, Long>> = MutableStateFlow(emptyMap()),
         isIdle: MutableStateFlow<Boolean> = MutableStateFlow(false),
+        nowEpochMs: () -> Long = { 5L },
         scope: TestScope,
     ): FeedOverlayController =
         FeedOverlayController(
@@ -49,7 +50,7 @@ class FeedOverlayControllerTest {
             feedsFlow = configs,
             activeFeedsFlow = activeFeeds,
             isIdleFlow = isIdle,
-            nowEpochMs = { 5L },
+            nowEpochMs = nowEpochMs,
         )
 
     private fun showingConfig(state: FeedState): FeedConfig? = (state as? FeedState.Showing)?.config
@@ -338,4 +339,186 @@ class FeedOverlayControllerTest {
 
             assertEquals(FeedState.Idle, controller.state.value)
         }
+
+    @Test
+    fun `a second activation while showing restarts the auto close timer`() =
+        runTest {
+            val bus = KioskEventBus()
+            val controller = controller(bus = bus, scope = TestScope(testScheduler))
+            runCurrent()
+            bus.emit(KioskEvent.FeedActivated("door", 200L, wakeScreen = true))
+            runCurrent()
+
+            advanceTimeBy(59_000L)
+            runCurrent()
+            bus.emit(KioskEvent.FeedActivated("door", 59_200L, wakeScreen = true))
+            runCurrent()
+
+            // The first ring's 60s boundary (t=60_000) falls inside this advance.
+            advanceTimeBy(2_000L)
+            runCurrent()
+            assertTrue(controller.state.value is FeedState.Showing)
+
+            advanceTimeBy(60_000L)
+            runCurrent()
+            assertEquals(FeedState.Idle, controller.state.value)
+        }
+
+    @Test
+    fun `a non waking momentary ring that expired while idle does not appear on wake`() =
+        runTest {
+            val quiet = doorbell.copy(wakeScreen = false)
+            val bus = KioskEventBus()
+            var clock = 1_000L
+            val isIdle = MutableStateFlow(true)
+            val controller =
+                controller(
+                    bus = bus,
+                    configs = MutableStateFlow(listOf(quiet)),
+                    isIdle = isIdle,
+                    nowEpochMs = { clock },
+                    scope = TestScope(testScheduler),
+                )
+            runCurrent()
+
+            bus.emit(KioskEvent.FeedActivated("door", clock, wakeScreen = false))
+            runCurrent()
+            assertEquals(FeedState.Idle, controller.state.value)
+
+            clock += 3_600_000L
+            isIdle.value = false
+            runCurrent()
+
+            assertEquals(FeedState.Idle, controller.state.value)
+        }
+
+    @Test
+    fun `a non waking momentary ring with no auto close still appears on wake`() =
+        runTest {
+            val quiet = doorbell.copy(wakeScreen = false, autoCloseSec = 0)
+            val bus = KioskEventBus()
+            var clock = 1_000L
+            val isIdle = MutableStateFlow(true)
+            val controller =
+                controller(
+                    bus = bus,
+                    configs = MutableStateFlow(listOf(quiet)),
+                    isIdle = isIdle,
+                    nowEpochMs = { clock },
+                    scope = TestScope(testScheduler),
+                )
+            runCurrent()
+
+            bus.emit(KioskEvent.FeedActivated("door", clock, wakeScreen = false))
+            runCurrent()
+
+            clock += 3_600_000L
+            isIdle.value = false
+            runCurrent()
+
+            assertEquals(quiet, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `a sustained feed active since long ago still shows on wake`() =
+        runTest {
+            var clock = 3_600_000L
+            val isIdle = MutableStateFlow(true)
+            val controller =
+                controller(
+                    configs = MutableStateFlow(listOf(monitor.copy(autoCloseSec = 60))),
+                    activeFeeds = MutableStateFlow(mapOf("baby" to 1_000L)),
+                    isIdle = isIdle,
+                    nowEpochMs = { clock },
+                    scope = TestScope(testScheduler),
+                )
+            runCurrent()
+
+            clock += 1_000L
+            isIdle.value = false
+            runCurrent()
+
+            assertEquals(monitor.copy(autoCloseSec = 60), showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `the event's wakeScreen flag does not override the feed's own`() =
+        runTest {
+            val quiet = doorbell.copy(wakeScreen = false)
+            val bus = KioskEventBus()
+            val controller =
+                controller(
+                    bus = bus,
+                    configs = MutableStateFlow(listOf(quiet)),
+                    isIdle = MutableStateFlow(true),
+                    scope = TestScope(testScheduler),
+                )
+            runCurrent()
+
+            bus.emit(KioskEvent.FeedActivated("door", 5L, wakeScreen = true))
+            runCurrent()
+
+            assertEquals(FeedState.Idle, controller.state.value)
+        }
+
+    @Test
+    fun `a waking feed shows while idle even when the event says otherwise`() =
+        runTest {
+            val bus = KioskEventBus()
+            val controller =
+                controller(
+                    bus = bus,
+                    configs = MutableStateFlow(listOf(doorbell)),
+                    isIdle = MutableStateFlow(true),
+                    scope = TestScope(testScheduler),
+                )
+            runCurrent()
+
+            bus.emit(KioskEvent.FeedActivated("door", 5L, wakeScreen = false))
+            runCurrent()
+
+            assertEquals(doorbell, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `selectFeed with no candidates picks nothing`() {
+        val selected =
+            selectFeed(
+                configsById = mapOf("door" to doorbell),
+                candidates = emptyMap(),
+                suppressedIds = emptySet(),
+                isIdle = false,
+                nowEpochMs = 1_000L,
+            )
+
+        assertEquals(null, selected)
+    }
+
+    @Test
+    fun `selectFeed skips a candidate with no matching config`() {
+        val selected =
+            selectFeed(
+                configsById = mapOf("door" to doorbell),
+                candidates = mapOf("gone" to 1_000L),
+                suppressedIds = emptySet(),
+                isIdle = false,
+                nowEpochMs = 1_000L,
+            )
+
+        assertEquals(null, selected)
+    }
+
+    @Test
+    fun `selectFeed picks nothing when every candidate is suppressed`() {
+        val selected =
+            selectFeed(
+                configsById = mapOf("door" to doorbell, "baby" to monitor),
+                candidates = mapOf("door" to 1_000L, "baby" to 1_000L),
+                suppressedIds = setOf("door", "baby"),
+                isIdle = false,
+                nowEpochMs = 1_000L,
+            )
+
+        assertEquals(null, selected)
+    }
 }

@@ -47,7 +47,13 @@ class FeedOverlayController(
     private val suppressed = MutableStateFlow<Set<String>>(emptySet())
     private val forced = MutableStateFlow<FeedState.Showing?>(null)
 
-    private var autoCloseKey: Pair<String, Int>? = null
+    private data class AutoClose(
+        val feedId: String,
+        val seconds: Int,
+        val openedAtEpochMs: Long,
+    )
+
+    private var autoCloseKey: AutoClose? = null
     private var autoCloseJob: Job? = null
 
     val state: StateFlow<FeedState> =
@@ -58,7 +64,7 @@ class FeedOverlayController(
             suppressed,
             isIdleFlow,
         ) { configs, active, momentaryFeeds, suppressedIds, isIdle ->
-            selectFeed(configs, active + momentaryFeeds, suppressedIds, isIdle)
+            selectFeed(configs, active + momentaryFeeds, suppressedIds, isIdle, nowEpochMs())
         }.combine(forced) { derived, manual ->
             manual ?: derived ?: FeedState.Idle
         }.stateIn(
@@ -129,10 +135,14 @@ class FeedOverlayController(
     }
 
     private fun syncAutoClose(current: FeedState) {
+        // openedAtEpochMs is part of the key so a re-activation of an already
+        // showing feed restarts the timer: ringing again at t=59 must not leave
+        // one second of overlay. Sustained feeds keep a stable timestamp while
+        // they stay active, so this never thrashes their timer.
         val key =
             (current as? FeedState.Showing)
                 ?.takeIf { it.config.autoCloseSec > 0 }
-                ?.let { it.config.id to it.config.autoCloseSec }
+                ?.let { AutoClose(it.config.id, it.config.autoCloseSec, it.openedAtEpochMs) }
         if (key == autoCloseKey) {
             return
         }
@@ -143,8 +153,8 @@ class FeedOverlayController(
                 null
             } else {
                 scope.launch {
-                    delay(key.second * 1000L)
-                    closeFeed(key.first)
+                    delay(key.seconds * 1000L)
+                    closeFeed(key.feedId)
                 }
             }
     }
@@ -156,6 +166,7 @@ internal fun selectFeed(
     candidates: Map<String, Long>,
     suppressedIds: Set<String>,
     isIdle: Boolean,
+    nowEpochMs: Long,
 ): FeedState.Showing? =
     candidates
         .asSequence()
@@ -163,6 +174,19 @@ internal fun selectFeed(
         .mapNotNull { (id, activatedAt) ->
             configsById[id]?.let { config -> FeedState.Showing(config, activatedAt) }
         }.filter { showing -> showing.config.wakeScreen || !isIdle }
+        .filterNot { showing -> showing.isExpiredRing(nowEpochMs) }
         .maxWithOrNull(
             compareBy({ showing -> showing.config.order }, { showing -> showing.openedAtEpochMs }),
         )
+
+/** The auto-close timer only runs while a feed is on screen, so a momentary feed
+ *  held back by the idle gate would otherwise wait there forever and paint the
+ *  next time anyone touches the tablet. A ring is an edge: once its own timeout
+ *  has passed it is stale, whether or not it was ever visible. A sustained feed
+ *  is a level and never expires this way, nor does a feed that never auto-closes. */
+private fun FeedState.Showing.isExpiredRing(nowEpochMs: Long): Boolean {
+    if (config.trigger !is FeedTrigger.Momentary || config.autoCloseSec <= 0) {
+        return false
+    }
+    return nowEpochMs - openedAtEpochMs >= config.autoCloseSec * 1000L
+}

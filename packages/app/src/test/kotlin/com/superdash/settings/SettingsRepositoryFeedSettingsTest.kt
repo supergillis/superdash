@@ -226,6 +226,19 @@ class SettingsRepositoryFeedSettingsTest {
         }
 
     @Test
+    fun `migration leaves a payload it cannot decode untouched`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set("doorbells", "{not-json")
+            val settings = SettingsRepositoryFeedSettings(store)
+
+            settings.feeds.first()
+
+            assertEquals("{not-json", store.flow("doorbells", "[]").first())
+            assertEquals(true, store.flow("feeds_migrated_v2", false).first())
+        }
+
+    @Test
     fun `upsert clamps auto close to the supported range`() =
         runTest {
             val store = InMemoryKeyValueStore()

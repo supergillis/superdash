@@ -15,8 +15,9 @@ import kotlinx.coroutines.flow.onStart
 /**
  * App-owned [FeedSettings] backed by [KeyValueStore].
  *
- * Uses the same DataStore keys, defaults, and coerce ranges as the legacy
- * fields on [SettingsRepository] so the upgrade is zero-migration.
+ * Uses the same DataStore keys, defaults, and coerce ranges as the legacy fields
+ * on [SettingsRepository]. The one upgrade step is [migrateAutoCloseIfNeeded],
+ * which folds the former global auto-close setting into each stored feed.
  */
 internal class SettingsRepositoryFeedSettings(
     private val store: KeyValueStore,
@@ -67,9 +68,18 @@ internal class SettingsRepositoryFeedSettings(
             return
         }
         val legacyAutoCloseSec = store.flow(LEGACY_AUTO_CLOSE_SEC.key, LEGACY_AUTO_CLOSE_SEC.default).first()
-        store.mutate(FEEDS) { encoded ->
-            val current = FeedConfig.decodeList(encoded)
-            FeedConfig.encodeList(current.map { it.copy(autoCloseSec = legacyAutoCloseSec) })
+        // decodeList reports a payload it cannot parse as an empty list, so writing
+        // one back would replace the user's feeds with "[]". Nothing to stamp is
+        // also nothing to write on a fresh install.
+        if (FeedConfig.decodeList(store.flow(FEEDS.key, FEEDS.default).first()).isNotEmpty()) {
+            store.mutate(FEEDS) { encoded ->
+                val current = FeedConfig.decodeList(encoded)
+                if (current.isEmpty()) {
+                    encoded
+                } else {
+                    FeedConfig.encodeList(current.map { it.copy(autoCloseSec = legacyAutoCloseSec) })
+                }
+            }
         }
         store.write(MIGRATED_V2, true)
     }

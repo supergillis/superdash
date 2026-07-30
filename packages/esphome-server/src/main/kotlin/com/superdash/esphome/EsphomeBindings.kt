@@ -160,8 +160,8 @@ internal fun esphomeEntities(
             onCommand = voice.setVoiceEnabled,
         ),
         switchEntity(
-            objectId = "doorbell_enabled",
-            name = "Doorbell Enabled",
+            objectId = "feed_enabled",
+            name = "Feed Enabled",
             state = feed.feedEnabled,
             onCommand = feed.setFeedEnabled,
         ),
@@ -182,8 +182,8 @@ internal fun esphomeEntities(
             state = screensaver.inScreensaver,
         ),
         binarySensorEntity(
-            objectId = "doorbell_ringing",
-            name = "Doorbell Ringing",
+            objectId = "feed_showing",
+            name = "Feed Showing",
             state = feed.feedRinging,
         ),
         binarySensorEntity(
@@ -197,8 +197,8 @@ internal fun esphomeEntities(
             state = ha.haEntityCount,
         ),
         sensorEntity(
-            objectId = "doorbell_count",
-            name = "Doorbell Count",
+            objectId = "feed_count",
+            name = "Feed Count",
             state = feed.feedCount,
         ),
         textSensorEntity(

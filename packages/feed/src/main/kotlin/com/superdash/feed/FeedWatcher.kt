@@ -38,6 +38,12 @@ class FeedWatcher(
     private val lastFireById = mutableMapOf<String, Long>()
     private val started = AtomicBoolean(false)
 
+    // A subscription outlives every edit that keeps its triggerEntity, so its
+    // coroutine must never capture the config: handleUpdate resolves the current
+    // one by id. Re-subscribing instead would drop the id out of activeFeeds and
+    // reset its activation timestamp on every unrelated edit.
+    private val latestConfigById = MutableStateFlow<Map<String, FeedConfig>>(emptyMap())
+
     private val mutableActiveFeeds = MutableStateFlow<Map<String, Long>>(emptyMap())
 
     /** Feed id to the epoch millis of its rising edge, for sustained feeds only.
@@ -74,6 +80,17 @@ class FeedWatcher(
     private suspend fun reconcile(configs: List<FeedConfig>) {
         mutex.withLock {
             val wantedById = configs.associateBy { it.id }
+            latestConfigById.value = wantedById
+            // A feed edited from sustained to momentary has no level state any more,
+            // and nothing else would ever take it back out of activeFeeds.
+            val momentaryIds =
+                configs
+                    .filter { it.trigger !is FeedTrigger.Sustained }
+                    .map { it.id }
+                    .toSet()
+            if (momentaryIds.isNotEmpty()) {
+                mutableActiveFeeds.update { it - momentaryIds }
+            }
             // Cancel removed AND triggerEntity-changed subscriptions.
             val toCancel =
                 subscriptions
@@ -92,10 +109,11 @@ class FeedWatcher(
                 if (subscriptions.containsKey(config.id)) {
                     continue
                 }
+                val feedId = config.id
                 val job =
                     scope.launch {
                         observeEntity(config.triggerEntity).collect { entity ->
-                            handleUpdate(config, entity)
+                            handleUpdate(feedId, entity)
                         }
                     }
                 subscriptions[config.id] = Subscription(config.triggerEntity, job)
@@ -103,7 +121,8 @@ class FeedWatcher(
         }
     }
 
-    private suspend fun handleUpdate(config: FeedConfig, entity: EntityState?) {
+    private suspend fun handleUpdate(feedId: String, entity: EntityState?) {
+        val config = latestConfigById.value[feedId] ?: return
         when (val trigger = config.trigger) {
             is FeedTrigger.Momentary -> handleMomentaryUpdate(config, entity)
             is FeedTrigger.Sustained -> handleSustainedUpdate(config, trigger, entity)

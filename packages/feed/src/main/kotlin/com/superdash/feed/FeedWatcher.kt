@@ -7,8 +7,12 @@ import com.superdash.kiosk.bus.KioskEventBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -33,6 +37,13 @@ class FeedWatcher(
     private val lastStateById = mutableMapOf<String, String?>()
     private val lastFireById = mutableMapOf<String, Long>()
     private val started = AtomicBoolean(false)
+
+    private val mutableActiveFeeds = MutableStateFlow<Map<String, Long>>(emptyMap())
+
+    /** Feed id to the epoch millis of its rising edge, for sustained feeds only.
+     *  Level state stays out of [KioskEventBus]: with replay 0 and DROP_OLDEST a
+     *  dropped deactivation would strand the overlay on screen. */
+    val activeFeeds: StateFlow<Map<String, Long>> = mutableActiveFeeds.asStateFlow()
 
     // reconcile() runs on the combine collector while each feed's handleUpdate
     // runs on its own coroutine, all on a multi-threaded dispatcher. Serialize the
@@ -75,6 +86,7 @@ class FeedWatcher(
                 subscriptions.remove(id)?.job?.cancel()
                 lastStateById.remove(id)
                 lastFireById.remove(id)
+                mutableActiveFeeds.update { it - id }
             }
             for (config in configs) {
                 if (subscriptions.containsKey(config.id)) {
@@ -92,6 +104,13 @@ class FeedWatcher(
     }
 
     private suspend fun handleUpdate(config: FeedConfig, entity: EntityState?) {
+        when (val trigger = config.trigger) {
+            is FeedTrigger.Momentary -> handleMomentaryUpdate(config, entity)
+            is FeedTrigger.Sustained -> handleSustainedUpdate(config, trigger, entity)
+        }
+    }
+
+    private suspend fun handleMomentaryUpdate(config: FeedConfig, entity: EntityState?) {
         val newState = entity?.state
         val fireAt =
             mutex.withLock {
@@ -112,6 +131,32 @@ class FeedWatcher(
         if (fireAt != null) {
             log.i("ring", "feed" to config.id, "name" to config.name)
             bus.emit(KioskEvent.FeedActivated(config.id, fireAt))
+        }
+    }
+
+    private suspend fun handleSustainedUpdate(
+        config: FeedConfig,
+        trigger: FeedTrigger.Sustained,
+        entity: EntityState?,
+    ) {
+        val active = trigger.isActive(entity?.state)
+        val activatedAt =
+            mutex.withLock {
+                val wasActive = mutableActiveFeeds.value.containsKey(config.id)
+                if (active == wasActive) {
+                    return@withLock null
+                }
+                if (!active) {
+                    mutableActiveFeeds.update { it - config.id }
+                    return@withLock null
+                }
+                val now = nowEpochMs()
+                mutableActiveFeeds.update { it + (config.id to now) }
+                now
+            }
+        if (activatedAt != null) {
+            log.i("sustained active", "feed" to config.id, "name" to config.name)
+            bus.emit(KioskEvent.FeedActivated(config.id, activatedAt))
         }
     }
 

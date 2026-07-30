@@ -420,4 +420,161 @@ class FeedWatcherTest {
             assertEquals("a", events.first().feedId)
             collectJob.cancel()
         }
+
+    private val sustainedConfig =
+        FeedConfig(
+            id = "s",
+            name = "Nursery",
+            triggerEntity = "input_boolean.baby_monitor",
+            cameraEntity = "camera.nursery",
+            trigger = FeedTrigger.Sustained(activeStates = listOf("on")),
+        )
+
+    private fun booleanEntity(state: String): EntityState =
+        EntityState(
+            entityId = "input_boolean.baby_monitor",
+            state = state,
+            attributes = JsonObject(emptyMap()),
+        )
+
+    @Test
+    fun `sustained trigger already active at first snapshot enters activeFeeds`() =
+        runTest {
+            val triggerStateFlow = MutableStateFlow<EntityState?>(booleanEntity("on"))
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(sustainedConfig)),
+                    enabledFlow = flowOf(true),
+                    observeEntity = { _ -> triggerStateFlow },
+                    bus = KioskEventBus(),
+                    nowEpochMs = { 11L },
+                )
+            watcher.start()
+            advanceUntilIdle()
+
+            assertEquals(mapOf("s" to 11L), watcher.activeFeeds.value)
+        }
+
+    @Test
+    fun `sustained trigger going inactive leaves activeFeeds`() =
+        runTest {
+            val triggerStateFlow = MutableStateFlow<EntityState?>(booleanEntity("on"))
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(sustainedConfig)),
+                    enabledFlow = flowOf(true),
+                    observeEntity = { _ -> triggerStateFlow },
+                    bus = KioskEventBus(),
+                    nowEpochMs = { 11L },
+                )
+            watcher.start()
+            advanceUntilIdle()
+
+            triggerStateFlow.value = booleanEntity("off")
+            advanceUntilIdle()
+
+            assertEquals(emptyMap<String, Long>(), watcher.activeFeeds.value)
+        }
+
+    @Test
+    fun `activation timestamp is stable while the feed stays active`() =
+        runTest {
+            val triggerStateFlow = MutableStateFlow<EntityState?>(booleanEntity("off"))
+            var clock = 100L
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(sustainedConfig.copy(trigger = FeedTrigger.Sustained(listOf("on", "playing"))))),
+                    enabledFlow = flowOf(true),
+                    observeEntity = { _ -> triggerStateFlow },
+                    bus = KioskEventBus(),
+                    nowEpochMs = { clock },
+                )
+            watcher.start()
+            advanceUntilIdle()
+
+            triggerStateFlow.value = booleanEntity("on")
+            advanceUntilIdle()
+            clock = 200L
+            triggerStateFlow.value = booleanEntity("playing")
+            advanceUntilIdle()
+
+            assertEquals(mapOf("s" to 100L), watcher.activeFeeds.value)
+        }
+
+    @Test
+    fun `sustained rising edge emits FeedActivated`() =
+        runTest {
+            val triggerStateFlow = MutableStateFlow<EntityState?>(booleanEntity("off"))
+            val bus = KioskEventBus()
+            val received = mutableListOf<KioskEvent>()
+            val collectJob = launch { bus.events.toList(received) }
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(sustainedConfig)),
+                    enabledFlow = flowOf(true),
+                    observeEntity = { _ -> triggerStateFlow },
+                    bus = bus,
+                    nowEpochMs = { 77L },
+                )
+            watcher.start()
+            advanceUntilIdle()
+
+            triggerStateFlow.value = booleanEntity("on")
+            advanceUntilIdle()
+
+            val events = received.filterIsInstance<KioskEvent.FeedActivated>()
+            assertEquals(1, events.size)
+            assertEquals("s", events.first().feedId)
+            collectJob.cancel()
+        }
+
+    @Test
+    fun `disabling the master toggle clears activeFeeds`() =
+        runTest {
+            val triggerStateFlow = MutableStateFlow<EntityState?>(booleanEntity("on"))
+            val enabledFlow = MutableStateFlow(true)
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(sustainedConfig)),
+                    enabledFlow = enabledFlow,
+                    observeEntity = { _ -> triggerStateFlow },
+                    bus = KioskEventBus(),
+                    nowEpochMs = { 11L },
+                )
+            watcher.start()
+            advanceUntilIdle()
+            assertEquals(mapOf("s" to 11L), watcher.activeFeeds.value)
+
+            enabledFlow.value = false
+            advanceUntilIdle()
+
+            assertEquals(emptyMap<String, Long>(), watcher.activeFeeds.value)
+        }
+
+    @Test
+    fun `momentary feed never enters activeFeeds`() =
+        runTest {
+            val triggerStateFlow = MutableStateFlow<EntityState?>(entity("off"))
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(configA)),
+                    enabledFlow = flowOf(true),
+                    observeEntity = { _ -> triggerStateFlow },
+                    bus = KioskEventBus(),
+                    nowEpochMs = { 42L },
+                )
+            watcher.start()
+            advanceUntilIdle()
+
+            triggerStateFlow.value = entity("on")
+            advanceUntilIdle()
+
+            assertEquals(emptyMap<String, Long>(), watcher.activeFeeds.value)
+        }
 }

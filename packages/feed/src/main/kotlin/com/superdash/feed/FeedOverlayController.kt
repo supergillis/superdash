@@ -83,9 +83,13 @@ class FeedOverlayController(
         }
         // A suppressed id is re-armed by leaving the candidate set. For sustained
         // feeds that is the trigger going inactive; for momentary feeds it is the
-        // close itself, so they re-arm on the next ring.
+        // close itself, so they re-arm on the next ring. suppressed is itself an
+        // input here: closeFeed() can write a suppression with no accompanying
+        // change to activeFeedsFlow/momentary (e.g. a forced show() with nothing
+        // else active), and without suppressed in the combine that write would
+        // never get revisited, leaving the id stuck suppressed forever.
         scope.launch {
-            combine(activeFeedsFlow, momentary) { active, momentaryFeeds ->
+            combine(activeFeedsFlow, momentary, suppressed) { active, momentaryFeeds, _ ->
                 active.keys + momentaryFeeds.keys
             }.collect { present ->
                 suppressed.update { current -> current.filterTo(mutableSetOf()) { it in present } }

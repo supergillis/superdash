@@ -366,6 +366,7 @@ private fun SettingsDestinationContent(
             SidebarSettingsSection(
                 state = state.sidebar,
                 actions = actions.sidebar,
+                feeds = state.feed.configs,
             )
         }
         SettingsDestination.TopLevel.Voice -> {

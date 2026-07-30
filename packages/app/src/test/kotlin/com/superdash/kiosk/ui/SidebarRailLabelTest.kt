@@ -1,7 +1,10 @@
 package com.superdash.kiosk.ui
 
+import com.superdash.core.json.coreJson
 import com.superdash.kiosk.SidebarAction
 import com.superdash.kiosk.SidebarShortcut
+import com.superdash.kiosk.defaultShortLabel
+import com.superdash.kiosk.emitsUserTouchedFromSidebar
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -32,5 +35,31 @@ class SidebarRailLabelTest {
             )
 
         assertEquals("Reload", sidebarLabel(shortcut))
+    }
+
+    @Test
+    fun `show feed action has a default short label`() {
+        assertEquals("Camera", SidebarAction.ShowFeed("baby").defaultShortLabel)
+    }
+
+    @Test
+    fun `show feed action counts as a user touch`() {
+        assertEquals(true, SidebarAction.ShowFeed("baby").emitsUserTouchedFromSidebar())
+    }
+
+    @Test
+    fun `show feed action round trips through shortcut json`() {
+        val shortcut =
+            SidebarShortcut(
+                id = "baby-cam",
+                title = "Nursery",
+                icon = "camera",
+                action = SidebarAction.ShowFeed("baby"),
+            )
+
+        val encoded = coreJson.encodeToString(SidebarShortcut.serializer(), shortcut)
+        val decoded = coreJson.decodeFromString(SidebarShortcut.serializer(), encoded)
+
+        assertEquals(shortcut, decoded)
     }
 }

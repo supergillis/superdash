@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.superdash.R
+import com.superdash.feed.FeedConfig
 import com.superdash.kiosk.SidebarAction
 import com.superdash.kiosk.SidebarPosition
 import com.superdash.kiosk.SidebarShortcut
@@ -43,6 +45,7 @@ import com.superdash.settings.SidebarSettingsState
 fun SidebarSettingsSection(
     state: SidebarSettingsState,
     actions: SidebarSettingsActions,
+    feeds: List<FeedConfig>,
 ) {
     var editingShortcut by remember { mutableStateOf<SidebarShortcut?>(null) }
     var addingShortcut by remember { mutableStateOf(false) }
@@ -109,6 +112,7 @@ fun SidebarSettingsSection(
         SidebarShortcutDialog(
             title = stringResource(R.string.settings_sidebar_edit_shortcut_title),
             shortcut = shortcutBeingEdited,
+            feeds = feeds,
             onDismiss = { editingShortcut = null },
             onSave = { updated ->
                 actions.onShortcutsChange(
@@ -130,6 +134,7 @@ fun SidebarSettingsSection(
         SidebarShortcutDialog(
             title = stringResource(R.string.settings_sidebar_add_shortcut_title),
             shortcut = newDashboardShortcut(nextId),
+            feeds = feeds,
             onDismiss = { addingShortcut = false },
             onSave = { shortcut ->
                 actions.onShortcutsChange(state.shortcuts + shortcut)
@@ -184,6 +189,7 @@ private fun SidebarShortcutRow(
 private fun SidebarShortcutDialog(
     title: String,
     shortcut: SidebarShortcut,
+    feeds: List<FeedConfig>,
     onDismiss: () -> Unit,
     onSave: (SidebarShortcut) -> Unit,
 ) {
@@ -201,6 +207,9 @@ private fun SidebarShortcutDialog(
     var actionKind by remember(shortcut.id) { mutableStateOf(SidebarActionKind.fromAction(shortcut.action)) }
     var dashboardPath by remember(shortcut.id) {
         mutableStateOf((shortcut.action as? SidebarAction.OpenDashboardPath)?.path ?: "")
+    }
+    var feedId by remember(shortcut.id) {
+        mutableStateOf((shortcut.action as? SidebarAction.ShowFeed)?.feedId ?: "")
     }
 
     AlertDialog(
@@ -243,7 +252,7 @@ private fun SidebarShortcutDialog(
                             shortLabelDraft =
                                 updatedLabelDraftForActionChange(
                                     draft = shortLabelDraft,
-                                    selectedAction = value.toAction(dashboardPath),
+                                    selectedAction = value.toAction(dashboardPath, feedId),
                                 )
                         },
                     )
@@ -257,12 +266,38 @@ private fun SidebarShortcutDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+                if (actionKind == SidebarActionKind.ShowFeed) {
+                    for (feed in feeds) {
+                        ListItem(
+                            headlineContent = { Text(feed.name) },
+                            supportingContent = { Text(feed.cameraEntity) },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = feedId == feed.id,
+                                    onClick = {
+                                        feedId = feed.id
+                                        if (titleDraft.isBlank()) {
+                                            titleDraft = feed.name
+                                        }
+                                    },
+                                )
+                            },
+                            modifier =
+                                Modifier.fillMaxWidth().clickable {
+                                    feedId = feed.id
+                                    if (titleDraft.isBlank()) {
+                                        titleDraft = feed.name
+                                    }
+                                },
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    val selectedAction = actionKind.toAction(dashboardPath)
+                    val selectedAction = actionKind.toAction(dashboardPath, feedId)
                     onSave(
                         savedSidebarShortcut(
                             shortcut = shortcut,
@@ -295,9 +330,13 @@ private enum class SidebarActionKind(
     NightModeOn(R.string.settings_sidebar_action_night_mode_on),
     NightModeOff(R.string.settings_sidebar_action_night_mode_off),
     Dashboard(R.string.settings_sidebar_action_open_dashboard_view),
+    ShowFeed(R.string.settings_sidebar_action_show_feed),
     ;
 
-    fun toAction(path: String): SidebarAction =
+    fun toAction(
+        path: String,
+        feedId: String,
+    ): SidebarAction =
         when (this) {
             OpenSettings -> SidebarAction.OpenSettings
             ReloadDashboard -> SidebarAction.ReloadDashboard
@@ -306,6 +345,7 @@ private enum class SidebarActionKind(
             NightModeOn -> SidebarAction.SetNightModeActive(active = true)
             NightModeOff -> SidebarAction.SetNightModeActive(active = false)
             Dashboard -> SidebarAction.OpenDashboardPath(path.trim().trim('/'))
+            ShowFeed -> SidebarAction.ShowFeed(feedId.trim())
         }
 
     companion object {
@@ -322,6 +362,7 @@ private enum class SidebarActionKind(
                         NightModeOff
                     }
                 is SidebarAction.OpenDashboardPath -> Dashboard
+                is SidebarAction.ShowFeed -> ShowFeed
             }
     }
 }
@@ -373,6 +414,7 @@ private fun sidebarActionText(action: SidebarAction): String =
             }
         is SidebarAction.OpenDashboardPath ->
             stringResource(R.string.settings_sidebar_action_open_dashboard_view_path, action.path)
+        is SidebarAction.ShowFeed -> stringResource(R.string.settings_sidebar_action_show_feed)
     }
 
 private fun List<SidebarShortcut>.move(

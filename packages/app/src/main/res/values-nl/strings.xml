@@ -192,6 +192,7 @@
     <string name="settings_sidebar_action_night_mode_off">Nachtmodus uit</string>
     <string name="settings_sidebar_action_open_dashboard_view">Dashboardweergave openen</string>
     <string name="settings_sidebar_action_open_dashboard_view_path">Dashboardweergave openen: %1$s</string>
+    <string name="settings_sidebar_action_show_feed">Camera tonen</string>
     <string name="settings_sidebar_icon_moon">Maan</string>
     <string name="settings_sidebar_icon_sun">Zon</string>
     <string name="settings_sidebar_icon_refresh">Vernieuwen</string>

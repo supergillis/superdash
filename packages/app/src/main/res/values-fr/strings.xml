@@ -192,6 +192,7 @@
     <string name="settings_sidebar_action_night_mode_off">Mode nuit désactivé</string>
     <string name="settings_sidebar_action_open_dashboard_view">Ouvrir une vue du tableau de bord</string>
     <string name="settings_sidebar_action_open_dashboard_view_path">Ouvrir une vue du tableau de bord : %1$s</string>
+    <string name="settings_sidebar_action_show_feed">Afficher la caméra</string>
     <string name="settings_sidebar_icon_moon">Lune</string>
     <string name="settings_sidebar_icon_sun">Soleil</string>
     <string name="settings_sidebar_icon_refresh">Actualiser</string>

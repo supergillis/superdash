@@ -263,6 +263,7 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     graph.kioskSettings.setDashboardPath(action.path)
                 }
+            is SidebarAction.ShowFeed -> graph.feedOverlayController.showById(action.feedId)
         }
     }
 

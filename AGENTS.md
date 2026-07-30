@@ -12,7 +12,7 @@ cannot enforce. These apply to human contributors and AI coding agents alike.
 superdash is a Home Assistant kiosk app for Android tablets. It runs a Home
 Assistant dashboard full-screen, stays signed in across restarts, and adds
 wall-panel extras: on-device wake word and voice, an ambient photo screensaver,
-and feed camera overlays. It can expose itself back to Home Assistant over
+and camera feed overlays. It can expose itself back to Home Assistant over
 the ESPHome native API.
 
 Multi-module Gradle/Kotlin build. The app module is `:packages:app`.
@@ -25,7 +25,7 @@ Multi-module Gradle/Kotlin build. The app module is `:packages:app`.
 | `packages/ha-client` | Home Assistant OAuth, tokens, WebSocket, Assist, media source. |
 | `packages/voice` | Wake word, on-device STT (Whisper/Moonshine), local intents. |
 | `packages/screensaver` | Screensaver and Immich photo slideshow. |
-| `packages/feed` | Feed camera overlay. |
+| `packages/feed` | Camera feed overlays. |
 | `packages/esphome-server` | ESPHome native API server and mDNS announce. |
 | `packages/immich-client` | Immich API client for slideshow photos. |
 | `packages/kiosk-bus` | Internal event bus. |

@@ -23,7 +23,7 @@
 |---|---|---|
 | `UserTouched` | WebView touch, ESPHome stop screensaver, settings screensaver tap | Sleep controller |
 | `WakeWordDetected(phrase)` | Voice coordinator on wake | Sleep controller |
-| `FeedActivated(feedId, timestampMs)` | Feed watcher | Sleep controller, voice coordinator, feed overlay controller |
+| `FeedActivated(feedId, timestampMs, wakeScreen)` | Feed watcher | Sleep controller (only when `wakeScreen`), voice coordinator, feed overlay controller |
 
 ## Buffer behavior
 

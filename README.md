@@ -7,7 +7,7 @@ Home Assistant kiosk app for Android tablets.
 superdash turns an Android tablet into an always-on Home Assistant wall panel. Your
 dashboard runs full-screen in a kiosk, stays signed in across restarts, and gains the
 extras a wall panel wants: hands-free voice control, an ambient photo screensaver, and
-doorbell camera overlays. It can also expose itself back to Home Assistant over the
+camera feed overlays. It can also expose itself back to Home Assistant over the
 ESPHome native API, so HA can read and control the kiosk.
 
 ## Features
@@ -15,7 +15,7 @@ ESPHome native API, so HA can read and control the kiosk.
 - **Full-screen kiosk** — Your Home Assistant dashboard, edge-to-edge and always-on. Stays signed in across reboots.
 - **Hands-free voice** — On-device wake word detection sends your speech straight to Home Assistant Assist.
 - **Ambient screensaver** — Photo slideshow (Immich), clock overlay, and a night mode for idle hours.
-- **Doorbell overlays** — A live camera feed pops up when a doorbell rings.
+- **Camera overlays** — A live camera feed appears when a trigger entity fires, either as a doorbell pop-up or for as long as the trigger stays active.
 - **Camera & motion sensing** — Exposes the tablet camera and an on-device motion sensor to Home Assistant, and can wake the screen when someone approaches.
 - **Two-way with Home Assistant** — Exposes the tablet back to HA over the ESPHome native API, so HA can read and control the kiosk.
 - **Customizable sidebar** — A rail of shortcuts (settings, reload, sleep/wake, night mode, jump to any dashboard view) pinned to any screen edge.
@@ -91,8 +91,9 @@ Open Settings by swiping in from the screen edge. Top-level sections:
   speech-to-text and wake word models (tap the download icon next to a model).
 - `Screensaver`: idle display, night mode, and the Immich photo slideshow under
   `Immich photos`.
-- `Doorbell`: turn on `Doorbell overlay` to show a camera feed when a doorbell
-  rings.
+- `Cameras`: add a feed pointed at a trigger entity to show a camera overlay,
+  either momentarily (a doorbell) or for as long as the trigger stays active
+  (a baby monitor).
 - `ESPHome`: turn on `Enabled` to expose superdash to Home Assistant over the
   ESPHome protocol so HA can read and control the kiosk.
 - `General`: pick the app language.
@@ -131,7 +132,7 @@ kiosk product.
 | `packages/ha-client` | Home Assistant OAuth, tokens, WebSocket, Assist, media source. |
 | `packages/voice` | Wake word, on-device STT (Whisper/Moonshine), local intents. |
 | `packages/screensaver` | Screensaver and Immich photo slideshow. |
-| `packages/feed` | Feed camera overlay. |
+| `packages/feed` | Camera feed overlays. |
 | `packages/esphome-server` | ESPHome native API server and mDNS announce. |
 | `packages/immich-client` | Immich API client for slideshow photos. |
 | `packages/kiosk-bus` | Internal event bus. |
@@ -176,10 +177,10 @@ Home Assistant discovers the kiosk through ESPHome native API.
 
 | Type | Entities |
 |---|---|
-| Switches | Keep screen on, start on boot, night mode, voice, doorbell, launch on wake. |
-| Sensors | HA entity count, doorbell count. |
+| Switches | Keep screen on, start on boot, night mode, voice, camera feed, launch on wake. |
+| Sensors | HA entity count, feed count. |
 | Text sensors | HA state, voice state, selected modes, weather entity, media source, app version. |
-| Numbers | VAD silence, idle timeout, picture spacing, doorbell auto-close. |
+| Numbers | VAD silence, idle timeout, picture spacing. |
 | Selects | Screensaver modes, overlay position, STT providers, Assist provider, wake word, media order. |
 | Buttons | Refresh WebView, restart app, start screensaver, stop screensaver. |
 

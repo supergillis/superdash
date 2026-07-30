@@ -59,11 +59,24 @@ Immich behavior:
 - Videos advance when playback ends.
 - Failed videos are skipped.
 
-## Feed
+## Feeds
 
-`FeedWatcher` observes configured HA entities.
+`FeedWatcher` observes configured HA trigger entities.
 
 - Watches enabled feeds.
+- Momentary triggers emit `FeedActivated` on a rising edge, debounced 5s.
+- Sustained triggers report activity through `activeFeeds`, a `StateFlow`.
 - Resolves camera streams through Home Assistant.
-- Emits overlay state.
-- Emits bus events for cross-feature reactions.
+
+`FeedOverlayController` derives the visible feed.
+
+- Candidates are active sustained feeds plus open momentary feeds.
+- Highest `order` wins, ties break on the most recent activation.
+- Closing suppresses a feed until its trigger goes inactive.
+- Auto-close is per feed and acts as an automatic close.
+- Feeds with `wakeScreen` off stay hidden while the tablet is idle.
+
+| Trigger | Shows | Hides |
+|---|---|---|
+| Momentary | Rising edge on the trigger entity | Auto-close, tap, or back |
+| Sustained | Trigger state is in `activeStates` | Trigger leaves `activeStates`, auto-close, tap, or back |

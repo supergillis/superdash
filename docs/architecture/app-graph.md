@@ -45,7 +45,7 @@ principles.
 | `MainActivity.dispatchTouchEvent` / `dispatchKeyEvent` | `UserTouched` | `SleepController` → `idleController.touch()` |
 | `EsphomeBindings.stopScreensaver` | `UserTouched` | `SleepController` → `idleController.touch()` |
 | `VoicePipelineCoordinator.onWake` | `WakeWordDetected(phrase)` | `SleepController` → `idleController.touch()` |
-| `FeedWatcher.handleUpdate` | `FeedActivated(feedId, timestampMs)` | `SleepController` → `idleController.touch()`; `VoicePipelineCoordinator` → `stopAll()`; `FeedOverlayController` → resolves config by id → `state = Showing(config, timestampMs)` |
+| `FeedWatcher.handleUpdate` | `FeedActivated(feedId, timestampMs, wakeScreen)` | `SleepController` (only when `wakeScreen`) → `idleController.touch()`; `VoicePipelineCoordinator` → `stopAll()`; `FeedOverlayController` → resolves config by id → `state = Showing(config, timestampMs)` |
 
 Activity-targeted commands (`RefreshWebView`, `RestartApp`) go through
 `ActivityCommandQueue`, not the bus, so they survive Activity pauses.

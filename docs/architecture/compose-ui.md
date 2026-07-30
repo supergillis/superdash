@@ -46,7 +46,7 @@ Current sections:
 - Screensaver.
 - Immich.
 - Voice.
-- Doorbell.
+- Cameras.
 - Device.
 - Admin.
 

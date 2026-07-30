@@ -50,18 +50,17 @@ fun FeedEditDialog(
             )
         }
     var autoCloseSec by remember { mutableStateOf((initial?.autoCloseSec ?: 60).toString()) }
+    var autoCloseEdited by remember { mutableStateOf(false) }
     var wakeScreen by remember { mutableStateOf(initial?.wakeScreen ?: true) }
     var order by remember { mutableStateOf((initial?.order ?: 0).toString()) }
     var orderEdited by remember { mutableStateOf(false) }
 
     LaunchedEffect(sustained) {
         if (initial == null && !orderEdited) {
-            order =
-                if (sustained) {
-                    "0"
-                } else {
-                    "10"
-                }
+            order = defaultFeedOrderFor(sustained)
+        }
+        if (initial == null && !autoCloseEdited) {
+            autoCloseSec = defaultFeedAutoCloseSecFor(sustained)
         }
     }
 
@@ -186,7 +185,10 @@ fun FeedEditDialog(
                 }
                 OutlinedTextField(
                     value = autoCloseSec,
-                    onValueChange = { value -> autoCloseSec = value.filter { it.isDigit() }.take(3) },
+                    onValueChange = { value ->
+                        autoCloseEdited = true
+                        autoCloseSec = value.filter { it.isDigit() }.take(3)
+                    },
                     label = { Text(stringResource(R.string.settings_feed_auto_close_label)) },
                     supportingText = { Text(stringResource(R.string.settings_feed_auto_close_hint)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -262,6 +264,23 @@ fun FeedEditDialog(
         },
     )
 }
+
+/** Sustained feeds are visible for as long as their trigger stays active, so an
+ *  auto-close timeout would defeat the mode: the feed would vanish mid-stream and
+ *  then suppress itself until the trigger cycled. Only prefills a new feed. */
+internal fun defaultFeedAutoCloseSecFor(sustained: Boolean): String =
+    if (sustained) {
+        "0"
+    } else {
+        "60"
+    }
+
+internal fun defaultFeedOrderFor(sustained: Boolean): String =
+    if (sustained) {
+        "0"
+    } else {
+        "10"
+    }
 
 private val FeedTriggerDomains =
     setOf(

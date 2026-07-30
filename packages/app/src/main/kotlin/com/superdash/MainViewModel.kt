@@ -30,7 +30,6 @@ class MainViewModel(
     nightScreensaverModeKeyFlow: Flow<String>,
     nightModeActiveFlow: Flow<Boolean>,
     feedStateFlow: Flow<FeedState>,
-    feedAutoCloseSecFlow: Flow<Int>,
     voiceEnabledFlow: Flow<Boolean>,
     sidebarPositionFlow: Flow<SidebarPosition>,
     sidebarPinnedFlow: Flow<Boolean>,
@@ -65,14 +64,6 @@ class MainViewModel(
             )
         }
 
-    private val feedFlow =
-        combine(feedStateFlow, feedAutoCloseSecFlow) { state, autoCloseSec ->
-            MainFeedState(
-                state = state,
-                autoCloseSec = autoCloseSec,
-            )
-        }
-
     private val sidebarFlow =
         combine(
             sidebarPositionFlow,
@@ -94,9 +85,9 @@ class MainViewModel(
         combine(
             connectionFlow,
             environmentFlow,
-            feedFlow,
+            feedStateFlow,
             sidebarFlow,
-        ) { connection, environment, feed, sidebar ->
+        ) { connection, environment, feedState, sidebar ->
             val effectiveMode =
                 ScreensaverMode.fromKey(
                     if (environment.nightActive) {
@@ -120,8 +111,7 @@ class MainViewModel(
                 voiceState = environment.voiceState,
                 isIdle = environment.isIdle && effectiveMode != ScreensaverMode.Off,
                 nightModeActive = environment.nightActive,
-                feedState = feed.state,
-                feedAutoCloseSec = feed.autoCloseSec,
+                feedState = feedState,
                 haBaseUrl = (appState as? AppState.Configured)?.haUrl ?: "",
                 sidebar = sidebar,
             )
@@ -153,11 +143,6 @@ class MainViewModel(
         val nightActive: Boolean,
     )
 
-    private data class MainFeedState(
-        val state: FeedState,
-        val autoCloseSec: Int,
-    )
-
     class Factory(
         private val graph: AppGraph,
     ) : ViewModelProvider.Factory {
@@ -174,7 +159,6 @@ class MainViewModel(
                 nightScreensaverModeKeyFlow = graph.screensaverSettings.nightMode,
                 nightModeActiveFlow = graph.sleepController.nightModeActive,
                 feedStateFlow = graph.feedOverlayController.state,
-                feedAutoCloseSecFlow = graph.feedSettings.autoCloseSec,
                 voiceEnabledFlow = graph.voiceSettings.enabled,
                 sidebarPositionFlow = graph.sidebarSettings.position,
                 sidebarPinnedFlow = graph.sidebarSettings.pinned,

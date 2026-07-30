@@ -480,7 +480,6 @@ private fun SettingsScreen(
             state =
                 KioskOverlayState(
                     feedState = state.feedState,
-                    feedAutoCloseSec = state.feedAutoCloseSec,
                     haBaseUrl = state.haUrl ?: "",
                     isIdle = state.isIdle,
                 ),

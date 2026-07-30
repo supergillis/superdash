@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +44,6 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import com.superdash.core.log.Log
 import com.superdash.feed.R
-import kotlinx.coroutines.delay
 
 private val log = Log("FeedOverlay")
 
@@ -59,22 +57,11 @@ private val log = Log("FeedOverlay")
 fun FeedOverlay(
     state: FeedState.Showing,
     streamState: FeedStreamState,
-    autoCloseSec: Int,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var playbackError: String? by remember(state.config.id, streamState) { mutableStateOf(null) }
     var firstFrameRendered: Boolean by remember(state.config.id, streamState) { mutableStateOf(false) }
-
-    if (autoCloseSec > 0) {
-        // Key on autoCloseSec too so changing it via Settings while the overlay is
-        // open restarts the timer with the new duration instead of finishing the
-        // stale delay.
-        LaunchedEffect(state.openedAtEpochMs, autoCloseSec) {
-            delay(autoCloseSec * 1000L)
-            onClose()
-        }
-    }
 
     BackHandler(onBack = onClose)
 

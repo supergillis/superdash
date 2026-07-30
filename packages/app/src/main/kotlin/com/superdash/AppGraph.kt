@@ -214,6 +214,8 @@ class AppGraph(
             scope = scope,
             bus = eventBus,
             feedsFlow = feedSettings.feeds,
+            activeFeedsFlow = feedWatcher.activeFeeds,
+            isIdleFlow = idleController.isIdle,
         )
 
     val deviceInfo: DeviceInfo = DeviceInfo(application)

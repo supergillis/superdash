@@ -20,7 +20,6 @@ data class MainUiState(
     val isIdle: Boolean,
     val nightModeActive: Boolean,
     val feedState: FeedState,
-    val feedAutoCloseSec: Int,
     val haBaseUrl: String,
     val sidebar: SidebarUiState,
 ) {
@@ -34,7 +33,6 @@ data class MainUiState(
                 isIdle = false,
                 nightModeActive = false,
                 feedState = FeedState.Idle,
-                feedAutoCloseSec = 60,
                 haBaseUrl = "",
                 sidebar = SidebarUiState.empty(),
             )

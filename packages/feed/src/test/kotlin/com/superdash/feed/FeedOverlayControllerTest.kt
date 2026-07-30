@@ -3,9 +3,11 @@ package com.superdash.feed
 import com.superdash.kiosk.bus.KioskEvent
 import com.superdash.kiosk.bus.KioskEventBus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -13,91 +15,273 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FeedOverlayControllerTest {
-    private val config =
+    private val doorbell =
         FeedConfig(
-            id = "a",
+            id = "door",
             name = "Front",
             triggerEntity = "binary_sensor.front",
             cameraEntity = "camera.front",
+            autoCloseSec = 60,
+            order = 10,
         )
 
+    private val monitor =
+        FeedConfig(
+            id = "baby",
+            name = "Nursery",
+            triggerEntity = "input_boolean.baby_monitor",
+            cameraEntity = "camera.nursery",
+            trigger = FeedTrigger.Sustained(),
+            autoCloseSec = 0,
+            wakeScreen = false,
+            order = 0,
+        )
+
+    private fun controller(
+        bus: KioskEventBus = KioskEventBus(),
+        configs: List<FeedConfig> = listOf(doorbell, monitor),
+        activeFeeds: MutableStateFlow<Map<String, Long>> = MutableStateFlow(emptyMap()),
+        isIdle: MutableStateFlow<Boolean> = MutableStateFlow(false),
+        scope: TestScope,
+    ): FeedOverlayController =
+        FeedOverlayController(
+            scope = scope,
+            bus = bus,
+            feedsFlow = flowOf(configs),
+            activeFeedsFlow = activeFeeds,
+            isIdleFlow = isIdle,
+            nowEpochMs = { 5L },
+        )
+
+    private fun showingConfig(state: FeedState): FeedConfig? = (state as? FeedState.Showing)?.config
+
     @Test
-    fun `bus event flips state to Showing with resolved config and timestamp`() =
+    fun `sustained activity shows the feed`() =
         runTest {
-            val bus = KioskEventBus()
-            val presenter =
-                FeedOverlayController(
-                    scope = TestScope(testScheduler),
-                    bus = bus,
-                    feedsFlow = flowOf(listOf(config)),
-                    nowEpochMs = { 999L },
-                )
-            advanceUntilIdle()
-            assertEquals(FeedState.Idle, presenter.state.value)
+            val activeFeeds = MutableStateFlow<Map<String, Long>>(emptyMap())
+            val controller = controller(activeFeeds = activeFeeds, scope = TestScope(testScheduler))
+            runCurrent()
 
-            bus.emit(KioskEvent.FeedActivated(config.id, 4242L))
-            advanceUntilIdle()
+            activeFeeds.value = mapOf("baby" to 100L)
+            runCurrent()
 
-            val state = presenter.state.value
-            assertTrue(state is FeedState.Showing)
-            assertEquals(config, (state as FeedState.Showing).config)
-            assertEquals(4242L, state.openedAtEpochMs)
+            assertEquals(monitor, showingConfig(controller.state.value))
+            assertEquals(100L, (controller.state.value as FeedState.Showing).openedAtEpochMs)
         }
 
     @Test
-    fun `bus event with unknown feed id is dropped`() =
+    fun `higher order wins over a lower order active feed`() =
         runTest {
             val bus = KioskEventBus()
-            val presenter =
-                FeedOverlayController(
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val controller = controller(bus = bus, activeFeeds = activeFeeds, scope = TestScope(testScheduler))
+            runCurrent()
+
+            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            runCurrent()
+
+            assertEquals(doorbell, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `equal order breaks the tie on most recent activation`() =
+        runTest {
+            val first = monitor.copy(id = "first", order = 0)
+            val second = monitor.copy(id = "second", order = 0)
+            val activeFeeds = MutableStateFlow(mapOf("first" to 100L))
+            val controller =
+                controller(
+                    configs = listOf(first, second),
+                    activeFeeds = activeFeeds,
                     scope = TestScope(testScheduler),
-                    bus = bus,
-                    feedsFlow = flowOf(listOf(config)),
-                    nowEpochMs = { 1L },
                 )
-            advanceUntilIdle()
+            runCurrent()
+
+            activeFeeds.value = mapOf("first" to 100L, "second" to 200L)
+            runCurrent()
+
+            assertEquals(second, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `closing a higher order feed falls back to a still active feed`() =
+        runTest {
+            val bus = KioskEventBus()
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val controller = controller(bus = bus, activeFeeds = activeFeeds, scope = TestScope(testScheduler))
+            runCurrent()
+            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            runCurrent()
+
+            controller.close()
+            runCurrent()
+
+            assertEquals(monitor, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `closing a sustained feed suppresses it while it stays active`() =
+        runTest {
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val controller = controller(activeFeeds = activeFeeds, scope = TestScope(testScheduler))
+            runCurrent()
+
+            controller.close()
+            runCurrent()
+
+            assertEquals(FeedState.Idle, controller.state.value)
+        }
+
+    @Test
+    fun `suppression clears when the feed goes inactive and it shows again`() =
+        runTest {
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val controller = controller(activeFeeds = activeFeeds, scope = TestScope(testScheduler))
+            runCurrent()
+            controller.close()
+            runCurrent()
+
+            activeFeeds.value = emptyMap()
+            runCurrent()
+            activeFeeds.value = mapOf("baby" to 300L)
+            runCurrent()
+
+            assertEquals(monitor, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `auto close hides a momentary feed after its own timeout`() =
+        runTest {
+            val bus = KioskEventBus()
+            val controller = controller(bus = bus, scope = TestScope(testScheduler))
+            runCurrent()
+            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            runCurrent()
+            assertTrue(controller.state.value is FeedState.Showing)
+
+            advanceTimeBy(59_000L)
+            runCurrent()
+            assertTrue(controller.state.value is FeedState.Showing)
+
+            advanceTimeBy(2_000L)
+            runCurrent()
+            assertEquals(FeedState.Idle, controller.state.value)
+        }
+
+    @Test
+    fun `zero auto close keeps the feed open`() =
+        runTest {
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val controller = controller(activeFeeds = activeFeeds, scope = TestScope(testScheduler))
+            runCurrent()
+
+            advanceTimeBy(600_000L)
+            runCurrent()
+
+            assertEquals(monitor, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `a momentary feed re-arms after auto close`() =
+        runTest {
+            val bus = KioskEventBus()
+            val controller = controller(bus = bus, scope = TestScope(testScheduler))
+            runCurrent()
+            bus.emit(KioskEvent.FeedActivated("door", 200L))
+            runCurrent()
+            advanceTimeBy(61_000L)
+            runCurrent()
+            assertEquals(FeedState.Idle, controller.state.value)
+
+            bus.emit(KioskEvent.FeedActivated("door", 400L))
+            runCurrent()
+
+            assertEquals(doorbell, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `a non waking feed stays hidden while idle and appears on wake`() =
+        runTest {
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val isIdle = MutableStateFlow(true)
+            val controller =
+                controller(activeFeeds = activeFeeds, isIdle = isIdle, scope = TestScope(testScheduler))
+            runCurrent()
+            assertEquals(FeedState.Idle, controller.state.value)
+
+            isIdle.value = false
+            runCurrent()
+
+            assertEquals(monitor, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `a waking feed shows while idle`() =
+        runTest {
+            val waking = monitor.copy(wakeScreen = true)
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val controller =
+                controller(
+                    configs = listOf(waking),
+                    activeFeeds = activeFeeds,
+                    isIdle = MutableStateFlow(true),
+                    scope = TestScope(testScheduler),
+                )
+            runCurrent()
+
+            assertEquals(waking, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `bus event with an unknown feed id is dropped`() =
+        runTest {
+            val bus = KioskEventBus()
+            val controller = controller(bus = bus, scope = TestScope(testScheduler))
+            runCurrent()
 
             bus.emit(KioskEvent.FeedActivated("does_not_exist", 1L))
-            advanceUntilIdle()
+            runCurrent()
 
-            assertEquals(FeedState.Idle, presenter.state.value)
+            assertEquals(FeedState.Idle, controller.state.value)
         }
 
     @Test
-    fun `close flips Showing back to Idle`() =
+    fun `show bypasses suppression and trigger state`() =
         runTest {
-            val bus = KioskEventBus()
-            val presenter =
-                FeedOverlayController(
-                    scope = TestScope(testScheduler),
-                    bus = bus,
-                    feedsFlow = flowOf(listOf(config)),
-                    nowEpochMs = { 1L },
-                )
-            advanceUntilIdle()
-            bus.emit(KioskEvent.FeedActivated(config.id, 1L))
-            advanceUntilIdle()
-            assertTrue(presenter.state.value is FeedState.Showing)
+            val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))
+            val controller = controller(activeFeeds = activeFeeds, scope = TestScope(testScheduler))
+            runCurrent()
+            controller.close()
+            runCurrent()
+            assertEquals(FeedState.Idle, controller.state.value)
 
-            presenter.close()
-            assertEquals(FeedState.Idle, presenter.state.value)
+            controller.show(monitor)
+            runCurrent()
+
+            assertEquals(monitor, showingConfig(controller.state.value))
         }
 
     @Test
-    fun `show bypasses the bus and sets Showing directly`() =
+    fun `showById resolves a configured feed`() =
         runTest {
-            val bus = KioskEventBus()
-            val presenter =
-                FeedOverlayController(
-                    scope = TestScope(testScheduler),
-                    bus = bus,
-                    feedsFlow = flowOf(emptyList()),
-                    nowEpochMs = { 7L },
-                )
-            presenter.show(config)
-            val state = presenter.state.value
-            assertTrue(state is FeedState.Showing)
-            assertEquals(config, (state as FeedState.Showing).config)
-            assertEquals(7L, state.openedAtEpochMs)
+            val controller = controller(scope = TestScope(testScheduler))
+            runCurrent()
+
+            controller.showById("baby")
+            runCurrent()
+
+            assertEquals(monitor, showingConfig(controller.state.value))
+        }
+
+    @Test
+    fun `showById with an unknown id does nothing`() =
+        runTest {
+            val controller = controller(scope = TestScope(testScheduler))
+            runCurrent()
+
+            controller.showById("gone")
+            runCurrent()
+
+            assertEquals(FeedState.Idle, controller.state.value)
         }
 }

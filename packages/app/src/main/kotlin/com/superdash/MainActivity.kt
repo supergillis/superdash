@@ -363,7 +363,6 @@ private fun MainContent(
                     state =
                         KioskOverlayState(
                             feedState = state.feedState,
-                            feedAutoCloseSec = state.feedAutoCloseSec,
                             haBaseUrl = state.haBaseUrl,
                             isIdle = state.isIdle,
                         ),

@@ -61,7 +61,6 @@ class MainViewModelTest {
         val nightKey = MutableStateFlow("black")
         val nightActive = MutableStateFlow(false)
         val feedState = MutableStateFlow<FeedState>(FeedState.Idle)
-        val autoClose = MutableStateFlow(60)
         val voiceEnabled = MutableStateFlow(false)
         val sidebarPosition = MutableStateFlow(SidebarPosition.Left)
         val sidebarPinned = MutableStateFlow(false)
@@ -81,7 +80,6 @@ class MainViewModelTest {
                 nightScreensaverModeKeyFlow = nightKey,
                 nightModeActiveFlow = nightActive,
                 feedStateFlow = feedState,
-                feedAutoCloseSecFlow = autoClose,
                 voiceEnabledFlow = voiceEnabled,
                 sidebarPositionFlow = sidebarPosition,
                 sidebarPinnedFlow = sidebarPinned,
@@ -230,7 +228,6 @@ class MainViewModelTest {
             val nightKey = MutableStateFlow("black")
             val nightActive = MutableStateFlow(false)
             val feedState = MutableStateFlow<FeedState>(FeedState.Idle)
-            val autoClose = MutableStateFlow(60)
             val voiceEnabled = MutableStateFlow(false)
             val sidebarPosition = MutableStateFlow(SidebarPosition.Bottom)
             val sidebarPinned = MutableStateFlow(true)
@@ -249,7 +246,6 @@ class MainViewModelTest {
                     nightScreensaverModeKeyFlow = nightKey,
                     nightModeActiveFlow = nightActive,
                     feedStateFlow = feedState,
-                    feedAutoCloseSecFlow = autoClose,
                     voiceEnabledFlow = voiceEnabled,
                     sidebarPositionFlow = sidebarPosition,
                     sidebarPinnedFlow = sidebarPinned,

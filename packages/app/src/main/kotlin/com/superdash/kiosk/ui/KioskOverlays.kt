@@ -24,7 +24,6 @@ import com.superdash.feed.resolveFeedStream
 @Immutable
 data class KioskOverlayState(
     val feedState: FeedState,
-    val feedAutoCloseSec: Int,
     val haBaseUrl: String,
     val isIdle: Boolean,
 )
@@ -90,7 +89,6 @@ fun KioskOverlays(
         FeedOverlay(
             state = showing,
             streamState = streamState,
-            autoCloseSec = state.feedAutoCloseSec,
             onClose = onCloseFeed,
             modifier = Modifier.fillMaxSize(),
         )

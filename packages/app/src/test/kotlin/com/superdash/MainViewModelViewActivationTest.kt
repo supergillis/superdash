@@ -62,7 +62,6 @@ class MainViewModelViewActivationTest {
         val nightKey: MutableStateFlow<String>,
         val nightActive: MutableStateFlow<Boolean>,
         val feedState: MutableStateFlow<FeedState>,
-        val autoClose: MutableStateFlow<Int>,
         val voiceEnabled: MutableStateFlow<Boolean>,
     )
 
@@ -79,7 +78,6 @@ class MainViewModelViewActivationTest {
                 nightKey = MutableStateFlow("black"),
                 nightActive = MutableStateFlow(false),
                 feedState = MutableStateFlow(FeedState.Idle),
-                autoClose = MutableStateFlow(60),
                 voiceEnabled = MutableStateFlow(false),
             )
         val viewModel =
@@ -94,7 +92,6 @@ class MainViewModelViewActivationTest {
                 nightScreensaverModeKeyFlow = flows.nightKey,
                 nightModeActiveFlow = flows.nightActive,
                 feedStateFlow = flows.feedState,
-                feedAutoCloseSecFlow = flows.autoClose,
                 voiceEnabledFlow = flows.voiceEnabled,
                 sidebarPositionFlow = MutableStateFlow(SidebarPosition.Left),
                 sidebarPinnedFlow = MutableStateFlow(false),
@@ -221,16 +218,6 @@ class MainViewModelViewActivationTest {
             flows.dashboardPath.value = "/lovelace/main"
             advanceUntilIdle()
             assertEquals("/lovelace/main", viewModel.uiState.value.dashboardPath)
-        }
-
-    @Test
-    fun `feedAutoCloseSec propagates from source flow`() =
-        runTest {
-            val (viewModel, flows) = buildViewModel()
-            backgroundScope.launch { viewModel.uiState.collect {} }
-            flows.autoClose.value = 30
-            advanceUntilIdle()
-            assertEquals(30, viewModel.uiState.value.feedAutoCloseSec)
         }
 
     @Test

@@ -46,7 +46,6 @@ data class SettingsUiState(
     val vadSilenceMs: Int get() = voice.vadSilenceMs
     val feedEnabled: Boolean get() = feed.enabled
     val feeds: ImmutableList<FeedConfig> get() = feed.configs
-    val feedAutoCloseSec: Int get() = feed.autoCloseSec
     val esphomeEnabled: Boolean get() = esphome.enabled
     val dayScreensaverMode: ScreensaverMode get() = screensaver.dayMode
     val nightScreensaverMode: ScreensaverMode get() = screensaver.nightMode

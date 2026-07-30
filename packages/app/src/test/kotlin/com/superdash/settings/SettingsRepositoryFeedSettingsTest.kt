@@ -249,4 +249,60 @@ class SettingsRepositoryFeedSettingsTest {
                     .autoCloseSec,
             )
         }
+
+    @Test
+    fun `upsert before the first collection still migrates untouched feeds`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set("doorbell_auto_close_sec", 120)
+            store.set(
+                "doorbells",
+                """
+                [
+                    {"id":"a","name":"Front","triggerEntity":"binary_sensor.front","cameraEntity":"camera.front"},
+                    {"id":"b","name":"Back","triggerEntity":"binary_sensor.back","cameraEntity":"camera.back"}
+                ]
+                """.trimIndent(),
+            )
+            val settings = SettingsRepositoryFeedSettings(store)
+
+            settings.upsertFeed(
+                FeedConfig(
+                    id = "a",
+                    name = "Front",
+                    triggerEntity = "binary_sensor.front",
+                    cameraEntity = "camera.front",
+                    autoCloseSec = 30,
+                ),
+            )
+
+            val feeds = settings.feeds.first()
+
+            assertEquals(30, feeds.single { config -> config.id == "a" }.autoCloseSec)
+            assertEquals(120, feeds.single { config -> config.id == "b" }.autoCloseSec)
+        }
+
+    @Test
+    fun `remove before the first collection still migrates the surviving feed`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set("doorbell_auto_close_sec", 120)
+            store.set(
+                "doorbells",
+                """
+                [
+                    {"id":"a","name":"Front","triggerEntity":"binary_sensor.front","cameraEntity":"camera.front"},
+                    {"id":"b","name":"Back","triggerEntity":"binary_sensor.back","cameraEntity":"camera.back"}
+                ]
+                """.trimIndent(),
+            )
+            val settings = SettingsRepositoryFeedSettings(store)
+
+            settings.removeFeed("a")
+
+            val feeds = settings.feeds.first()
+
+            assertEquals(listOf("b"), feeds.map { config -> config.id })
+            assertEquals(120, feeds.single().autoCloseSec)
+        }
 }

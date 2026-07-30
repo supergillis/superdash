@@ -32,6 +32,7 @@ internal class SettingsRepositoryFeedSettings(
     override suspend fun setEnabled(value: Boolean) = store.write(ENABLED, value)
 
     override suspend fun upsertFeed(config: FeedConfig) {
+        migrateAutoCloseIfNeeded()
         val sanitised = config.copy(autoCloseSec = config.autoCloseSec.coerceIn(0, 300))
         store.mutate(FEEDS) { encoded ->
             val current = FeedConfig.decodeList(encoded)
@@ -49,18 +50,14 @@ internal class SettingsRepositoryFeedSettings(
                 }
             FeedConfig.encodeList(updated)
         }
-        // A direct per-feed write means the store is already on the new model; without
-        // this, a write that lands before `feeds` is ever collected would get clobbered
-        // by the legacy stamp the next time `migrateAutoCloseIfNeeded` runs.
-        store.write(MIGRATED_V2, true)
     }
 
     override suspend fun removeFeed(id: String) {
+        migrateAutoCloseIfNeeded()
         store.mutate(FEEDS) { encoded ->
             val current = FeedConfig.decodeList(encoded)
             FeedConfig.encodeList(current.filterNot { it.id == id })
         }
-        store.write(MIGRATED_V2, true)
     }
 
     /** Auto-close moved from one global setting to a field on every feed. Stamp the

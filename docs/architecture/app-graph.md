@@ -20,7 +20,7 @@ Key groups:
 - `HaSubgraph`: HTTP client, tokens, HA WebSocket, Assist, media source.
 - `ImmichSubgraph`: Immich API client state.
 - `VoiceSubgraph`: TTS, coordinator, capture loop.
-- Root graph: settings, bus, image loader, idle, sleep, doorbell, device info.
+- Root graph: settings, bus, image loader, idle, sleep, feed, device info.
 - `EsphomeBindings`: Home Assistant control surface.
 
 ## Composition Root Rules
@@ -45,7 +45,7 @@ principles.
 | `MainActivity.dispatchTouchEvent` / `dispatchKeyEvent` | `UserTouched` | `SleepController` → `idleController.touch()` |
 | `EsphomeBindings.stopScreensaver` | `UserTouched` | `SleepController` → `idleController.touch()` |
 | `VoicePipelineCoordinator.onWake` | `WakeWordDetected(phrase)` | `SleepController` → `idleController.touch()` |
-| `DoorbellWatcher.handleUpdate` | `DoorbellRingStarted(doorbellId, timestampMs)` | `SleepController` → `idleController.touch()`; `VoicePipelineCoordinator` → `stopAll()`; `DoorbellOverlayController` → resolves config by id → `state = Showing(config, timestampMs)` |
+| `FeedWatcher.handleUpdate` | `FeedActivated(feedId, timestampMs)` | `SleepController` → `idleController.touch()`; `VoicePipelineCoordinator` → `stopAll()`; `FeedOverlayController` → resolves config by id → `state = Showing(config, timestampMs)` |
 
 Activity-targeted commands (`RefreshWebView`, `RestartApp`) go through
 `ActivityCommandQueue`, not the bus, so they survive Activity pauses.
@@ -54,7 +54,7 @@ Night-mode writes use the `SleepCommands` direct interface
 
 Direct calls (intentionally not on the bus):
 
-- UI cancel actions (`onCancelVoice`, `onCloseDoorbell`): single-consumer
+- UI cancel actions (`onCancelVoice`, `onCloseFeed`): single-consumer
   user input with synchronous-state-flip semantics.
 - Activity lifecycle (`idleController.pause`/`resume`): tied to Activity
   hooks, not a fact.
@@ -71,7 +71,7 @@ Direct calls (intentionally not on the bus):
 
 - Starts Home Assistant connectivity handling.
 - Starts ESPHome native API.
-- Starts doorbell watching.
+- Starts feed watching.
 - Starts screen state broadcasts.
 
 The voice capture loop is not started here. It runs inside `VoiceService`, a

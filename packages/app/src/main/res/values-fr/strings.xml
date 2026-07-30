@@ -15,8 +15,8 @@
     <string name="settings_voice_summary">Mot de réveil et assistant vocal</string>
     <string name="settings_screensaver_title">Écran de veille</string>
     <string name="settings_screensaver_summary">Affichage inactif, superpositions et photos</string>
-    <string name="settings_doorbell_title">Sonnette</string>
-    <string name="settings_doorbell_summary">Déclencheurs de superposition caméra</string>
+    <string name="settings_feed_title">Sonnette</string>
+    <string name="settings_feed_summary">Déclencheurs de superposition caméra</string>
     <string name="settings_camera_title">Caméra</string>
     <string name="settings_camera_summary">Caméra de la tablette et détection de mouvement</string>
     <string name="settings_esphome_title">ESPHome</string>
@@ -41,21 +41,21 @@
     <string name="settings_value_off">Désactivé</string>
 
     <!-- Doorbell -->
-    <string name="settings_doorbell_trigger_entity">Entité de déclenchement</string>
-    <string name="settings_doorbell_camera_entity">Entité caméra</string>
-    <string name="settings_doorbell_camera_entity_or_url">Entité caméra ou URL de flux</string>
-    <string name="settings_doorbell_dialog_add_title">Ajouter une sonnette</string>
-    <string name="settings_doorbell_dialog_edit_title">Modifier la sonnette</string>
-    <string name="settings_doorbell_name_label">Nom</string>
-    <string name="settings_doorbell_name_placeholder">Porte d\'entrée</string>
-    <string name="settings_doorbell_camera_url_hint">Les URL directes (par ex. go2rtc) contournent HA et démarrent la lecture plus vite.</string>
-    <string name="settings_doorbell_overlay_title">Superposition sonnette</string>
-    <string name="settings_doorbell_overlay_summary">Afficher le flux caméra quand la sonnette retentit</string>
-    <string name="settings_doorbell_auto_close_never">Fermeture automatique : jamais</string>
-    <string name="settings_doorbell_auto_close_seconds">Fermeture automatique : %1$ds</string>
-    <string name="settings_doorbell_list_title">Sonnettes</string>
-    <string name="settings_doorbell_list_empty">Ajoutez au moins une sonnette.</string>
-    <string name="settings_doorbell_add_button">+ Ajouter une sonnette</string>
+    <string name="settings_feed_trigger_entity">Entité de déclenchement</string>
+    <string name="settings_feed_camera_entity">Entité caméra</string>
+    <string name="settings_feed_camera_entity_or_url">Entité caméra ou URL de flux</string>
+    <string name="settings_feed_dialog_add_title">Ajouter une sonnette</string>
+    <string name="settings_feed_dialog_edit_title">Modifier la sonnette</string>
+    <string name="settings_feed_name_label">Nom</string>
+    <string name="settings_feed_name_placeholder">Porte d\'entrée</string>
+    <string name="settings_feed_camera_url_hint">Les URL directes (par ex. go2rtc) contournent HA et démarrent la lecture plus vite.</string>
+    <string name="settings_feed_overlay_title">Superposition sonnette</string>
+    <string name="settings_feed_overlay_summary">Afficher le flux caméra quand la sonnette retentit</string>
+    <string name="settings_feed_auto_close_never">Fermeture automatique : jamais</string>
+    <string name="settings_feed_auto_close_seconds">Fermeture automatique : %1$ds</string>
+    <string name="settings_feed_list_title">Sonnettes</string>
+    <string name="settings_feed_list_empty">Ajoutez au moins une sonnette.</string>
+    <string name="settings_feed_add_button">+ Ajouter une sonnette</string>
     <!-- Camera -->
     <string name="settings_camera_enabled_title">Caméra</string>
     <string name="settings_camera_enabled_summary">Exposer la caméra de la tablette et le détecteur de mouvement à Home Assistant</string>

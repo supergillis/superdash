@@ -15,8 +15,8 @@
     <string name="settings_voice_summary">Wake word en spraakassistent</string>
     <string name="settings_screensaver_title">Screensaver</string>
     <string name="settings_screensaver_summary">Inactief scherm, overlays en foto\'s</string>
-    <string name="settings_doorbell_title">Deurbel</string>
-    <string name="settings_doorbell_summary">Camera-overlay triggers</string>
+    <string name="settings_feed_title">Deurbel</string>
+    <string name="settings_feed_summary">Camera-overlay triggers</string>
     <string name="settings_camera_title">Camera</string>
     <string name="settings_camera_summary">Tabletcamera en bewegingssensor</string>
     <string name="settings_esphome_title">ESPHome</string>
@@ -41,21 +41,21 @@
     <string name="settings_value_off">Uit</string>
 
     <!-- Doorbell -->
-    <string name="settings_doorbell_trigger_entity">Trigger-entiteit</string>
-    <string name="settings_doorbell_camera_entity">Camera-entiteit</string>
-    <string name="settings_doorbell_camera_entity_or_url">Camera-entiteit of stream-URL</string>
-    <string name="settings_doorbell_dialog_add_title">Deurbel toevoegen</string>
-    <string name="settings_doorbell_dialog_edit_title">Deurbel bewerken</string>
-    <string name="settings_doorbell_name_label">Naam</string>
-    <string name="settings_doorbell_name_placeholder">Voordeur</string>
-    <string name="settings_doorbell_camera_url_hint">Directe URL\'s (bijv. go2rtc) slaan HA over en starten sneller op.</string>
-    <string name="settings_doorbell_overlay_title">Deurbeloverlay</string>
-    <string name="settings_doorbell_overlay_summary">Toon camerabeeld wanneer de deurbel gaat</string>
-    <string name="settings_doorbell_auto_close_never">Automatisch sluiten: nooit</string>
-    <string name="settings_doorbell_auto_close_seconds">Automatisch sluiten: %1$ds</string>
-    <string name="settings_doorbell_list_title">Deurbellen</string>
-    <string name="settings_doorbell_list_empty">Voeg minstens één deurbel toe.</string>
-    <string name="settings_doorbell_add_button">+ Deurbel toevoegen</string>
+    <string name="settings_feed_trigger_entity">Trigger-entiteit</string>
+    <string name="settings_feed_camera_entity">Camera-entiteit</string>
+    <string name="settings_feed_camera_entity_or_url">Camera-entiteit of stream-URL</string>
+    <string name="settings_feed_dialog_add_title">Deurbel toevoegen</string>
+    <string name="settings_feed_dialog_edit_title">Deurbel bewerken</string>
+    <string name="settings_feed_name_label">Naam</string>
+    <string name="settings_feed_name_placeholder">Voordeur</string>
+    <string name="settings_feed_camera_url_hint">Directe URL\'s (bijv. go2rtc) slaan HA over en starten sneller op.</string>
+    <string name="settings_feed_overlay_title">Deurbeloverlay</string>
+    <string name="settings_feed_overlay_summary">Toon camerabeeld wanneer de deurbel gaat</string>
+    <string name="settings_feed_auto_close_never">Automatisch sluiten: nooit</string>
+    <string name="settings_feed_auto_close_seconds">Automatisch sluiten: %1$ds</string>
+    <string name="settings_feed_list_title">Deurbellen</string>
+    <string name="settings_feed_list_empty">Voeg minstens één deurbel toe.</string>
+    <string name="settings_feed_add_button">+ Deurbel toevoegen</string>
     <!-- Camera -->
     <string name="settings_camera_enabled_title">Camera</string>
     <string name="settings_camera_enabled_summary">Maak de tabletcamera en bewegingssensor zichtbaar voor Home Assistant</string>

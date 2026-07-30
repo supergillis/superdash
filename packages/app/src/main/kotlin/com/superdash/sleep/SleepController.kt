@@ -18,7 +18,7 @@ private val log = Log("SleepController")
  *  - Exposes [nightModeActive] derived from internal settings.
  *  - Collects [KioskEventBus] wake events and forwards them to
  *    [ScreensaverIdleController.touch], so producers (touch, wake-word,
- *    doorbell) don't need to know about the idle controller.
+ *    feed) don't need to know about the idle controller.
  *  - Implements [SleepCommands] for direct setters (no bus indirection
  *    because there is no fan-out). */
 class SleepController(
@@ -38,7 +38,7 @@ class SleepController(
                 when (event) {
                     is KioskEvent.UserTouched,
                     is KioskEvent.WakeWordDetected,
-                    is KioskEvent.DoorbellRingStarted,
+                    is KioskEvent.FeedActivated,
                     -> {
                         log.i("wake event → idle touch", "event" to event::class.simpleName)
                         idleController.touch()

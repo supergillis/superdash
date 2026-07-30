@@ -23,7 +23,7 @@ Current system map for agents.
 | Home Assistant integration | [ha-integration.md](ha-integration.md) |
 | Compose UI | [compose-ui.md](compose-ui.md) |
 | Voice | [voice.md](voice.md) |
-| Screensaver and doorbell | [screensaver-doorbell.md](screensaver-doorbell.md) |
+| Screensaver and feed | [screensaver-feed.md](screensaver-feed.md) |
 | Decisions | [decisions.md](decisions.md) |
 
 ## Boot Flow
@@ -34,7 +34,7 @@ SuperdashApp.onCreate
   -> AppGraph startup calls
        -> ConnectivityManager
        -> EsphomeBindings
-       -> DoorbellWatcher
+       -> FeedWatcher
        -> ScreenStateProvider
 
 VoiceService (microphone foreground service)
@@ -54,7 +54,7 @@ MainActivity.onCreate
 - Need Home Assistant tokens or WebSocket: read [ha-integration.md](ha-integration.md).
 - Need UI flow: read [compose-ui.md](compose-ui.md).
 - Need wake word or Assist: read [voice.md](voice.md).
-- Need idle, sleep, photos, or doorbell: read [screensaver-doorbell.md](screensaver-doorbell.md).
+- Need idle, sleep, photos, or feed: read [screensaver-feed.md](screensaver-feed.md).
 - Need to avoid old mistakes: read [decisions.md](decisions.md).
 
 ## Conventions

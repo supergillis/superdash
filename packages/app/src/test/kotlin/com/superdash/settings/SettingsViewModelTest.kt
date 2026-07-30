@@ -3,9 +3,9 @@ package com.superdash.settings
 import com.superdash.camera.CameraSettings
 import com.superdash.core.locale.SupportedLanguage
 import com.superdash.core.resources.StringProvider
-import com.superdash.doorbell.DoorbellConfig
-import com.superdash.doorbell.DoorbellSettings
-import com.superdash.doorbell.DoorbellState
+import com.superdash.feed.FeedConfig
+import com.superdash.feed.FeedSettings
+import com.superdash.feed.FeedState
 import com.superdash.ha.EntityState
 import com.superdash.ha.HaConnectionState
 import com.superdash.kiosk.KioskSettings
@@ -105,7 +105,7 @@ class SettingsViewModelTest {
         kiosk: FakeKioskSettings = FakeKioskSettings(),
         sidebar: FakeSidebarSettings = FakeSidebarSettings(),
         voice: FakeVoiceSettings = FakeVoiceSettings(),
-        doorbell: FakeDoorbellSettings = FakeDoorbellSettings(),
+        feed: FakeFeedSettings = FakeFeedSettings(),
         camera: FakeCameraSettings = FakeCameraSettings(),
         screensaver: FakeScreensaverSettings = FakeScreensaverSettings(),
         pskStore: PskStore = fakePskStore,
@@ -113,7 +113,7 @@ class SettingsViewModelTest {
         haUrl: MutableStateFlow<String?> = MutableStateFlow(null),
         haState: MutableStateFlow<HaConnectionState> = MutableStateFlow(HaConnectionState.Disconnected),
         entities: MutableStateFlow<Map<String, EntityState>> = MutableStateFlow(emptyMap()),
-        doorbellState: MutableStateFlow<DoorbellState> = MutableStateFlow(DoorbellState.Idle),
+        feedState: MutableStateFlow<FeedState> = MutableStateFlow(FeedState.Idle),
         isIdle: MutableStateFlow<Boolean> = MutableStateFlow(false),
         voiceModelState: MutableStateFlow<VoiceModelState> = MutableStateFlow(VoiceModelState(emptyList())),
         actions: SettingsExternalActions = RecordingSettingsExternalActions(),
@@ -123,7 +123,7 @@ class SettingsViewModelTest {
             kioskSettings = kiosk,
             sidebarSettings = sidebar,
             voiceSettings = voice,
-            doorbellSettings = doorbell,
+            feedSettings = feed,
             cameraSettings = camera,
             screensaverSettings = screensaver,
             esphomePskStore = pskStore,
@@ -135,7 +135,7 @@ class SettingsViewModelTest {
             voiceModelStateFlow = voiceModelState,
             haStateFlow = haState,
             entitiesFlow = entities,
-            doorbellStateFlow = doorbellState,
+            feedStateFlow = feedState,
             isIdleFlow = isIdle,
             actions = actions,
             strings = strings,
@@ -202,16 +202,16 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `doorbellState propagates to uiState`() =
+    fun `feedState propagates to uiState`() =
         runTest {
-            val doorbellState = MutableStateFlow<DoorbellState>(DoorbellState.Idle)
-            val viewModel = buildViewModel(doorbellState = doorbellState)
+            val feedState = MutableStateFlow<FeedState>(FeedState.Idle)
+            val viewModel = buildViewModel(feedState = feedState)
             backgroundScope.launch { viewModel.uiState.collect {} }
 
             val showing =
-                DoorbellState.Showing(
+                FeedState.Showing(
                     config =
-                        DoorbellConfig(
+                        FeedConfig(
                             id = "test",
                             name = "Front",
                             triggerEntity = "binary_sensor.front",
@@ -219,9 +219,9 @@ class SettingsViewModelTest {
                         ),
                     openedAtEpochMs = 0L,
                 )
-            doorbellState.value = showing
+            feedState.value = showing
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.doorbellState is DoorbellState.Showing)
+            assertTrue(viewModel.uiState.value.feedState is FeedState.Showing)
         }
 
     @Test
@@ -797,22 +797,22 @@ class SettingsViewModelTest {
         override suspend fun setVadSilenceMs(value: Int) = Unit
     }
 
-    private class FakeDoorbellSettings(
+    private class FakeFeedSettings(
         enabledFlow: MutableStateFlow<Boolean> = MutableStateFlow(false),
-        doorbellsFlow: MutableStateFlow<List<DoorbellConfig>> = MutableStateFlow(emptyList()),
+        feedsFlow: MutableStateFlow<List<FeedConfig>> = MutableStateFlow(emptyList()),
         autoCloseSecFlow: MutableStateFlow<Int> = MutableStateFlow(60),
-    ) : DoorbellSettings {
+    ) : FeedSettings {
         override val enabled: Flow<Boolean> = enabledFlow.asStateFlow()
-        override val doorbells: Flow<List<DoorbellConfig>> = doorbellsFlow.asStateFlow()
+        override val feeds: Flow<List<FeedConfig>> = feedsFlow.asStateFlow()
         override val autoCloseSec: Flow<Int> = autoCloseSecFlow.asStateFlow()
 
         override suspend fun setEnabled(value: Boolean) = Unit
 
         override suspend fun setAutoCloseSec(value: Int) = Unit
 
-        override suspend fun upsertDoorbell(config: DoorbellConfig) = Unit
+        override suspend fun upsertFeed(config: FeedConfig) = Unit
 
-        override suspend fun removeDoorbell(id: String) = Unit
+        override suspend fun removeFeed(id: String) = Unit
     }
 
     private class FakeCameraSettings(

@@ -12,7 +12,7 @@ cannot enforce. These apply to human contributors and AI coding agents alike.
 superdash is a Home Assistant kiosk app for Android tablets. It runs a Home
 Assistant dashboard full-screen, stays signed in across restarts, and adds
 wall-panel extras: on-device wake word and voice, an ambient photo screensaver,
-and doorbell camera overlays. It can expose itself back to Home Assistant over
+and feed camera overlays. It can expose itself back to Home Assistant over
 the ESPHome native API.
 
 Multi-module Gradle/Kotlin build. The app module is `:packages:app`.
@@ -25,7 +25,7 @@ Multi-module Gradle/Kotlin build. The app module is `:packages:app`.
 | `packages/ha-client` | Home Assistant OAuth, tokens, WebSocket, Assist, media source. |
 | `packages/voice` | Wake word, on-device STT (Whisper/Moonshine), local intents. |
 | `packages/screensaver` | Screensaver and Immich photo slideshow. |
-| `packages/doorbell` | Doorbell camera overlay. |
+| `packages/feed` | Feed camera overlay. |
 | `packages/esphome-server` | ESPHome native API server and mDNS announce. |
 | `packages/immich-client` | Immich API client for slideshow photos. |
 | `packages/kiosk-bus` | Internal event bus. |
@@ -251,13 +251,13 @@ foreign vocabulary (`Presenter`, `Manager`, `Service`, `Helper`, `Util`,
 | Suffix | Role |
 |---|---|
 | `<Foo>ViewModel` | Top-level UI state holder backed by `viewModelScope` (e.g. `MainViewModel`, `SettingsViewModel`). |
-| `<Foo>Controller` | Long-lived state owner that subscribes to inputs and exposes a `StateFlow` (e.g. `SleepController`, `ScreensaverIdleController`, `KioskWindowController`, `DoorbellOverlayController`). |
+| `<Foo>Controller` | Long-lived state owner that subscribes to inputs and exposes a `StateFlow` (e.g. `SleepController`, `ScreensaverIdleController`, `KioskWindowController`, `FeedOverlayController`). |
 | `<Foo>Coordinator` | Orchestrator across components for a multi-step domain flow (e.g. `VoicePipelineCoordinator`). |
-| `<Foo>Watcher` / `<Foo>Detector` | Pure observer of domain inputs that emits typed facts (e.g. `DoorbellWatcher`, `VadSpeechDetector`). Owns no UI-shaped state. See `KioskEventBus` discipline in [docs/architecture/voice.md](docs/architecture/voice.md). |
+| `<Foo>Watcher` / `<Foo>Detector` | Pure observer of domain inputs that emits typed facts (e.g. `FeedWatcher`, `VadSpeechDetector`). Owns no UI-shaped state. See `KioskEventBus` discipline in [docs/architecture/voice.md](docs/architecture/voice.md). |
 | `<Foo>Repository` | Single owner of persisted state for a domain (e.g. `VoiceModelRepository`, `VoiceCommandRecordingRepository`). |
 | `<Foo>Screen` / `<Foo>Content` | Compose smart/dumb split, see the Compose section above. |
-| `<Foo>State` | Sealed UI state type (e.g. `DoorbellState`, `VoiceState`). |
-| `<Foo>Overlay` | Compose overlay composable (e.g. `DoorbellOverlay`). |
+| `<Foo>State` | Sealed UI state type (e.g. `FeedState`, `VoiceState`). |
+| `<Foo>Overlay` | Compose overlay composable (e.g. `FeedOverlay`). |
 
 If none of these fit, propose the new noun in PR review before adding it.
 

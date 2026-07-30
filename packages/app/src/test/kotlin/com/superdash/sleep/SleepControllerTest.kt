@@ -89,7 +89,7 @@ class SleepControllerTest {
         }
 
     @Test
-    fun `WakeWordDetected and DoorbellRingStarted trigger idle touch`() =
+    fun `WakeWordDetected and FeedActivated trigger idle touch`() =
         runTest {
             val bus = KioskEventBus()
             var touchCount = 0
@@ -103,7 +103,7 @@ class SleepControllerTest {
             )
             advanceUntilIdle()
             bus.emit(KioskEvent.WakeWordDetected("hey_jarvis"))
-            bus.emit(KioskEvent.DoorbellRingStarted("a", 0L))
+            bus.emit(KioskEvent.FeedActivated("a", 0L))
             advanceUntilIdle()
             assertEquals(2, touchCount)
         }

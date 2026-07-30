@@ -9,7 +9,7 @@ The app uses Compose for kiosk and settings screens.
 - `MainViewModel`: kiosk state.
 - `SettingsViewModel`: settings state.
 - `KioskWebView`: Home Assistant WebView host.
-- `KioskOverlays`: voice, screensaver, and doorbell overlays.
+- `KioskOverlays`: voice, screensaver, and feed overlays.
 
 ## Smart And Dumb Split
 
@@ -27,7 +27,7 @@ Follow `AGENTS.md`.
 - HA setup state.
 - Token state.
 - Voice state.
-- Doorbell state.
+- Feed state.
 - Screensaver state.
 - Weather state.
 - Immich client state.

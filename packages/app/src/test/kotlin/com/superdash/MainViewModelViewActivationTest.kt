@@ -1,7 +1,7 @@
 package com.superdash
 
-import com.superdash.doorbell.DoorbellConfig
-import com.superdash.doorbell.DoorbellState
+import com.superdash.feed.FeedConfig
+import com.superdash.feed.FeedState
 import com.superdash.ha.HaConnectionState
 import com.superdash.ha.HaTokens
 import com.superdash.kiosk.SidebarPosition
@@ -43,8 +43,8 @@ class MainViewModelViewActivationTest {
             expiresAtEpochMs = Long.MAX_VALUE,
         )
 
-    private val fakeDoorbellConfig =
-        DoorbellConfig(
+    private val fakeFeedConfig =
+        FeedConfig(
             id = "test",
             name = "Front",
             triggerEntity = "binary_sensor.front",
@@ -61,7 +61,7 @@ class MainViewModelViewActivationTest {
         val dayKey: MutableStateFlow<String>,
         val nightKey: MutableStateFlow<String>,
         val nightActive: MutableStateFlow<Boolean>,
-        val doorbellState: MutableStateFlow<DoorbellState>,
+        val feedState: MutableStateFlow<FeedState>,
         val autoClose: MutableStateFlow<Int>,
         val voiceEnabled: MutableStateFlow<Boolean>,
     )
@@ -78,7 +78,7 @@ class MainViewModelViewActivationTest {
                 dayKey = MutableStateFlow("photos"),
                 nightKey = MutableStateFlow("black"),
                 nightActive = MutableStateFlow(false),
-                doorbellState = MutableStateFlow(DoorbellState.Idle),
+                feedState = MutableStateFlow(FeedState.Idle),
                 autoClose = MutableStateFlow(60),
                 voiceEnabled = MutableStateFlow(false),
             )
@@ -93,8 +93,8 @@ class MainViewModelViewActivationTest {
                 dayScreensaverModeKeyFlow = flows.dayKey,
                 nightScreensaverModeKeyFlow = flows.nightKey,
                 nightModeActiveFlow = flows.nightActive,
-                doorbellStateFlow = flows.doorbellState,
-                doorbellAutoCloseSecFlow = flows.autoClose,
+                feedStateFlow = flows.feedState,
+                feedAutoCloseSecFlow = flows.autoClose,
                 voiceEnabledFlow = flows.voiceEnabled,
                 sidebarPositionFlow = MutableStateFlow(SidebarPosition.Left),
                 sidebarPinnedFlow = MutableStateFlow(false),
@@ -106,26 +106,26 @@ class MainViewModelViewActivationTest {
     }
 
     @Test
-    fun `doorbell uiState reflects Idle when doorbellState is Idle`() =
+    fun `feed uiState reflects Idle when feedState is Idle`() =
         runTest {
             val (viewModel, _) = buildViewModel()
             backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
-            assertEquals(DoorbellState.Idle, viewModel.uiState.value.doorbellState)
+            assertEquals(FeedState.Idle, viewModel.uiState.value.feedState)
         }
 
     @Test
-    fun `doorbell uiState reflects Showing when doorbellState becomes Showing`() =
+    fun `feed uiState reflects Showing when feedState becomes Showing`() =
         runTest {
             val (viewModel, flows) = buildViewModel()
             backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
 
-            val showing = DoorbellState.Showing(config = fakeDoorbellConfig, openedAtEpochMs = 1000L)
-            flows.doorbellState.value = showing
+            val showing = FeedState.Showing(config = fakeFeedConfig, openedAtEpochMs = 1000L)
+            flows.feedState.value = showing
             advanceUntilIdle()
 
-            assertEquals(showing, viewModel.uiState.value.doorbellState)
+            assertEquals(showing, viewModel.uiState.value.feedState)
         }
 
     @Test
@@ -224,13 +224,13 @@ class MainViewModelViewActivationTest {
         }
 
     @Test
-    fun `doorbellAutoCloseSec propagates from source flow`() =
+    fun `feedAutoCloseSec propagates from source flow`() =
         runTest {
             val (viewModel, flows) = buildViewModel()
             backgroundScope.launch { viewModel.uiState.collect {} }
             flows.autoClose.value = 30
             advanceUntilIdle()
-            assertEquals(30, viewModel.uiState.value.doorbellAutoCloseSec)
+            assertEquals(30, viewModel.uiState.value.feedAutoCloseSec)
         }
 
     @Test

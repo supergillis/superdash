@@ -67,14 +67,14 @@ data class EsphomeScreensaverBindings(
     val stopScreensaver: suspend () -> Unit,
 )
 
-/** Doorbell enable, ring status, configured count, and auto-close timing. */
-data class EsphomeDoorbellBindings(
-    val doorbellEnabled: Flow<Boolean>,
-    val setDoorbellEnabled: suspend (Boolean) -> Unit,
-    val doorbellRinging: Flow<Boolean>,
-    val doorbellCount: Flow<Float>,
-    val doorbellAutoCloseSec: Flow<Float>,
-    val setDoorbellAutoCloseSec: suspend (Float) -> Unit,
+/** Feed enable, ring status, configured count, and auto-close timing. */
+data class EsphomeFeedBindings(
+    val feedEnabled: Flow<Boolean>,
+    val setFeedEnabled: suspend (Boolean) -> Unit,
+    val feedRinging: Flow<Boolean>,
+    val feedCount: Flow<Float>,
+    val feedAutoCloseSec: Flow<Float>,
+    val setFeedAutoCloseSec: suspend (Float) -> Unit,
 )
 
 /** Manual night-mode override exposed as an ESPHome switch. */

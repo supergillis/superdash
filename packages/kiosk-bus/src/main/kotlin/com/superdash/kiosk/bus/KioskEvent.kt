@@ -6,8 +6,8 @@ package com.superdash.kiosk.bus
  *  Past-tense / noun-event signals that 0..N independent components may care about:
  *  - [UserTouched]: user interacted with the kiosk (touch, key, esphome stop-screensaver).
  *  - [WakeWordDetected]: wake-word fired; carries the detected phrase.
- *  - [DoorbellRingStarted]: a configured doorbell fired; carries the doorbell id
- *    and the ring timestamp. Consumers that need the typed config resolve it from
+ *  - [FeedActivated]: a configured feed activated; carries the feed id
+ *    and the activation timestamp. Consumers that need the typed config resolve it from
  *    their own settings flow.
  *
  *  ## What does NOT belong here
@@ -19,7 +19,7 @@ package com.superdash.kiosk.bus
  *    [com.superdash.sleep.SleepCommands]). The bus is overhead, not decoupling,
  *    when there is no fan-out.
  *  - **Hot flows / large payloads**: a [kotlinx.coroutines.flow.Flow] of audio
- *    buffers, a `DoorbellConfig` object, etc. Pass primitives (entity ids,
+ *    buffers, a `FeedConfig` object, etc. Pass primitives (entity ids,
  *    timestamps, phrases) and let consumers resolve typed objects from their own
  *    dependencies.
  *
@@ -36,8 +36,8 @@ sealed class KioskEvent {
         val phrase: String,
     ) : KioskEvent()
 
-    data class DoorbellRingStarted(
-        val doorbellId: String,
+    data class FeedActivated(
+        val feedId: String,
         val timestampMs: Long,
     ) : KioskEvent()
 }

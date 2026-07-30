@@ -15,8 +15,8 @@
     <string name="settings_voice_summary">Wake word and voice assistant</string>
     <string name="settings_screensaver_title">Screensaver</string>
     <string name="settings_screensaver_summary">Idle display, overlays, and photos</string>
-    <string name="settings_doorbell_title">Doorbell</string>
-    <string name="settings_doorbell_summary">Camera overlay triggers</string>
+    <string name="settings_feed_title">Doorbell</string>
+    <string name="settings_feed_summary">Camera overlay triggers</string>
     <string name="settings_camera_title">Camera</string>
     <string name="settings_camera_summary">Tablet camera and motion sensor</string>
     <string name="settings_esphome_title">ESPHome</string>
@@ -41,21 +41,21 @@
     <string name="settings_value_off">Off</string>
 
     <!-- Doorbell -->
-    <string name="settings_doorbell_trigger_entity">Trigger entity</string>
-    <string name="settings_doorbell_camera_entity">Camera entity</string>
-    <string name="settings_doorbell_camera_entity_or_url">Camera entity or stream URL</string>
-    <string name="settings_doorbell_dialog_add_title">Add doorbell</string>
-    <string name="settings_doorbell_dialog_edit_title">Edit doorbell</string>
-    <string name="settings_doorbell_name_label">Name</string>
-    <string name="settings_doorbell_name_placeholder">Front Door</string>
-    <string name="settings_doorbell_camera_url_hint">Direct URLs (e.g. go2rtc) skip HA and start playback faster.</string>
-    <string name="settings_doorbell_overlay_title">Doorbell overlay</string>
-    <string name="settings_doorbell_overlay_summary">Show camera feed when a doorbell rings</string>
-    <string name="settings_doorbell_auto_close_never">Auto-close: never</string>
-    <string name="settings_doorbell_auto_close_seconds">Auto-close: %1$ds</string>
-    <string name="settings_doorbell_list_title">Doorbells</string>
-    <string name="settings_doorbell_list_empty">Add at least one doorbell.</string>
-    <string name="settings_doorbell_add_button">+ Add doorbell</string>
+    <string name="settings_feed_trigger_entity">Trigger entity</string>
+    <string name="settings_feed_camera_entity">Camera entity</string>
+    <string name="settings_feed_camera_entity_or_url">Camera entity or stream URL</string>
+    <string name="settings_feed_dialog_add_title">Add doorbell</string>
+    <string name="settings_feed_dialog_edit_title">Edit doorbell</string>
+    <string name="settings_feed_name_label">Name</string>
+    <string name="settings_feed_name_placeholder">Front Door</string>
+    <string name="settings_feed_camera_url_hint">Direct URLs (e.g. go2rtc) skip HA and start playback faster.</string>
+    <string name="settings_feed_overlay_title">Doorbell overlay</string>
+    <string name="settings_feed_overlay_summary">Show camera feed when a doorbell rings</string>
+    <string name="settings_feed_auto_close_never">Auto-close: never</string>
+    <string name="settings_feed_auto_close_seconds">Auto-close: %1$ds</string>
+    <string name="settings_feed_list_title">Doorbells</string>
+    <string name="settings_feed_list_empty">Add at least one doorbell.</string>
+    <string name="settings_feed_add_button">+ Add doorbell</string>
     <!-- Camera -->
     <string name="settings_camera_enabled_title">Camera</string>
     <string name="settings_camera_enabled_summary">Expose the tablet camera and motion sensor to Home Assistant</string>

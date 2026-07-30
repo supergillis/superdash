@@ -131,7 +131,7 @@ kiosk product.
 | `packages/ha-client` | Home Assistant OAuth, tokens, WebSocket, Assist, media source. |
 | `packages/voice` | Wake word, on-device STT (Whisper/Moonshine), local intents. |
 | `packages/screensaver` | Screensaver and Immich photo slideshow. |
-| `packages/doorbell` | Doorbell camera overlay. |
+| `packages/feed` | Feed camera overlay. |
 | `packages/esphome-server` | ESPHome native API server and mDNS announce. |
 | `packages/immich-client` | Immich API client for slideshow photos. |
 | `packages/kiosk-bus` | Internal event bus. |

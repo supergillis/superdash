@@ -35,8 +35,8 @@ import com.superdash.settings.ui.AdminSettingsSection
 import com.superdash.settings.ui.CameraSettingsSection
 import com.superdash.settings.ui.ConnectionSettingsSection
 import com.superdash.settings.ui.DeviceSettingsSection
-import com.superdash.settings.ui.DoorbellSettingsSection
 import com.superdash.settings.ui.EsphomeSettingsSection
+import com.superdash.settings.ui.FeedSettingsSection
 import com.superdash.settings.ui.GeneralSettingsSection
 import com.superdash.settings.ui.ImmichSettingsSection
 import com.superdash.settings.ui.ScreensaverSettingsSection
@@ -397,11 +397,11 @@ private fun SettingsDestinationContent(
                 },
             )
         }
-        SettingsDestination.TopLevel.Doorbell -> {
-            DoorbellSettingsSection(
-                state = state.doorbell,
+        SettingsDestination.TopLevel.Feed -> {
+            FeedSettingsSection(
+                state = state.feed,
                 haEntities = state.haEntities,
-                actions = actions.doorbell,
+                actions = actions.feed,
             )
         }
         SettingsDestination.TopLevel.Camera -> {

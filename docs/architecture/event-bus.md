@@ -23,7 +23,7 @@
 |---|---|---|
 | `UserTouched` | WebView touch, ESPHome stop screensaver, settings screensaver tap | Sleep controller |
 | `WakeWordDetected(phrase)` | Voice coordinator on wake | Sleep controller |
-| `DoorbellRingStarted(doorbellId, timestampMs)` | Doorbell watcher | Sleep controller, voice coordinator, doorbell overlay controller |
+| `FeedActivated(feedId, timestampMs)` | Feed watcher | Sleep controller, voice coordinator, feed overlay controller |
 
 ## Buffer behavior
 
@@ -45,6 +45,6 @@ Use a domain `StateFlow` when a consumer needs the current value on first collec
 ## Payload discipline
 
 Bus event payloads are primitives (entity ids, timestamps, phrases). Consumers that
-need typed objects (e.g., `DoorbellConfig`) resolve them from their own settings
-flow. This keeps the bus package free of doorbell/voice/etc feature types and
+need typed objects (e.g., `FeedConfig`) resolve them from their own settings
+flow. This keeps the bus package free of feed/voice/etc feature types and
 makes future module extraction mechanical.

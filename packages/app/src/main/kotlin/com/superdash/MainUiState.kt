@@ -1,7 +1,7 @@
 package com.superdash
 
 import androidx.compose.runtime.Immutable
-import com.superdash.doorbell.DoorbellState
+import com.superdash.feed.FeedState
 import com.superdash.ha.HaTokens
 import com.superdash.kiosk.SidebarPosition
 import com.superdash.kiosk.SidebarSettingsDefaults
@@ -19,8 +19,8 @@ data class MainUiState(
     val voiceState: VoiceState,
     val isIdle: Boolean,
     val nightModeActive: Boolean,
-    val doorbellState: DoorbellState,
-    val doorbellAutoCloseSec: Int,
+    val feedState: FeedState,
+    val feedAutoCloseSec: Int,
     val haBaseUrl: String,
     val sidebar: SidebarUiState,
 ) {
@@ -33,8 +33,8 @@ data class MainUiState(
                 voiceState = VoiceState.Idle,
                 isIdle = false,
                 nightModeActive = false,
-                doorbellState = DoorbellState.Idle,
-                doorbellAutoCloseSec = 60,
+                feedState = FeedState.Idle,
+                feedAutoCloseSec = 60,
                 haBaseUrl = "",
                 sidebar = SidebarUiState.empty(),
             )

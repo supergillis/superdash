@@ -40,13 +40,13 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class VoicePipelineCoordinatorTest {
     @Test
-    fun `DoorbellRingStarted on bus cancels in-flight wake job`() =
+    fun `FeedActivated on bus cancels in-flight wake job`() =
         runTest {
             val bus = KioskEventBus()
             val coordinator = buildCoordinator(bus = bus, dispatcher = StandardTestDispatcher(testScheduler))
-            coordinator.onWake(testRunContext("doorbell"), neverEndingAudio())
+            coordinator.onWake(testRunContext("feed"), neverEndingAudio())
             advanceUntilIdle()
-            bus.emit(KioskEvent.DoorbellRingStarted("a", 0L))
+            bus.emit(KioskEvent.FeedActivated("a", 0L))
             advanceUntilIdle()
             assertEquals(VoiceState.Idle, coordinator.state.value)
         }

@@ -72,14 +72,14 @@ class EsphomeBindingsTest {
                         startScreensaver = {},
                         stopScreensaver = {},
                     ),
-                doorbell =
-                    EsphomeDoorbellBindings(
-                        doorbellEnabled = MutableStateFlow(false),
-                        setDoorbellEnabled = {},
-                        doorbellRinging = MutableStateFlow(false),
-                        doorbellCount = MutableStateFlow(0f),
-                        doorbellAutoCloseSec = MutableStateFlow(60f),
-                        setDoorbellAutoCloseSec = {},
+                feed =
+                    EsphomeFeedBindings(
+                        feedEnabled = MutableStateFlow(false),
+                        setFeedEnabled = {},
+                        feedRinging = MutableStateFlow(false),
+                        feedCount = MutableStateFlow(0f),
+                        feedAutoCloseSec = MutableStateFlow(60f),
+                        setFeedAutoCloseSec = {},
                     ),
                 nightMode =
                     EsphomeNightModeBindings(
@@ -340,14 +340,14 @@ class EsphomeBindingsTest {
                         startScreensaver = {},
                         stopScreensaver = {},
                     ),
-                doorbell =
-                    EsphomeDoorbellBindings(
-                        doorbellEnabled = MutableStateFlow(false),
-                        setDoorbellEnabled = {},
-                        doorbellRinging = MutableStateFlow(false),
-                        doorbellCount = MutableStateFlow(0f),
-                        doorbellAutoCloseSec = MutableStateFlow(60f),
-                        setDoorbellAutoCloseSec = {},
+                feed =
+                    EsphomeFeedBindings(
+                        feedEnabled = MutableStateFlow(false),
+                        setFeedEnabled = {},
+                        feedRinging = MutableStateFlow(false),
+                        feedCount = MutableStateFlow(0f),
+                        feedAutoCloseSec = MutableStateFlow(60f),
+                        setFeedAutoCloseSec = {},
                     ),
                 nightMode =
                     EsphomeNightModeBindings(

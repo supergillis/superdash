@@ -129,7 +129,7 @@ internal fun esphomeEntities(
     kiosk: EsphomeKioskBindings,
     voice: EsphomeVoiceBindings,
     screensaver: EsphomeScreensaverBindings,
-    doorbell: EsphomeDoorbellBindings,
+    feed: EsphomeFeedBindings,
     nightMode: EsphomeNightModeBindings,
     ha: EsphomeHaBindings,
     camera: EsphomeCameraBindings,
@@ -162,8 +162,8 @@ internal fun esphomeEntities(
         switchEntity(
             objectId = "doorbell_enabled",
             name = "Doorbell Enabled",
-            state = doorbell.doorbellEnabled,
-            onCommand = doorbell.setDoorbellEnabled,
+            state = feed.feedEnabled,
+            onCommand = feed.setFeedEnabled,
         ),
         switchEntity(
             objectId = "launch_on_wake",
@@ -184,7 +184,7 @@ internal fun esphomeEntities(
         binarySensorEntity(
             objectId = "doorbell_ringing",
             name = "Doorbell Ringing",
-            state = doorbell.doorbellRinging,
+            state = feed.feedRinging,
         ),
         binarySensorEntity(
             objectId = "voice_active",
@@ -199,7 +199,7 @@ internal fun esphomeEntities(
         sensorEntity(
             objectId = "doorbell_count",
             name = "Doorbell Count",
-            state = doorbell.doorbellCount,
+            state = feed.feedCount,
         ),
         textSensorEntity(
             objectId = "ha_connection_state",
@@ -274,12 +274,12 @@ internal fun esphomeEntities(
         numberEntity(
             objectId = "doorbell_auto_close_sec",
             name = "Doorbell Auto Close",
-            state = doorbell.doorbellAutoCloseSec,
+            state = feed.feedAutoCloseSec,
             minValue = 0f,
             maxValue = 300f,
             step = 10f,
             unitOfMeasurement = "s",
-            onCommand = doorbell.setDoorbellAutoCloseSec,
+            onCommand = feed.setFeedAutoCloseSec,
         ),
         selectEntity(
             objectId = "day_screensaver_mode",
@@ -436,7 +436,7 @@ class EsphomeBindings(
     kiosk: EsphomeKioskBindings,
     voice: EsphomeVoiceBindings,
     screensaver: EsphomeScreensaverBindings,
-    doorbell: EsphomeDoorbellBindings,
+    feed: EsphomeFeedBindings,
     nightMode: EsphomeNightModeBindings,
     ha: EsphomeHaBindings,
     camera: EsphomeCameraBindings,
@@ -468,7 +468,7 @@ class EsphomeBindings(
                     kiosk = kiosk,
                     voice = voice,
                     screensaver = screensaver,
-                    doorbell = doorbell,
+                    feed = feed,
                     nightMode = nightMode,
                     ha = ha,
                     camera = camera,

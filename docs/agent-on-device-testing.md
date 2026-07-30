@@ -49,7 +49,7 @@ $ADB -s <device-id> logcat -d
 |---|---|
 | Open Settings | Swipe from screen edge. |
 | Force screensaver | Settings, Screensaver, Test. |
-| Force doorbell | Settings, Doorbell, Test. |
+| Force feed | Settings, Doorbell, Test. |
 | Wake from idle | Tap the screen. |
 
 `SettingsActivity` is not exported.

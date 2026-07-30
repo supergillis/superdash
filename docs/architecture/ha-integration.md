@@ -20,7 +20,7 @@ Home Assistant code lives in `packages/ha-client`.
 
 - One `HaWebSocketClient` per app.
 - Owned by `AppGraph`.
-- Shared by voice, screensaver, doorbell, and media source code.
+- Shared by voice, screensaver, feed, and media source code.
 - Exposes connection state, entity state, recent frames, and raw frames.
 - `callResult()` sends a command and waits for the matching result frame.
 

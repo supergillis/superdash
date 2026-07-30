@@ -1,6 +1,6 @@
 package com.superdash
 
-import com.superdash.doorbell.DoorbellState
+import com.superdash.feed.FeedState
 import com.superdash.ha.HaConnectionState
 import com.superdash.ha.HaTokens
 import com.superdash.kiosk.SidebarPosition
@@ -47,7 +47,7 @@ class MainViewModelTest {
         val tokens: MutableStateFlow<HaTokens?>,
         val haState: MutableStateFlow<HaConnectionState>,
         val voiceEnabled: MutableStateFlow<Boolean>,
-        val doorbellState: MutableStateFlow<DoorbellState>,
+        val feedState: MutableStateFlow<FeedState>,
     )
 
     private fun buildViewModel(): Pair<MainViewModel, Inputs> {
@@ -60,7 +60,7 @@ class MainViewModelTest {
         val dayKey = MutableStateFlow("photos")
         val nightKey = MutableStateFlow("black")
         val nightActive = MutableStateFlow(false)
-        val doorbellState = MutableStateFlow<DoorbellState>(DoorbellState.Idle)
+        val feedState = MutableStateFlow<FeedState>(FeedState.Idle)
         val autoClose = MutableStateFlow(60)
         val voiceEnabled = MutableStateFlow(false)
         val sidebarPosition = MutableStateFlow(SidebarPosition.Left)
@@ -80,8 +80,8 @@ class MainViewModelTest {
                 dayScreensaverModeKeyFlow = dayKey,
                 nightScreensaverModeKeyFlow = nightKey,
                 nightModeActiveFlow = nightActive,
-                doorbellStateFlow = doorbellState,
-                doorbellAutoCloseSecFlow = autoClose,
+                feedStateFlow = feedState,
+                feedAutoCloseSecFlow = autoClose,
                 voiceEnabledFlow = voiceEnabled,
                 sidebarPositionFlow = sidebarPosition,
                 sidebarPinnedFlow = sidebarPinned,
@@ -90,7 +90,7 @@ class MainViewModelTest {
                 sidebarEdgeHandleFlow = sidebarEdgeHandle,
             )
 
-        return viewModel to Inputs(haUrl, tokens, haState, voiceEnabled, doorbellState)
+        return viewModel to Inputs(haUrl, tokens, haState, voiceEnabled, feedState)
     }
 
     @Test
@@ -229,7 +229,7 @@ class MainViewModelTest {
             val dayKey = MutableStateFlow("photos")
             val nightKey = MutableStateFlow("black")
             val nightActive = MutableStateFlow(false)
-            val doorbellState = MutableStateFlow<DoorbellState>(DoorbellState.Idle)
+            val feedState = MutableStateFlow<FeedState>(FeedState.Idle)
             val autoClose = MutableStateFlow(60)
             val voiceEnabled = MutableStateFlow(false)
             val sidebarPosition = MutableStateFlow(SidebarPosition.Bottom)
@@ -248,8 +248,8 @@ class MainViewModelTest {
                     dayScreensaverModeKeyFlow = dayKey,
                     nightScreensaverModeKeyFlow = nightKey,
                     nightModeActiveFlow = nightActive,
-                    doorbellStateFlow = doorbellState,
-                    doorbellAutoCloseSecFlow = autoClose,
+                    feedStateFlow = feedState,
+                    feedAutoCloseSecFlow = autoClose,
                     voiceEnabledFlow = voiceEnabled,
                     sidebarPositionFlow = sidebarPosition,
                     sidebarPinnedFlow = sidebarPinned,

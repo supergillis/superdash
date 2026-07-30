@@ -196,6 +196,7 @@
     <string name="settings_sidebar_action_open_dashboard_view">Open dashboard view</string>
     <string name="settings_sidebar_action_open_dashboard_view_path">Open dashboard view: %1$s</string>
     <string name="settings_sidebar_action_show_feed">Show camera</string>
+    <string name="settings_sidebar_no_feeds">No cameras configured</string>
     <string name="settings_sidebar_icon_moon">Moon</string>
     <string name="settings_sidebar_icon_sun">Sun</string>
     <string name="settings_sidebar_icon_refresh">Refresh</string>

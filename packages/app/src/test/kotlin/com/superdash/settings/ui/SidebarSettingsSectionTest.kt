@@ -5,6 +5,7 @@ import com.superdash.kiosk.SidebarAction
 import com.superdash.kiosk.SidebarShortcut
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SidebarSettingsSectionTest {
@@ -84,6 +85,20 @@ class SidebarSettingsSectionTest {
             )
 
         assertEquals("dashboard-5", nextDashboardShortcutId(shortcuts))
+    }
+
+    @Test fun `a show camera shortcut without a camera cannot be saved`() {
+        assertFalse(isSaveableSidebarAction(SidebarAction.ShowFeed("")))
+        assertFalse(isSaveableSidebarAction(SidebarAction.ShowFeed("  ")))
+    }
+
+    @Test fun `a show camera shortcut with a camera can be saved`() {
+        assertTrue(isSaveableSidebarAction(SidebarAction.ShowFeed("front")))
+    }
+
+    @Test fun `other actions are always saveable`() {
+        assertTrue(isSaveableSidebarAction(SidebarAction.ReloadDashboard))
+        assertTrue(isSaveableSidebarAction(SidebarAction.OpenDashboardPath("")))
     }
 
     @Test fun `settings action choices omit dismiss screensaver`() {

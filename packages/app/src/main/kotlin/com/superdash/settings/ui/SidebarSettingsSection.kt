@@ -267,6 +267,12 @@ private fun SidebarShortcutDialog(
                     )
                 }
                 if (actionKind == SidebarActionKind.ShowFeed) {
+                    if (feeds.isEmpty()) {
+                        ListItem(
+                            headlineContent = { Text(stringResource(R.string.settings_sidebar_no_feeds)) },
+                            supportingContent = { Text(stringResource(R.string.settings_feed_list_empty)) },
+                        )
+                    }
                     for (feed in feeds) {
                         ListItem(
                             headlineContent = { Text(feed.name) },
@@ -296,6 +302,7 @@ private fun SidebarShortcutDialog(
         },
         confirmButton = {
             TextButton(
+                enabled = isSaveableSidebarAction(actionKind.toAction(dashboardPath, feedId)),
                 onClick = {
                     val selectedAction = actionKind.toAction(dashboardPath, feedId)
                     onSave(
@@ -394,6 +401,11 @@ private fun rememberIconChoices(): List<SettingsChoice<String>> =
 @Composable
 private fun rememberActionChoices(): List<SettingsChoice<SidebarActionKind>> =
     availableActionKinds.map { kind -> SettingsChoice(kind, stringResource(kind.labelRes)) }
+
+/** A camera shortcut with no camera picked only logs a warning when pressed, so
+ *  keep it out of the store rather than saving a shortcut that does nothing. */
+internal fun isSaveableSidebarAction(action: SidebarAction): Boolean =
+    action !is SidebarAction.ShowFeed || action.feedId.isNotBlank()
 
 internal fun sidebarActionChoiceLabelIds(): List<Int> = availableActionKinds.map { kind -> kind.labelRes }
 

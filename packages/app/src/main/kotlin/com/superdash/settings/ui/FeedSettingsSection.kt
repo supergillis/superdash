@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.superdash.R
 import com.superdash.feed.FeedConfig
+import com.superdash.feed.FeedTrigger
 import com.superdash.ha.EntityState
 import com.superdash.settings.EsphomeSettingsActions
 import com.superdash.settings.EsphomeSettingsState
@@ -60,13 +61,21 @@ fun FeedSettingsSection(
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
         } else {
-            for (config in state.configs) {
+            for (config in state.configs.sortedByDescending { it.order }) {
                 ListItem(
                     headlineContent = { Text(config.name) },
                     supportingContent = {
                         Column {
                             Text(config.triggerEntity, style = MaterialTheme.typography.bodySmall)
                             Text(config.cameraEntity, style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                if (config.trigger is FeedTrigger.Sustained) {
+                                    stringResource(R.string.settings_feed_mode_sustained)
+                                } else {
+                                    stringResource(R.string.settings_feed_mode_momentary)
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                            )
                         }
                     },
                     trailingContent = {

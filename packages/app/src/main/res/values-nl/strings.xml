@@ -15,8 +15,8 @@
     <string name="settings_voice_summary">Wake word en spraakassistent</string>
     <string name="settings_screensaver_title">Screensaver</string>
     <string name="settings_screensaver_summary">Inactief scherm, overlays en foto\'s</string>
-    <string name="settings_feed_title">Deurbel</string>
-    <string name="settings_feed_summary">Camera-overlay triggers</string>
+    <string name="settings_feed_title">Camera\'s</string>
+    <string name="settings_feed_summary">Triggers voor camera-overlays</string>
     <string name="settings_camera_title">Camera</string>
     <string name="settings_camera_summary">Tabletcamera en bewegingssensor</string>
     <string name="settings_esphome_title">ESPHome</string>
@@ -40,22 +40,31 @@
     <string name="settings_value_not_set">Niet ingesteld</string>
     <string name="settings_value_off">Uit</string>
 
-    <!-- Doorbell -->
+    <!-- Cameras -->
     <string name="settings_feed_trigger_entity">Trigger-entiteit</string>
     <string name="settings_feed_camera_entity">Camera-entiteit</string>
     <string name="settings_feed_camera_entity_or_url">Camera-entiteit of stream-URL</string>
-    <string name="settings_feed_dialog_add_title">Deurbel toevoegen</string>
-    <string name="settings_feed_dialog_edit_title">Deurbel bewerken</string>
+    <string name="settings_feed_dialog_add_title">Camera toevoegen</string>
+    <string name="settings_feed_dialog_edit_title">Camera bewerken</string>
     <string name="settings_feed_name_label">Naam</string>
     <string name="settings_feed_name_placeholder">Voordeur</string>
     <string name="settings_feed_camera_url_hint">Directe URL\'s (bijv. go2rtc) slaan HA over en starten sneller op.</string>
-    <string name="settings_feed_overlay_title">Deurbeloverlay</string>
-    <string name="settings_feed_overlay_summary">Toon camerabeeld wanneer de deurbel gaat</string>
-    <string name="settings_feed_auto_close_never">Automatisch sluiten: nooit</string>
-    <string name="settings_feed_auto_close_seconds">Automatisch sluiten: %1$ds</string>
-    <string name="settings_feed_list_title">Deurbellen</string>
-    <string name="settings_feed_list_empty">Voeg minstens één deurbel toe.</string>
-    <string name="settings_feed_add_button">+ Deurbel toevoegen</string>
+    <string name="settings_feed_overlay_title">Camera-overlays</string>
+    <string name="settings_feed_overlay_summary">Toon een camerabeeld wanneer een entiteit triggert</string>
+    <string name="settings_feed_list_title">Camera\'s</string>
+    <string name="settings_feed_list_empty">Voeg minstens een camera toe.</string>
+    <string name="settings_feed_add_button">+ Camera toevoegen</string>
+    <string name="settings_feed_mode_label">Triggermodus</string>
+    <string name="settings_feed_mode_momentary">Deurbel</string>
+    <string name="settings_feed_mode_sustained">Zolang actief</string>
+    <string name="settings_feed_active_states_label">Actieve statussen</string>
+    <string name="settings_feed_active_states_hint">Gescheiden door komma\'s. Gebruik * voor elke status behalve niet beschikbaar.</string>
+    <string name="settings_feed_auto_close_label">Automatisch sluiten (seconden)</string>
+    <string name="settings_feed_auto_close_hint">0 houdt het beeld open tot je het sluit.</string>
+    <string name="settings_feed_wake_screen_label">Scherm wekken</string>
+    <string name="settings_feed_wake_screen_hint">Uit toont het beeld pas zodra de tablet wakker is.</string>
+    <string name="settings_feed_order_label">Prioriteit</string>
+    <string name="settings_feed_order_hint">De hoogste wint als meerdere camera\'s actief zijn.</string>
     <!-- Camera -->
     <string name="settings_camera_enabled_title">Camera</string>
     <string name="settings_camera_enabled_summary">Maak de tabletcamera en bewegingssensor zichtbaar voor Home Assistant</string>

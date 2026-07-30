@@ -78,8 +78,6 @@ class EsphomeBindingsTest {
                         setFeedEnabled = {},
                         feedRinging = MutableStateFlow(false),
                         feedCount = MutableStateFlow(0f),
-                        feedAutoCloseSec = MutableStateFlow(60f),
-                        setFeedAutoCloseSec = {},
                     ),
                 nightMode =
                     EsphomeNightModeBindings(
@@ -136,7 +134,6 @@ class EsphomeBindingsTest {
                 "vad_silence_ms",
                 "idle_timeout_sec",
                 "picture_spacing_dp",
-                "doorbell_auto_close_sec",
                 "day_screensaver_mode",
                 "night_screensaver_mode",
                 "overlay_position",
@@ -346,8 +343,6 @@ class EsphomeBindingsTest {
                         setFeedEnabled = {},
                         feedRinging = MutableStateFlow(false),
                         feedCount = MutableStateFlow(0f),
-                        feedAutoCloseSec = MutableStateFlow(60f),
-                        setFeedAutoCloseSec = {},
                     ),
                 nightMode =
                     EsphomeNightModeBindings(

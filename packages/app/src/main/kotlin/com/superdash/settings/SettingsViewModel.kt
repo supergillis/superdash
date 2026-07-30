@@ -202,12 +202,10 @@ class SettingsViewModel(
         combine(
             feedSettings.enabled,
             feedSettings.feeds,
-            feedSettings.autoCloseSec,
-        ) { enabled, configs, autoClose ->
+        ) { enabled, configs ->
             FeedSettingsState(
                 enabled = enabled,
                 configs = configs.toImmutableList(),
-                autoCloseSec = autoClose,
             )
         }
 
@@ -536,8 +534,6 @@ class SettingsViewModel(
         }
 
     fun setFeedEnabled(value: Boolean) = launch { feedSettings.setEnabled(value) }
-
-    fun setFeedAutoCloseSec(value: Int) = launch { feedSettings.setAutoCloseSec(value) }
 
     fun upsertFeed(config: FeedConfig) = launch { feedSettings.upsertFeed(config) }
 

@@ -131,7 +131,6 @@ data class ImmichSettingsActions(
 @Immutable
 data class FeedSettingsActions(
     val onFeedEnabledChange: (Boolean) -> Unit,
-    val onFeedAutoCloseSecChange: (Int) -> Unit,
     val onUpsertFeed: (FeedConfig) -> Unit,
     val onRemoveFeed: (String) -> Unit,
     val onTestFeed: (FeedConfig) -> Unit,
@@ -406,7 +405,6 @@ private fun SettingsScreen(
                 feed =
                     FeedSettingsActions(
                         onFeedEnabledChange = settingsViewModel::setFeedEnabled,
-                        onFeedAutoCloseSecChange = settingsViewModel::setFeedAutoCloseSec,
                         onUpsertFeed = settingsViewModel::upsertFeed,
                         onRemoveFeed = settingsViewModel::removeFeed,
                         onTestFeed = onTestFeed,

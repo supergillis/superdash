@@ -271,16 +271,6 @@ internal fun esphomeEntities(
             unitOfMeasurement = "dp",
             onCommand = screensaver.setPictureSpacingDp,
         ),
-        numberEntity(
-            objectId = "doorbell_auto_close_sec",
-            name = "Doorbell Auto Close",
-            state = feed.feedAutoCloseSec,
-            minValue = 0f,
-            maxValue = 300f,
-            step = 10f,
-            unitOfMeasurement = "s",
-            onCommand = feed.setFeedAutoCloseSec,
-        ),
         selectEntity(
             objectId = "day_screensaver_mode",
             name = "Day Screensaver Mode",

@@ -40,7 +40,6 @@ internal fun testSettingsActions(): SettingsActions =
         feed =
             FeedSettingsActions(
                 onFeedEnabledChange = {},
-                onFeedAutoCloseSecChange = {},
                 onUpsertFeed = {},
                 onRemoveFeed = {},
                 onTestFeed = {},

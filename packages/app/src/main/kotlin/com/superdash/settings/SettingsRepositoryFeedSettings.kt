@@ -8,7 +8,9 @@ import com.superdash.core.persistence.write
 import com.superdash.feed.FeedConfig
 import com.superdash.feed.FeedSettings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 /**
  * App-owned [FeedSettings] backed by [KeyValueStore].
@@ -21,32 +23,36 @@ internal class SettingsRepositoryFeedSettings(
 ) : FeedSettings {
     override val enabled: Flow<Boolean> = store.observe(ENABLED)
 
-    override val autoCloseSec: Flow<Int> = store.observe(AUTO_CLOSE_SEC)
-
     override val feeds: Flow<List<FeedConfig>> =
-        store.observe(FEEDS).map { FeedConfig.decodeList(it) }
+        store
+            .observe(FEEDS)
+            .onStart { migrateAutoCloseIfNeeded() }
+            .map { FeedConfig.decodeList(it) }
 
     override suspend fun setEnabled(value: Boolean) = store.write(ENABLED, value)
 
-    override suspend fun setAutoCloseSec(value: Int) = store.write(AUTO_CLOSE_SEC, value)
-
     override suspend fun upsertFeed(config: FeedConfig) {
+        val sanitised = config.copy(autoCloseSec = config.autoCloseSec.coerceIn(0, 300))
         store.mutate(FEEDS) { encoded ->
             val current = FeedConfig.decodeList(encoded)
             val updated =
-                if (current.any { it.id == config.id }) {
+                if (current.any { it.id == sanitised.id }) {
                     current.map {
-                        if (it.id == config.id) {
-                            config
+                        if (it.id == sanitised.id) {
+                            sanitised
                         } else {
                             it
                         }
                     }
                 } else {
-                    current + config
+                    current + sanitised
                 }
             FeedConfig.encodeList(updated)
         }
+        // A direct per-feed write means the store is already on the new model; without
+        // this, a write that lands before `feeds` is ever collected would get clobbered
+        // by the legacy stamp the next time `migrateAutoCloseIfNeeded` runs.
+        store.write(MIGRATED_V2, true)
     }
 
     override suspend fun removeFeed(id: String) {
@@ -54,12 +60,27 @@ internal class SettingsRepositoryFeedSettings(
             val current = FeedConfig.decodeList(encoded)
             FeedConfig.encodeList(current.filterNot { it.id == id })
         }
+        store.write(MIGRATED_V2, true)
+    }
+
+    /** Auto-close moved from one global setting to a field on every feed. Stamp the
+     *  old global onto stored feeds once so upgrades keep their configured timeout. */
+    private suspend fun migrateAutoCloseIfNeeded() {
+        if (store.flow(MIGRATED_V2.key, MIGRATED_V2.default).first()) {
+            return
+        }
+        val legacyAutoCloseSec = store.flow(LEGACY_AUTO_CLOSE_SEC.key, LEGACY_AUTO_CLOSE_SEC.default).first()
+        store.mutate(FEEDS) { encoded ->
+            val current = FeedConfig.decodeList(encoded)
+            FeedConfig.encodeList(current.map { it.copy(autoCloseSec = legacyAutoCloseSec) })
+        }
+        store.write(MIGRATED_V2, true)
     }
 
     private companion object {
         val ENABLED = Setting(key = "doorbell_enabled", default = false)
-        val AUTO_CLOSE_SEC =
-            Setting(key = "doorbell_auto_close_sec", default = 60, write = { it.coerceIn(0, 300) })
         val FEEDS = Setting(key = "doorbells", default = "[]")
+        val MIGRATED_V2 = Setting(key = "feeds_migrated_v2", default = false)
+        val LEGACY_AUTO_CLOSE_SEC = Setting(key = "doorbell_auto_close_sec", default = 60)
     }
 }

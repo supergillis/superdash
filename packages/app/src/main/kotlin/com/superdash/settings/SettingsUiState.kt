@@ -159,14 +159,12 @@ data class VoiceSettingsState(
 data class FeedSettingsState(
     val enabled: Boolean,
     val configs: ImmutableList<FeedConfig>,
-    val autoCloseSec: Int,
 ) {
     companion object {
         fun empty(): FeedSettingsState =
             FeedSettingsState(
                 enabled = false,
                 configs = persistentListOf(),
-                autoCloseSec = 60,
             )
     }
 }

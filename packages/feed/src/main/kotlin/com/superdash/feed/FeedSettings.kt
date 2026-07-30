@@ -11,13 +11,9 @@ import kotlinx.coroutines.flow.Flow
 interface FeedSettings {
     val enabled: Flow<Boolean>
 
-    val autoCloseSec: Flow<Int>
-
     val feeds: Flow<List<FeedConfig>>
 
     suspend fun setEnabled(value: Boolean)
-
-    suspend fun setAutoCloseSec(value: Int)
 
     suspend fun upsertFeed(config: FeedConfig)
 

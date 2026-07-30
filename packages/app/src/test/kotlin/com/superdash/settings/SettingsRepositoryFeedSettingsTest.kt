@@ -19,29 +19,6 @@ class SettingsRepositoryFeedSettingsTest {
         }
 
     @Test
-    fun `auto close defaults to 60 seconds`() =
-        runTest {
-            val settings = SettingsRepositoryFeedSettings(InMemoryKeyValueStore())
-            assertEquals(60, settings.autoCloseSec.first())
-        }
-
-    @Test
-    fun `auto close coerces below zero to zero`() =
-        runTest {
-            val settings = SettingsRepositoryFeedSettings(InMemoryKeyValueStore())
-            settings.setAutoCloseSec(-5)
-            assertEquals(0, settings.autoCloseSec.first())
-        }
-
-    @Test
-    fun `auto close coerces above 300 to 300`() =
-        runTest {
-            val settings = SettingsRepositoryFeedSettings(InMemoryKeyValueStore())
-            settings.setAutoCloseSec(999)
-            assertEquals(300, settings.autoCloseSec.first())
-        }
-
-    @Test
     fun `feeds defaults to empty list`() =
         runTest {
             val settings = SettingsRepositoryFeedSettings(InMemoryKeyValueStore())
@@ -182,6 +159,94 @@ class SettingsRepositoryFeedSettingsTest {
                     .first()
                     .map { config -> config.id }
                     .toSet(),
+            )
+        }
+
+    @Test
+    fun `migration stamps the legacy global auto close onto stored feeds`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set("doorbell_auto_close_sec", 120)
+            store.set(
+                "doorbells",
+                """
+                [{"id":"a","name":"Front","triggerEntity":"binary_sensor.front","cameraEntity":"camera.front"}]
+                """.trimIndent(),
+            )
+            val settings = SettingsRepositoryFeedSettings(store)
+
+            val feeds = settings.feeds.first()
+
+            assertEquals(1, feeds.size)
+            assertEquals(120, feeds.first().autoCloseSec)
+            assertEquals(true, store.flow("feeds_migrated_v2", false).first())
+        }
+
+    @Test
+    fun `migration runs once and does not re-stamp later edits`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set("doorbell_auto_close_sec", 120)
+            store.set(
+                "doorbells",
+                """
+                [{"id":"a","name":"Front","triggerEntity":"binary_sensor.front","cameraEntity":"camera.front"}]
+                """.trimIndent(),
+            )
+            val settings = SettingsRepositoryFeedSettings(store)
+            settings.feeds.first()
+
+            settings.upsertFeed(
+                FeedConfig(
+                    id = "a",
+                    name = "Front",
+                    triggerEntity = "binary_sensor.front",
+                    cameraEntity = "camera.front",
+                    autoCloseSec = 30,
+                ),
+            )
+
+            assertEquals(
+                30,
+                settings.feeds
+                    .first()
+                    .first()
+                    .autoCloseSec,
+            )
+        }
+
+    @Test
+    fun `migration with no stored feeds only sets the marker`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            val settings = SettingsRepositoryFeedSettings(store)
+
+            assertEquals(emptyList<FeedConfig>(), settings.feeds.first())
+            assertEquals(true, store.flow("feeds_migrated_v2", false).first())
+        }
+
+    @Test
+    fun `upsert clamps auto close to the supported range`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            val settings = SettingsRepositoryFeedSettings(store)
+
+            settings.upsertFeed(
+                FeedConfig(
+                    id = "a",
+                    name = "Front",
+                    triggerEntity = "binary_sensor.front",
+                    cameraEntity = "camera.front",
+                    autoCloseSec = 9_999,
+                ),
+            )
+
+            assertEquals(
+                300,
+                settings.feeds
+                    .first()
+                    .first()
+                    .autoCloseSec,
             )
         }
 }

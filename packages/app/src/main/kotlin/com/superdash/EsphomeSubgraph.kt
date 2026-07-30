@@ -156,11 +156,6 @@ class EsphomeSubgraph(
                 feedSettings.feeds
                     .map { configs -> configs.size.toFloat() }
                     .distinctUntilChanged(),
-            feedAutoCloseSec =
-                feedSettings.autoCloseSec
-                    .map { value -> value.toFloat() }
-                    .distinctUntilChanged(),
-            setFeedAutoCloseSec = { value -> feedSettings.setAutoCloseSec(value.toInt()) },
         )
 
     private val nightModeBindings: EsphomeNightModeBindings =

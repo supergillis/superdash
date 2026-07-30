@@ -8,7 +8,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,24 +48,6 @@ fun FeedSettingsSection(
         },
     )
     if (state.enabled) {
-        Text(
-            if (state.autoCloseSec == 0) {
-                stringResource(R.string.settings_feed_auto_close_never)
-            } else {
-                stringResource(R.string.settings_feed_auto_close_seconds, state.autoCloseSec)
-            },
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
-        Slider(
-            value = state.autoCloseSec.toFloat(),
-            onValueChange = { value ->
-                val snapped = (value / 10).toInt() * 10
-                actions.onFeedAutoCloseSecChange(snapped)
-            },
-            valueRange = 0f..300f,
-            steps = 29,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
         Text(
             stringResource(R.string.settings_feed_list_title),
             style = MaterialTheme.typography.bodyMedium,

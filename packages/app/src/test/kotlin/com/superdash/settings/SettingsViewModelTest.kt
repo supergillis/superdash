@@ -800,15 +800,11 @@ class SettingsViewModelTest {
     private class FakeFeedSettings(
         enabledFlow: MutableStateFlow<Boolean> = MutableStateFlow(false),
         feedsFlow: MutableStateFlow<List<FeedConfig>> = MutableStateFlow(emptyList()),
-        autoCloseSecFlow: MutableStateFlow<Int> = MutableStateFlow(60),
     ) : FeedSettings {
         override val enabled: Flow<Boolean> = enabledFlow.asStateFlow()
         override val feeds: Flow<List<FeedConfig>> = feedsFlow.asStateFlow()
-        override val autoCloseSec: Flow<Int> = autoCloseSecFlow.asStateFlow()
 
         override suspend fun setEnabled(value: Boolean) = Unit
-
-        override suspend fun setAutoCloseSec(value: Int) = Unit
 
         override suspend fun upsertFeed(config: FeedConfig) = Unit
 

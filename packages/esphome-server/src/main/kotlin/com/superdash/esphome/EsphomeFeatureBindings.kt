@@ -67,14 +67,12 @@ data class EsphomeScreensaverBindings(
     val stopScreensaver: suspend () -> Unit,
 )
 
-/** Feed enable, ring status, configured count, and auto-close timing. */
+/** Feed enable, showing status, and configured count. */
 data class EsphomeFeedBindings(
     val feedEnabled: Flow<Boolean>,
     val setFeedEnabled: suspend (Boolean) -> Unit,
     val feedRinging: Flow<Boolean>,
     val feedCount: Flow<Float>,
-    val feedAutoCloseSec: Flow<Float>,
-    val setFeedAutoCloseSec: suspend (Float) -> Unit,
 )
 
 /** Manual night-mode override exposed as an ESPHome switch. */

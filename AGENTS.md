@@ -372,7 +372,10 @@ split-horizon names is a common cause.
 
 ### App state
 
-Read settings on a debug build without editing DataStore by hand:
+Read and write settings with `scripts/device/sd.ts` on a build made with
+`-Psuperdash.debugTools=true`. See the cookbook for commands.
+
+Read raw settings on any debug build:
 
 ```bash
 $ADB -s <device-id> shell run-as com.superdash cat files/datastore/app_settings.preferences_pb

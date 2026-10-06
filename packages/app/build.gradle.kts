@@ -44,6 +44,10 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
+            // Opt-in adb control surface for scripts/device/sd.ts. Off by default so a
+            // plain debug build exposes no settings writer: -Psuperdash.debugTools=true.
+            manifestPlaceholders["debugToolsEnabled"] =
+                providers.gradleProperty("superdash.debugTools").orNull?.toBooleanStrict() ?: false
         }
         release {
             isMinifyEnabled = false

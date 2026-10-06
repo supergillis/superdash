@@ -47,3 +47,6 @@ migration-backups/
 
 .worktrees/
 .clone/
+
+# Device scripts
+node_modules/

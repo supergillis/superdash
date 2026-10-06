@@ -77,6 +77,7 @@
     <string name="settings_camera_motion_mode_motion">Tout mouvement</string>
     <string name="settings_camera_motion_mode_person">Personne uniquement</string>
     <string name="settings_camera_sensitivity_label">Sensibilité de détection</string>
+    <string name="settings_camera_max_fps_label">Fréquence d\'images max. (ips)</string>
     <string name="settings_camera_wake_on_motion_title">Réveiller l\'écran en cas de mouvement</string>
     <string name="settings_camera_wake_on_motion_summary">Quitter l\'écran de veille lorsqu\'un mouvement est détecté</string>
     <string name="settings_camera_allow_remote_enable_title">Activation à distance</string>
@@ -173,6 +174,8 @@
     <string name="settings_sidebar_pinned_summary">Les barres latérales épinglées réservent de l\'espace au tableau de bord.</string>
     <string name="settings_sidebar_show_labels_label">Afficher les libellés</string>
     <string name="settings_sidebar_show_labels_summary">Affiche un court texte sous chaque icône de la barre latérale.</string>
+    <string name="settings_sidebar_edge_handle_label">Poignée de bord</string>
+    <string name="settings_sidebar_edge_handle_summary">Affiche un petit onglet pour ouvrir une barre latérale non épinglée.</string>
     <string name="settings_sidebar_add_shortcut_button">Ajouter un raccourci</string>
     <string name="settings_sidebar_edit_shortcut_title">Modifier le raccourci</string>
     <string name="settings_sidebar_add_shortcut_title">Ajouter un raccourci</string>
@@ -278,6 +281,7 @@
 
     <!-- Sidebar overlay -->
     <string name="sidebar_dismiss_content_description">Fermer la barre latérale</string>
+    <string name="sidebar_open_content_description">Ouvrir la barre latérale</string>
     <string name="sidebar_unpin_content_description">Désépingler la barre latérale</string>
     <string name="sidebar_pin_content_description">Épingler la barre latérale</string>
     <string name="sidebar_item_active_content_description">%1$s, actif</string>

@@ -77,6 +77,7 @@
     <string name="settings_camera_motion_mode_motion">Elke beweging</string>
     <string name="settings_camera_motion_mode_person">Alleen personen</string>
     <string name="settings_camera_sensitivity_label">Detectiegevoeligheid</string>
+    <string name="settings_camera_max_fps_label">Max. framerate (fps)</string>
     <string name="settings_camera_wake_on_motion_title">Scherm wekken bij beweging</string>
     <string name="settings_camera_wake_on_motion_summary">Screensaver afsluiten wanneer beweging wordt gedetecteerd</string>
     <string name="settings_camera_allow_remote_enable_title">Op afstand inschakelen</string>
@@ -173,6 +174,8 @@
     <string name="settings_sidebar_pinned_summary">Vastgezette zijbalken reserveren dashboardruimte.</string>
     <string name="settings_sidebar_show_labels_label">Labels tonen</string>
     <string name="settings_sidebar_show_labels_summary">Toont korte tekst onder elk zijbalkpictogram.</string>
+    <string name="settings_sidebar_edge_handle_label">Randgreep</string>
+    <string name="settings_sidebar_edge_handle_summary">Toont een klein lipje om een niet-vastgezette zijbalk te openen.</string>
     <string name="settings_sidebar_add_shortcut_button">Snelkoppeling toevoegen</string>
     <string name="settings_sidebar_edit_shortcut_title">Snelkoppeling bewerken</string>
     <string name="settings_sidebar_add_shortcut_title">Snelkoppeling toevoegen</string>
@@ -278,6 +281,7 @@
 
     <!-- Sidebar overlay -->
     <string name="sidebar_dismiss_content_description">Zijbalk sluiten</string>
+    <string name="sidebar_open_content_description">Zijbalk openen</string>
     <string name="sidebar_unpin_content_description">Zijbalk losmaken</string>
     <string name="sidebar_pin_content_description">Zijbalk vastzetten</string>
     <string name="sidebar_item_active_content_description">%1$s, actief</string>

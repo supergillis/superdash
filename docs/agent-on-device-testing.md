@@ -89,11 +89,12 @@ node scripts/device/sd.ts ha input_boolean.superdash_test_ring on
 | `dump`, `get <key>` | Read settings. Secrets are redacted. |
 | `set <key> <value> [--type t]` | Write a raw setting. The type is inferred from the stored value. |
 | `remove <key>` | Delete a setting so the default applies. |
-| `feed state` | Enabled flag, shown feed, active triggers, configured feeds. |
+| `feed state` | Enabled and idle flags, shown feed, active triggers, configured feeds. |
 | `feed show`, `feed close` | Force a feed open or closed. |
 | `feed upsert <json\|@file>`, `feed remove` | Edit feeds. |
 | `ha <entity> [on\|off]` | Read an HA entity, or toggle an `input_boolean.superdash_test*` helper. |
 | `ha --list [prefix]` | Entity ids and states, filtered by prefix. |
+| `idle`, `wake` | Force the screensaver idle state, or touch to leave it. |
 | `screenshot`, `logs` | Capture visual state and the `superdash` log tag. |
 
 - Writes apply live. The app observes the same DataStore.
@@ -104,6 +105,19 @@ node scripts/device/sd.ts ha input_boolean.superdash_test_ring on
 - Debug receivers require `android.permission.DUMP`, which the adb shell holds and other apps cannot.
 - The device is `--device`, then `$ANDROID_SERIAL`, then the only connected device.
 - Type-check with `npm install && npm run typecheck` in `scripts/device`.
+
+### Feed Smoke Test
+
+`scripts/device/feed-smoke.ts` checks feeds end to end, from an HA trigger to the overlay state, in under a minute:
+
+```bash
+node scripts/device/feed-smoke.ts [--camera <url or camera entity>]
+```
+
+- Needs the HA toggle helpers `input_boolean.superdash_test_ring` and `input_boolean.superdash_test_monitor`.
+- Creates or updates the `test ring` and `test monitor` feeds, and leaves both helpers off.
+- Covers show and hide, close and re-arm, auto-close, priority, the idle gate, night mode, and the `feed_showing` ESPHome sensor.
+- Run it after any change to `packages/feed` or the overlay wiring.
 
 ## App State
 

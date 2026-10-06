@@ -1,0 +1,119 @@
+// adb access to a superdash debug build with -Psuperdash.debugTools=true.
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
+
+export const PACKAGE = "com.superdash";
+export const REPO_ROOT = resolve(import.meta.dirname, "../..");
+
+const RECEIVER = `${PACKAGE}/.debug.DebugToolsReceiver`;
+const RESULT_OK = -1;
+
+export class UsageError extends Error {}
+
+export interface FeedConfig {
+  id: string;
+  name: string;
+  triggerEntity: string;
+  cameraEntity: string;
+  trigger?: { type: "sustained"; activeStates?: string[] };
+  autoCloseSec?: number;
+  wakeScreen?: boolean;
+  order?: number;
+}
+
+export interface FeedStateReply {
+  enabled: boolean;
+  idle: boolean;
+  showing: string | null;
+  active: Record<string, number>;
+  feeds: FeedConfig[];
+}
+
+const adbPath = [
+  process.env.ADB,
+  process.env.ANDROID_HOME && join(process.env.ANDROID_HOME, "platform-tools/adb"),
+  join(homedir(), "Android/Sdk/platform-tools/adb"),
+  "/opt/homebrew/share/android-commandlinetools/platform-tools/adb",
+].find((path): path is string => !!path && existsSync(path)) ?? "adb";
+
+// adb shell re-joins arguments into one remote command line, so anything with
+// spaces or quotes travels base64-encoded and every plain token is checked.
+function shellToken(value: string): string {
+  if (!/^[\w.:@\-/]+$/.test(value)) {
+    throw new UsageError(`unsafe argument: ${value}`);
+  }
+  return value;
+}
+
+export class Device {
+  readonly serial: string;
+
+  private constructor(serial: string) {
+    this.serial = serial;
+  }
+
+  /** --device, then $ANDROID_SERIAL, then the only connected device. */
+  static pick(requested?: string): Device {
+    const explicit = requested ?? process.env.ANDROID_SERIAL;
+    if (explicit) {
+      return new Device(explicit);
+    }
+    const devices = execFileSync(adbPath, ["devices", "-l"], { encoding: "utf8" })
+      .split("\n")
+      .slice(1)
+      .map((line) => line.split(/\s+/))
+      .filter((fields) => fields[1] === "device");
+    // A wireless device can be listed twice, by ip:port and by its mDNS name; the
+    // transport-independent "device:" field tells the duplicates apart.
+    const unique = new Map(devices.map((fields) => [fields.find((field) => field.startsWith("device:")), fields[0]]));
+    const [only, ...others] = unique.values();
+    if (!only || others.length > 0) {
+      throw new UsageError(`expected one connected device, found ${unique.size}; pass --device`);
+    }
+    return new Device(only);
+  }
+
+  adb(args: string[]): Buffer {
+    return execFileSync(adbPath, ["-s", this.serial, ...args], { maxBuffer: 64 * 1024 * 1024 });
+  }
+
+  /** Runs one receiver command and returns its reply; a failed command throws. */
+  send(command: string, extras: Record<string, string | undefined> = {}): string {
+    const args = ["shell", "am", "broadcast", "-n", RECEIVER, "--es", "cmd", shellToken(command)];
+    for (const [name, value] of Object.entries(extras)) {
+      if (value === undefined) {
+        continue;
+      }
+      if (name === "value") {
+        args.push("--es", "value_b64", Buffer.from(value).toString("base64"));
+      } else {
+        args.push("--es", shellToken(name), shellToken(value));
+      }
+    }
+    const output = this.adb(args).toString();
+    const match = /Broadcast completed: result=(-?\d+)(?:, data="([\s\S]*)")?\s*$/.exec(output);
+    if (!match || match[2] === undefined) {
+      throw new Error(
+        `no reply from ${RECEIVER}. Is a debug build with -Psuperdash.debugTools=true installed? Try: sd install\n${output.trim()}`,
+      );
+    }
+    if (Number(match[1]) !== RESULT_OK) {
+      throw new Error(match[2]);
+    }
+    return match[2];
+  }
+
+  feedState(): FeedStateReply {
+    return JSON.parse(this.send("feed_state")) as FeedStateReply;
+  }
+
+  upsertFeed(config: FeedConfig): void {
+    this.send("feed_upsert", { value: JSON.stringify(config) });
+  }
+
+  toggle(entity: string, state: "on" | "off"): void {
+    this.send("ha_state", { entity, value: state });
+  }
+}

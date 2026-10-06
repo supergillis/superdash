@@ -87,6 +87,14 @@ class DebugToolsReceiver : BroadcastReceiver() {
                 graph.feedOverlayController.close()
                 "ok"
             }
+            "idle" -> {
+                graph.idleController.forceIdle()
+                "ok"
+            }
+            "wake" -> {
+                graph.idleController.touch()
+                "ok"
+            }
             "ha_list" -> {
                 listEntities(graph, intent.getStringExtra("prefix").orEmpty())
             }
@@ -180,6 +188,7 @@ class DebugToolsReceiver : BroadcastReceiver() {
         val shown = graph.feedOverlayController.state.value as? FeedState.Showing
         return buildJsonObject {
             put("enabled", graph.feedSettings.enabled.first())
+            put("idle", graph.idleController.isIdle.value)
             put("showing", shown?.config?.id)
             put(
                 "active",

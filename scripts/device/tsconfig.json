@@ -5,6 +5,7 @@
     "module": "nodenext",
     "types": ["node"],
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "strict": true,

@@ -60,8 +60,8 @@ object SettingsLayout {
             SettingsDestination.TopLevel.Screensaver -> {
                 "settings_nav_screensaver"
             }
-            SettingsDestination.TopLevel.Doorbell -> {
-                "settings_nav_doorbell"
+            SettingsDestination.TopLevel.Feed -> {
+                "settings_nav_feed"
             }
             SettingsDestination.TopLevel.Camera -> {
                 "settings_nav_camera"

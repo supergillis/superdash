@@ -5,18 +5,18 @@ import com.superdash.camera.CameraController
 import com.superdash.camera.CameraSettings
 import com.superdash.device.DeviceInfo
 import com.superdash.device.ScreenStateProvider
-import com.superdash.doorbell.DoorbellOverlayController
-import com.superdash.doorbell.DoorbellSettings
-import com.superdash.doorbell.DoorbellState
 import com.superdash.esphome.EsphomeBindings
 import com.superdash.esphome.EsphomeCameraBindings
 import com.superdash.esphome.EsphomeDeviceMetadata
-import com.superdash.esphome.EsphomeDoorbellBindings
+import com.superdash.esphome.EsphomeFeedBindings
 import com.superdash.esphome.EsphomeHaBindings
 import com.superdash.esphome.EsphomeKioskBindings
 import com.superdash.esphome.EsphomeNightModeBindings
 import com.superdash.esphome.EsphomeScreensaverBindings
 import com.superdash.esphome.EsphomeVoiceBindings
+import com.superdash.feed.FeedOverlayController
+import com.superdash.feed.FeedSettings
+import com.superdash.feed.FeedState
 import com.superdash.ha.HaWebSocketClient
 import com.superdash.kiosk.KioskSettings
 import com.superdash.kiosk.bus.ActivityCommand
@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.map
 class EsphomeSubgraph(
     application: Application,
     scope: CoroutineScope,
-    doorbellSettings: DoorbellSettings,
+    feedSettings: FeedSettings,
     screensaverSettings: ScreensaverSettings,
     voiceSettings: VoiceSettings,
     kioskSettings: KioskSettings,
@@ -49,7 +49,7 @@ class EsphomeSubgraph(
     screenStateProvider: ScreenStateProvider,
     idleController: ScreensaverIdleController,
     sleepController: SleepController,
-    doorbellOverlayController: DoorbellOverlayController,
+    feedOverlayController: FeedOverlayController,
     voiceCoordinator: VoicePipelineCoordinator,
     haClient: HaWebSocketClient,
     noisePsk: Flow<ByteArray?> = flowOf(null),
@@ -144,23 +144,18 @@ class EsphomeSubgraph(
             stopScreensaver = { eventBus.emit(KioskEvent.UserTouched) },
         )
 
-    private val doorbellBindings: EsphomeDoorbellBindings =
-        EsphomeDoorbellBindings(
-            doorbellEnabled = doorbellSettings.enabled,
-            setDoorbellEnabled = { value -> doorbellSettings.setEnabled(value) },
-            doorbellRinging =
-                doorbellOverlayController.state
-                    .map { it is DoorbellState.Showing }
+    private val feedBindings: EsphomeFeedBindings =
+        EsphomeFeedBindings(
+            feedEnabled = feedSettings.enabled,
+            setFeedEnabled = { value -> feedSettings.setEnabled(value) },
+            feedRinging =
+                feedOverlayController.state
+                    .map { it is FeedState.Showing }
                     .distinctUntilChanged(),
-            doorbellCount =
-                doorbellSettings.doorbells
+            feedCount =
+                feedSettings.feeds
                     .map { configs -> configs.size.toFloat() }
                     .distinctUntilChanged(),
-            doorbellAutoCloseSec =
-                doorbellSettings.autoCloseSec
-                    .map { value -> value.toFloat() }
-                    .distinctUntilChanged(),
-            setDoorbellAutoCloseSec = { value -> doorbellSettings.setAutoCloseSec(value.toInt()) },
         )
 
     private val nightModeBindings: EsphomeNightModeBindings =
@@ -224,7 +219,7 @@ class EsphomeSubgraph(
             kiosk = kioskBindings,
             voice = voiceBindings,
             screensaver = screensaverBindings,
-            doorbell = doorbellBindings,
+            feed = feedBindings,
             nightMode = nightModeBindings,
             ha = haBindings,
             camera = cameraBindings,

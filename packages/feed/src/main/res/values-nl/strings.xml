@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feed_connecting">Verbinden…</string>
+    <string name="feed_close">Sluiten</string>
+    <string name="feed_push_to_talk">Push-to-talk (binnenkort beschikbaar)</string>
+    <string name="feed_stream_interrupted">Stream onderbroken</string>
+    <string name="feed_camera_unavailable">Camera niet beschikbaar</string>
+</resources>

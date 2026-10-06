@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
         }
         val bearerTokenProvider: suspend () -> String? = graph.tokenStore::loadAccessToken
         val fetchHlsUrl: suspend (String) -> String = { entity -> graph.cameraStreamSource.fetchHlsUrl(entity) }
-        val onCloseDoorbell: () -> Unit = { graph.doorbellOverlayController.close() }
+        val onCloseFeed: () -> Unit = { graph.feedOverlayController.close() }
         val onCancelVoice: () -> Unit = graph.voiceCoordinator::stopAll
 
         setContent {
@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
                     screensaverContent = screensaverContent,
                     bearerTokenProvider = bearerTokenProvider,
                     fetchHlsUrl = fetchHlsUrl,
-                    onCloseDoorbell = onCloseDoorbell,
+                    onCloseFeed = onCloseFeed,
                     onCancelVoice = onCancelVoice,
                     onVoiceServiceShouldRunChange = { shouldRun ->
                         if (shouldRun) {
@@ -263,6 +263,7 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     graph.kioskSettings.setDashboardPath(action.path)
                 }
+            is SidebarAction.ShowFeed -> graph.feedOverlayController.showById(action.feedId)
         }
     }
 
@@ -287,7 +288,7 @@ private fun MainScreen(
     screensaverContent: @Composable () -> Unit,
     bearerTokenProvider: suspend () -> String?,
     fetchHlsUrl: suspend (String) -> String,
-    onCloseDoorbell: () -> Unit,
+    onCloseFeed: () -> Unit,
     onCancelVoice: () -> Unit,
     onVoiceServiceShouldRunChange: (Boolean) -> Unit,
     onSubmitUrl: (String) -> Unit,
@@ -307,7 +308,7 @@ private fun MainScreen(
         screensaverContent = screensaverContent,
         bearerTokenProvider = bearerTokenProvider,
         fetchHlsUrl = fetchHlsUrl,
-        onCloseDoorbell = onCloseDoorbell,
+        onCloseFeed = onCloseFeed,
         onSubmitUrl = onSubmitUrl,
         onCancelVoice = onCancelVoice,
         onSidebarPinnedChange = onSidebarPinnedChange,
@@ -323,7 +324,7 @@ private fun MainContent(
     screensaverContent: @Composable () -> Unit,
     bearerTokenProvider: suspend () -> String?,
     fetchHlsUrl: suspend (String) -> String,
-    onCloseDoorbell: () -> Unit,
+    onCloseFeed: () -> Unit,
     onSubmitUrl: (String) -> Unit,
     onCancelVoice: () -> Unit,
     onSidebarPinnedChange: (Boolean) -> Unit,
@@ -362,14 +363,13 @@ private fun MainContent(
                 KioskOverlays(
                     state =
                         KioskOverlayState(
-                            doorbellState = state.doorbellState,
-                            doorbellAutoCloseSec = state.doorbellAutoCloseSec,
+                            feedState = state.feedState,
                             haBaseUrl = state.haBaseUrl,
                             isIdle = state.isIdle,
                         ),
                     bearerTokenProvider = bearerTokenProvider,
                     fetchHlsUrl = fetchHlsUrl,
-                    onCloseDoorbell = onCloseDoorbell,
+                    onCloseFeed = onCloseFeed,
                     onTapScreensaver = {},
                     screensaverContent = screensaverContent,
                 )

@@ -20,7 +20,7 @@ Home Assistant code lives in `packages/ha-client`.
 
 - One `HaWebSocketClient` per app.
 - Owned by `AppGraph`.
-- Shared by voice, screensaver, doorbell, and media source code.
+- Shared by voice, screensaver, feed, and media source code.
 - Exposes connection state, entity state, recent frames, and raw frames.
 - `callResult()` sends a command and waits for the matching result frame.
 
@@ -58,9 +58,9 @@ Home Assistant code lives in `packages/ha-client`.
 
 | Type | Examples |
 |---|---|
-| Switch | `keep_screen_on`, `voice_enabled`, `doorbell_enabled` |
-| Binary sensor | `screen_on`, `in_screensaver`, `voice_active` |
-| Sensor | `ha_entity_count`, `doorbell_count` |
+| Switch | `keep_screen_on`, `voice_enabled`, `feed_enabled` |
+| Binary sensor | `screen_on`, `in_screensaver`, `feed_showing`, `voice_active` |
+| Sensor | `ha_entity_count`, `feed_count` |
 | Text sensor | `ha_connection_state`, `voice_state`, `app_version` |
 | Number | `vad_silence_ms`, `idle_timeout_sec`, `picture_spacing_dp` |
 | Select | `day_screensaver_mode`, `overlay_position`, `media_library_order` |

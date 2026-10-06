@@ -27,7 +27,7 @@ private val log = Log("CameraService")
 
 /** Foreground service holding the `camera` FGS type while the camera feature
  *  is enabled, so capture keeps working when the kiosk activity is not
- *  resumed (screensaver, doorbell overlay). The pipeline itself lives in
+ *  resumed (screensaver, feed overlay). The pipeline itself lives in
  *  AppGraph's CameraController; this service only anchors the FGS type. */
 class CameraService : LifecycleService() {
     override fun onCreate() {

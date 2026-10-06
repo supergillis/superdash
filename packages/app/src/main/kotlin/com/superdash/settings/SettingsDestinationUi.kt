@@ -34,7 +34,7 @@ fun SettingsDestination.TopLevel.icon(): ImageVector =
         SettingsDestination.TopLevel.Screensaver -> {
             Icons.Filled.Image
         }
-        SettingsDestination.TopLevel.Doorbell -> {
+        SettingsDestination.TopLevel.Feed -> {
             Icons.Filled.Notifications
         }
         SettingsDestination.TopLevel.Camera -> {

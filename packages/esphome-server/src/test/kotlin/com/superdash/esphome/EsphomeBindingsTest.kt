@@ -72,14 +72,12 @@ class EsphomeBindingsTest {
                         startScreensaver = {},
                         stopScreensaver = {},
                     ),
-                doorbell =
-                    EsphomeDoorbellBindings(
-                        doorbellEnabled = MutableStateFlow(false),
-                        setDoorbellEnabled = {},
-                        doorbellRinging = MutableStateFlow(false),
-                        doorbellCount = MutableStateFlow(0f),
-                        doorbellAutoCloseSec = MutableStateFlow(60f),
-                        setDoorbellAutoCloseSec = {},
+                feed =
+                    EsphomeFeedBindings(
+                        feedEnabled = MutableStateFlow(false),
+                        setFeedEnabled = {},
+                        feedRinging = MutableStateFlow(false),
+                        feedCount = MutableStateFlow(0f),
                     ),
                 nightMode =
                     EsphomeNightModeBindings(
@@ -119,14 +117,14 @@ class EsphomeBindingsTest {
                 "start_on_boot",
                 "night_mode",
                 "voice_enabled",
-                "doorbell_enabled",
+                "feed_enabled",
                 "launch_on_wake",
                 "screen_on",
                 "in_screensaver",
-                "doorbell_ringing",
+                "feed_showing",
                 "voice_active",
                 "ha_entity_count",
-                "doorbell_count",
+                "feed_count",
                 "ha_connection_state",
                 "voice_state",
                 "active_wake_word_state",
@@ -138,7 +136,6 @@ class EsphomeBindingsTest {
                 "vad_silence_ms",
                 "idle_timeout_sec",
                 "picture_spacing_dp",
-                "doorbell_auto_close_sec",
                 "day_screensaver_mode",
                 "night_screensaver_mode",
                 "overlay_position",
@@ -362,14 +359,12 @@ class EsphomeBindingsTest {
                         startScreensaver = {},
                         stopScreensaver = {},
                     ),
-                doorbell =
-                    EsphomeDoorbellBindings(
-                        doorbellEnabled = MutableStateFlow(false),
-                        setDoorbellEnabled = {},
-                        doorbellRinging = MutableStateFlow(false),
-                        doorbellCount = MutableStateFlow(0f),
-                        doorbellAutoCloseSec = MutableStateFlow(60f),
-                        setDoorbellAutoCloseSec = {},
+                feed =
+                    EsphomeFeedBindings(
+                        feedEnabled = MutableStateFlow(false),
+                        setFeedEnabled = {},
+                        feedRinging = MutableStateFlow(false),
+                        feedCount = MutableStateFlow(0f),
                     ),
                 nightMode =
                     EsphomeNightModeBindings(

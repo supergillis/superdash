@@ -51,8 +51,8 @@ AppGraph
 External interrupts:
 
 ```text
-DoorbellWatcher
-  -> KioskEventBus.emit(KioskEvent.DoorbellRingStarted)
+FeedWatcher
+  -> KioskEventBus.emit(KioskEvent.FeedActivated)
   -> VoicePipelineCoordinator.stopAll()
 ```
 
@@ -79,7 +79,7 @@ Components do not call each other's methods to react to state changes.
 
 Rules:
 
-- `KioskEventBus` is for app-wide notifications such as `DoorbellRingStarted`,
+- `KioskEventBus` is for app-wide notifications such as `FeedActivated`,
   `WakeWordDetected`, and `UserTouched`.
 - Voice execution stays inside the voice subgraph as typed `Flow` pipelines.
 - `VoiceRunResult` is published on `VoicePipelineCoordinator.runResults`.
@@ -87,7 +87,7 @@ Rules:
 
 ### Principles
 
-1. **Bus events are domain facts, not commands.** `DoorbellRingStarted`
+1. **Bus events are domain facts, not commands.** `FeedActivated`
    (happened), not `StopVoice` (do this). Naming uses past-tense or
    noun-event form.
 2. **One-way only.** Producers emit and forget; nothing replies on the bus.

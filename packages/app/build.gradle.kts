@@ -107,7 +107,7 @@ dependencies {
     implementation(project(":packages:ha-client"))
     implementation(project(":packages:esphome-server"))
     implementation(project(":packages:immich-client"))
-    implementation(project(":packages:doorbell"))
+    implementation(project(":packages:feed"))
     implementation(project(":packages:screensaver"))
     implementation(project(":packages:voice"))
     implementation(project(":packages:camera"))

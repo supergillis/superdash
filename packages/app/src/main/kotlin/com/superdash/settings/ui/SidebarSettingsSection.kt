@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.superdash.R
+import com.superdash.feed.FeedConfig
 import com.superdash.kiosk.SidebarAction
 import com.superdash.kiosk.SidebarPosition
 import com.superdash.kiosk.SidebarShortcut
@@ -43,6 +45,7 @@ import com.superdash.settings.SidebarSettingsState
 fun SidebarSettingsSection(
     state: SidebarSettingsState,
     actions: SidebarSettingsActions,
+    feeds: List<FeedConfig>,
 ) {
     var editingShortcut by remember { mutableStateOf<SidebarShortcut?>(null) }
     var addingShortcut by remember { mutableStateOf(false) }
@@ -109,6 +112,8 @@ fun SidebarSettingsSection(
         SidebarShortcutDialog(
             title = stringResource(R.string.settings_sidebar_edit_shortcut_title),
             shortcut = shortcutBeingEdited,
+            isNew = false,
+            feeds = feeds,
             onDismiss = { editingShortcut = null },
             onSave = { updated ->
                 actions.onShortcutsChange(
@@ -130,6 +135,8 @@ fun SidebarSettingsSection(
         SidebarShortcutDialog(
             title = stringResource(R.string.settings_sidebar_add_shortcut_title),
             shortcut = newDashboardShortcut(nextId),
+            isNew = true,
+            feeds = feeds,
             onDismiss = { addingShortcut = false },
             onSave = { shortcut ->
                 actions.onShortcutsChange(state.shortcuts + shortcut)
@@ -184,10 +191,17 @@ private fun SidebarShortcutRow(
 private fun SidebarShortcutDialog(
     title: String,
     shortcut: SidebarShortcut,
+    isNew: Boolean,
+    feeds: List<FeedConfig>,
     onDismiss: () -> Unit,
     onSave: (SidebarShortcut) -> Unit,
 ) {
     var titleDraft by remember(shortcut.id) { mutableStateOf(shortcut.title) }
+    // A new shortcut starts as a dashboard template; its title and icon follow the
+    // chosen action until the user edits them, like the short label already does.
+    var titleFollowsAction by remember(shortcut.id) { mutableStateOf(isNew) }
+    var iconFollowsAction by remember(shortcut.id) { mutableStateOf(isNew) }
+    val actionChoices = rememberActionChoices()
     var shortLabelDraft by remember(shortcut.id) {
         val initialValue = shortcut.shortLabel.orEmpty()
         mutableStateOf(
@@ -202,6 +216,9 @@ private fun SidebarShortcutDialog(
     var dashboardPath by remember(shortcut.id) {
         mutableStateOf((shortcut.action as? SidebarAction.OpenDashboardPath)?.path ?: "")
     }
+    var feedId by remember(shortcut.id) {
+        mutableStateOf((shortcut.action as? SidebarAction.ShowFeed)?.feedId ?: "")
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -213,7 +230,10 @@ private fun SidebarShortcutDialog(
             ) {
                 OutlinedTextField(
                     value = titleDraft,
-                    onValueChange = { value -> titleDraft = value },
+                    onValueChange = { value ->
+                        titleDraft = value
+                        titleFollowsAction = false
+                    },
                     label = { Text(stringResource(R.string.settings_sidebar_title_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -231,20 +251,35 @@ private fun SidebarShortcutDialog(
                     label = stringResource(R.string.settings_sidebar_icon_label),
                     choices = rememberIconChoices(),
                     selectedValue = iconDraft,
-                    onSelect = { value -> iconDraft = value },
+                    onSelect = { value ->
+                        iconDraft = value
+                        iconFollowsAction = false
+                    },
                 )
                 if (shortcut.action !is SidebarAction.OpenSettings) {
                     SettingsChoiceRow(
                         label = stringResource(R.string.settings_sidebar_action_label),
-                        choices = rememberActionChoices(),
+                        choices = actionChoices,
                         selectedValue = actionKind,
                         onSelect = { value ->
                             actionKind = value
+                            val selectedAction = value.toAction(dashboardPath, feedId)
                             shortLabelDraft =
                                 updatedLabelDraftForActionChange(
                                     draft = shortLabelDraft,
-                                    selectedAction = value.toAction(dashboardPath),
+                                    selectedAction = selectedAction,
                                 )
+                            if (iconFollowsAction) {
+                                iconDraft = selectedAction.defaultIcon
+                            }
+                            if (titleFollowsAction) {
+                                titleDraft =
+                                    if (value == SidebarActionKind.Dashboard) {
+                                        shortcut.title
+                                    } else {
+                                        actionChoices.first { it.value == value }.label
+                                    }
+                            }
                         },
                     )
                 }
@@ -257,12 +292,37 @@ private fun SidebarShortcutDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+                if (actionKind == SidebarActionKind.ShowFeed) {
+                    if (feeds.isEmpty()) {
+                        ListItem(
+                            headlineContent = { Text(stringResource(R.string.settings_sidebar_no_feeds)) },
+                            supportingContent = { Text(stringResource(R.string.settings_feed_list_empty)) },
+                        )
+                    }
+                    for (feed in feeds) {
+                        val pickFeed = {
+                            feedId = feed.id
+                            if (titleFollowsAction || titleDraft.isBlank()) {
+                                titleDraft = feed.name
+                            }
+                        }
+                        ListItem(
+                            headlineContent = { Text(feed.name) },
+                            supportingContent = { Text(feed.cameraEntity) },
+                            leadingContent = {
+                                RadioButton(selected = feedId == feed.id, onClick = pickFeed)
+                            },
+                            modifier = Modifier.fillMaxWidth().clickable(onClick = pickFeed),
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(
+                enabled = isSaveableSidebarAction(actionKind.toAction(dashboardPath, feedId)),
                 onClick = {
-                    val selectedAction = actionKind.toAction(dashboardPath)
+                    val selectedAction = actionKind.toAction(dashboardPath, feedId)
                     onSave(
                         savedSidebarShortcut(
                             shortcut = shortcut,
@@ -295,9 +355,13 @@ private enum class SidebarActionKind(
     NightModeOn(R.string.settings_sidebar_action_night_mode_on),
     NightModeOff(R.string.settings_sidebar_action_night_mode_off),
     Dashboard(R.string.settings_sidebar_action_open_dashboard_view),
+    ShowFeed(R.string.settings_sidebar_action_show_feed),
     ;
 
-    fun toAction(path: String): SidebarAction =
+    fun toAction(
+        path: String,
+        feedId: String,
+    ): SidebarAction =
         when (this) {
             OpenSettings -> SidebarAction.OpenSettings
             ReloadDashboard -> SidebarAction.ReloadDashboard
@@ -306,6 +370,7 @@ private enum class SidebarActionKind(
             NightModeOn -> SidebarAction.SetNightModeActive(active = true)
             NightModeOff -> SidebarAction.SetNightModeActive(active = false)
             Dashboard -> SidebarAction.OpenDashboardPath(path.trim().trim('/'))
+            ShowFeed -> SidebarAction.ShowFeed(feedId.trim())
         }
 
     companion object {
@@ -322,6 +387,7 @@ private enum class SidebarActionKind(
                         NightModeOff
                     }
                 is SidebarAction.OpenDashboardPath -> Dashboard
+                is SidebarAction.ShowFeed -> ShowFeed
             }
     }
 }
@@ -339,7 +405,35 @@ private val iconOptions =
         SidebarIconOption("sun", R.string.settings_sidebar_icon_sun),
         SidebarIconOption("refresh", R.string.settings_sidebar_icon_refresh),
         SidebarIconOption("dashboard", R.string.settings_sidebar_icon_dashboard),
+        SidebarIconOption("camera", R.string.settings_sidebar_icon_camera),
     )
+
+internal val SidebarAction.defaultIcon: String
+    get() =
+        when (this) {
+            SidebarAction.OpenSettings -> {
+                "settings"
+            }
+            SidebarAction.ReloadDashboard -> {
+                "refresh"
+            }
+            SidebarAction.ShowScreensaver, SidebarAction.DismissScreensaver -> {
+                "screensaver"
+            }
+            is SidebarAction.SetNightModeActive -> {
+                if (active) {
+                    "moon"
+                } else {
+                    "sun"
+                }
+            }
+            is SidebarAction.OpenDashboardPath -> {
+                "dashboard"
+            }
+            is SidebarAction.ShowFeed -> {
+                "camera"
+            }
+        }
 
 private val availableActionKinds =
     SidebarActionKind.entries.filterNot { kind ->
@@ -354,9 +448,16 @@ private fun rememberIconChoices(): List<SettingsChoice<String>> =
 private fun rememberActionChoices(): List<SettingsChoice<SidebarActionKind>> =
     availableActionKinds.map { kind -> SettingsChoice(kind, stringResource(kind.labelRes)) }
 
+/** A camera shortcut with no camera picked only logs a warning when pressed, so
+ *  keep it out of the store rather than saving a shortcut that does nothing. */
+internal fun isSaveableSidebarAction(action: SidebarAction): Boolean =
+    action !is SidebarAction.ShowFeed || action.feedId.isNotBlank()
+
 internal fun sidebarActionChoiceLabelIds(): List<Int> = availableActionKinds.map { kind -> kind.labelRes }
 
 internal fun sidebarIconChoiceLabelIds(): List<Int> = iconOptions.map { option -> option.labelRes }
+
+internal fun sidebarIconChoiceIds(): List<String> = iconOptions.map { option -> option.id }
 
 @Composable
 private fun sidebarActionText(action: SidebarAction): String =
@@ -373,6 +474,7 @@ private fun sidebarActionText(action: SidebarAction): String =
             }
         is SidebarAction.OpenDashboardPath ->
             stringResource(R.string.settings_sidebar_action_open_dashboard_view_path, action.path)
+        is SidebarAction.ShowFeed -> stringResource(R.string.settings_sidebar_action_show_feed)
     }
 
 private fun List<SidebarShortcut>.move(

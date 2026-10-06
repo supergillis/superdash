@@ -26,7 +26,7 @@ sealed interface SettingsDestination {
 
         data object Screensaver : TopLevel(R.string.settings_screensaver_title, R.string.settings_screensaver_summary)
 
-        data object Doorbell : TopLevel(R.string.settings_doorbell_title, R.string.settings_doorbell_summary)
+        data object Feed : TopLevel(R.string.settings_feed_title, R.string.settings_feed_summary)
 
         data object Camera : TopLevel(R.string.settings_camera_title, R.string.settings_camera_summary)
 
@@ -59,7 +59,7 @@ sealed interface SettingsDestination {
                 TopLevel.Sidebar,
                 TopLevel.Voice,
                 TopLevel.Screensaver,
-                TopLevel.Doorbell,
+                TopLevel.Feed,
                 TopLevel.Camera,
                 TopLevel.Esphome,
                 TopLevel.Admin,

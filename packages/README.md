@@ -118,6 +118,28 @@ Tests:
 ./gradlew :packages:camera:testDebugUnitTest
 ```
 
+## `packages/feed`
+
+Camera feed overlay.
+
+Owns:
+
+- Trigger watching, momentary and sustained (`FeedWatcher`).
+- Visible feed selection and suppression (`FeedOverlayController`).
+- Camera stream resolution.
+- Feed overlay UI state.
+
+Start with:
+
+- `src/main/kotlin/com/superdash/feed/FeedWatcher.kt`
+- `src/main/kotlin/com/superdash/feed/FeedOverlayController.kt`
+
+Tests:
+
+```bash
+./gradlew :packages:feed:testDebugUnitTest
+```
+
 ## `packages/immich-client`
 
 Immich client library.

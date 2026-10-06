@@ -5,6 +5,7 @@ import com.superdash.kiosk.SidebarAction
 import com.superdash.kiosk.SidebarShortcut
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SidebarSettingsSectionTest {
@@ -86,6 +87,20 @@ class SidebarSettingsSectionTest {
         assertEquals("dashboard-5", nextDashboardShortcutId(shortcuts))
     }
 
+    @Test fun `a show camera shortcut without a camera cannot be saved`() {
+        assertFalse(isSaveableSidebarAction(SidebarAction.ShowFeed("")))
+        assertFalse(isSaveableSidebarAction(SidebarAction.ShowFeed("  ")))
+    }
+
+    @Test fun `a show camera shortcut with a camera can be saved`() {
+        assertTrue(isSaveableSidebarAction(SidebarAction.ShowFeed("front")))
+    }
+
+    @Test fun `other actions are always saveable`() {
+        assertTrue(isSaveableSidebarAction(SidebarAction.ReloadDashboard))
+        assertTrue(isSaveableSidebarAction(SidebarAction.OpenDashboardPath("")))
+    }
+
     @Test fun `settings action choices omit dismiss screensaver`() {
         assertFalse(
             sidebarActionChoiceLabelIds().contains(R.string.settings_sidebar_action_dismiss_screensaver),
@@ -101,8 +116,30 @@ class SidebarSettingsSectionTest {
                 R.string.settings_sidebar_icon_sun,
                 R.string.settings_sidebar_icon_refresh,
                 R.string.settings_sidebar_icon_dashboard,
+                R.string.settings_sidebar_icon_camera,
             ),
             sidebarIconChoiceLabelIds(),
         )
+    }
+
+    @Test fun `a show camera shortcut defaults to the camera icon`() {
+        assertEquals("camera", SidebarAction.ShowFeed("feed").defaultIcon)
+    }
+
+    @Test fun `every default icon is a choice in the picker`() {
+        val actions =
+            listOf(
+                SidebarAction.OpenSettings,
+                SidebarAction.ReloadDashboard,
+                SidebarAction.ShowScreensaver,
+                SidebarAction.DismissScreensaver,
+                SidebarAction.SetNightModeActive(active = true),
+                SidebarAction.SetNightModeActive(active = false),
+                SidebarAction.OpenDashboardPath("lovelace/1"),
+                SidebarAction.ShowFeed("feed"),
+            )
+        actions.forEach { action ->
+            assertTrue("${action.defaultIcon} for $action", action.defaultIcon in sidebarIconChoiceIds())
+        }
     }
 }

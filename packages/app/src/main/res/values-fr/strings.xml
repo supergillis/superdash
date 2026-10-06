@@ -198,6 +198,7 @@
     <string name="settings_sidebar_icon_sun">Soleil</string>
     <string name="settings_sidebar_icon_refresh">Actualiser</string>
     <string name="settings_sidebar_icon_dashboard">Tableau de bord</string>
+    <string name="settings_sidebar_icon_camera">Caméra</string>
 
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Garder l\'écran allumé</string>

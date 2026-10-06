@@ -116,8 +116,30 @@ class SidebarSettingsSectionTest {
                 R.string.settings_sidebar_icon_sun,
                 R.string.settings_sidebar_icon_refresh,
                 R.string.settings_sidebar_icon_dashboard,
+                R.string.settings_sidebar_icon_camera,
             ),
             sidebarIconChoiceLabelIds(),
         )
+    }
+
+    @Test fun `a show camera shortcut defaults to the camera icon`() {
+        assertEquals("camera", SidebarAction.ShowFeed("feed").defaultIcon)
+    }
+
+    @Test fun `every default icon is a choice in the picker`() {
+        val actions =
+            listOf(
+                SidebarAction.OpenSettings,
+                SidebarAction.ReloadDashboard,
+                SidebarAction.ShowScreensaver,
+                SidebarAction.DismissScreensaver,
+                SidebarAction.SetNightModeActive(active = true),
+                SidebarAction.SetNightModeActive(active = false),
+                SidebarAction.OpenDashboardPath("lovelace/1"),
+                SidebarAction.ShowFeed("feed"),
+            )
+        actions.forEach { action ->
+            assertTrue("${action.defaultIcon} for $action", action.defaultIcon in sidebarIconChoiceIds())
+        }
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalIconButton
@@ -476,5 +477,6 @@ private fun sidebarIcon(value: String): ImageVector =
         "sun" -> Icons.Filled.LightMode
         "refresh" -> Icons.Filled.Refresh
         "dashboard" -> Icons.Filled.DashboardCustomize
+        "camera" -> Icons.Filled.Videocam
         else -> Icons.Filled.DashboardCustomize
     }

@@ -201,6 +201,7 @@
     <string name="settings_sidebar_icon_sun">Sun</string>
     <string name="settings_sidebar_icon_refresh">Refresh</string>
     <string name="settings_sidebar_icon_dashboard">Dashboard</string>
+    <string name="settings_sidebar_icon_camera">Camera</string>
 
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Keep screen on</string>

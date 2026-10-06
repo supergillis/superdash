@@ -198,6 +198,7 @@
     <string name="settings_sidebar_icon_sun">Zon</string>
     <string name="settings_sidebar_icon_refresh">Vernieuwen</string>
     <string name="settings_sidebar_icon_dashboard">Dashboard</string>
+    <string name="settings_sidebar_icon_camera">Camera</string>
 
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Scherm aan houden</string>

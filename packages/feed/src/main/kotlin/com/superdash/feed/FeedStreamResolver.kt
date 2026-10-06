@@ -2,8 +2,13 @@ package com.superdash.feed
 
 import com.superdash.core.log.Log
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withTimeoutOrNull
 
 private val log = Log("FeedStreamResolver")
+
+/** HA's `camera/stream` never answers when it cannot open the camera's stream
+ *  source, so an unbounded wait leaves the overlay spinning forever. */
+internal const val HLS_FETCH_TIMEOUT_MS = 15_000L
 
 /** Resolves a feed's playable stream URL plus bearer token (if any).
  *
@@ -31,11 +36,17 @@ suspend fun resolveFeedStream(
             }
             is CameraSource.HaEntity -> {
                 val token = bearerTokenProvider()
-                val relative = fetchHlsUrl(source.entityId)
-                FeedStreamState.Ready(
-                    streamUrl = haBaseUrl.trimEnd('/') + relative,
-                    bearerToken = token,
-                )
+                val relative = withTimeoutOrNull(HLS_FETCH_TIMEOUT_MS) { fetchHlsUrl(source.entityId) }
+                if (relative == null) {
+                    log.w("stream resolve timed out", null, "camera" to config.cameraEntity)
+                    // A null reason shows the localized "camera unavailable" message.
+                    FeedStreamState.Failed(null)
+                } else {
+                    FeedStreamState.Ready(
+                        streamUrl = haBaseUrl.trimEnd('/') + relative,
+                        bearerToken = token,
+                    )
+                }
             }
         }
     } catch (e: CancellationException) {

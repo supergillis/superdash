@@ -109,6 +109,7 @@ data class ConnectionSettingsState(
 data class DeviceSettingsState(
     val keepScreenOn: Boolean,
     val startOnBoot: Boolean,
+    val canLaunchFromBackground: Boolean = true,
 ) {
     companion object {
         fun empty(): DeviceSettingsState =

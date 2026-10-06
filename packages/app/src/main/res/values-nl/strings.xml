@@ -206,6 +206,8 @@
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Scherm aan houden</string>
     <string name="settings_device_launch_on_boot">Opstarten bij inschakelen</string>
+    <string name="settings_device_background_launch_title">Zelf starten toestaan</string>
+    <string name="settings_device_background_launch_summary">Android verhindert dat superdash opent bij het opstarten. Tik om weergave over andere apps toe te staan, of stel superdash in als startscherm.</string>
 
     <!-- Voice -->
     <string name="settings_voice_enabled_title">Spraak ingeschakeld</string>

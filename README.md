@@ -78,10 +78,14 @@ Set this up only if you want a wall-mounted tablet to boot straight into the
 dashboard.
 
 1. In Settings, open `Kiosk` and turn on `Launch on boot`.
-2. Make superdash your home app: open Android's own Settings, find the default
-   home app or launcher setting, and choose superdash. superdash registers as a
-   home app, so it then launches when the tablet powers on and when you press
-   Home.
+2. Let Android start it. Android blocks apps from opening on their own unless
+   one of these is true:
+   - superdash is your home app: in Android's own Settings, find the default
+     home app or launcher setting and choose superdash. It then also opens when
+     you press Home.
+   - superdash may display over other apps. If neither is set, Settings shows an
+     `Allow starting on its own` row under `Launch on boot` that opens this
+     permission.
 
 ### Explore Settings
 

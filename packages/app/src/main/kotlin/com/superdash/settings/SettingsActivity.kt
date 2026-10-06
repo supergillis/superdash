@@ -38,6 +38,7 @@ import com.superdash.immich.ImmichProbeResult
 import com.superdash.kiosk.BatteryOptimizationPrompt
 import com.superdash.kiosk.SidebarPosition
 import com.superdash.kiosk.SidebarShortcut
+import com.superdash.kiosk.boot.BackgroundLaunch
 import com.superdash.kiosk.bus.KioskEvent
 import com.superdash.kiosk.ui.KioskOverlayState
 import com.superdash.kiosk.ui.KioskOverlays
@@ -85,6 +86,7 @@ data class ConnectionSettingsActions(
 data class DeviceSettingsActions(
     val onKeepScreenOnChange: (Boolean) -> Unit,
     val onStartOnBootChange: (Boolean) -> Unit,
+    val onAllowBackgroundLaunch: () -> Unit,
 )
 
 @Immutable
@@ -237,6 +239,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshCameraPermissionState()
+        settingsViewModel.setCanLaunchFromBackground(BackgroundLaunch.isAllowed(this))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -294,6 +297,7 @@ class SettingsActivity : AppCompatActivity() {
                     onTestConnection = { url -> testConnection(url) },
                     onReauthenticate = { reauthenticateHa(graph) },
                     onBatteryHelp = { BatteryOptimizationPrompt.openSettingsForUser(this@SettingsActivity) },
+                    onAllowBackgroundLaunch = { BackgroundLaunch.openOverlaySettings(this@SettingsActivity) },
                     onOpenWsDebug = { startActivity(Intent(this@SettingsActivity, WsDebugActivity::class.java)) },
                     onRequestVoiceEnable = { requestMicAndEnableVoice() },
                     onRequestCameraEnable = { requestCameraAndEnable() },
@@ -353,6 +357,7 @@ private fun SettingsScreen(
     onTestConnection: suspend (String) -> Boolean,
     onReauthenticate: () -> Unit,
     onBatteryHelp: () -> Unit,
+    onAllowBackgroundLaunch: () -> Unit,
     onOpenWsDebug: () -> Unit,
     onRequestVoiceEnable: () -> Unit,
     onRequestCameraEnable: () -> Unit,
@@ -367,6 +372,7 @@ private fun SettingsScreen(
             onTestConnection,
             onReauthenticate,
             onBatteryHelp,
+            onAllowBackgroundLaunch,
             onOpenWsDebug,
             onRequestVoiceEnable,
             onRequestCameraEnable,
@@ -392,6 +398,7 @@ private fun SettingsScreen(
                     DeviceSettingsActions(
                         onKeepScreenOnChange = settingsViewModel::setKeepScreenOn,
                         onStartOnBootChange = settingsViewModel::setStartOnBoot,
+                        onAllowBackgroundLaunch = onAllowBackgroundLaunch,
                     ),
                 voice =
                     VoiceSettingsActions(

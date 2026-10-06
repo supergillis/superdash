@@ -21,4 +21,11 @@ fun DeviceSettingsSection(
         checked = state.startOnBoot,
         onCheckedChange = actions.onStartOnBootChange,
     )
+    if (state.startOnBoot && !state.canLaunchFromBackground) {
+        SettingsActionRow(
+            label = stringResource(R.string.settings_device_background_launch_title),
+            supportingText = stringResource(R.string.settings_device_background_launch_summary),
+            onClick = actions.onAllowBackgroundLaunch,
+        )
+    }
 }

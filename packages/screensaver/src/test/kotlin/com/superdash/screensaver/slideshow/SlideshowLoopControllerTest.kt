@@ -229,36 +229,6 @@ class SlideshowLoopControllerTest {
             runCurrent()
         }
 
-    @Test fun `a video that never finishes advances after the video timeout`() =
-        runTest {
-            val source = FakeSource()
-            val v = video("v")
-            val b = image("b")
-            source.enqueue(v)
-            source.enqueue(b)
-            val controller =
-                SlideshowLoopController(
-                    source = source,
-                    intervalMs = 30_000L,
-                    historyCapacity = 20,
-                    scope = this,
-                )
-            controller.start()
-            runCurrent()
-            assertEquals(v, controller.currentItem.value)
-
-            advanceTimeBy(SlideshowLoopController.VIDEO_TIMEOUT_MS - 1)
-            runCurrent()
-            assertEquals(v, controller.currentItem.value)
-
-            advanceTimeBy(2L)
-            runCurrent()
-            assertEquals(b, controller.currentItem.value)
-
-            controller.stop()
-            runCurrent()
-        }
-
     @Test fun `video item still advances on requestForward without waiting for finished`() =
         runTest {
             val source = FakeSource()

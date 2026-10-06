@@ -4,9 +4,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.submitForm
 import io.ktor.http.parameters
-import kotlinx.datetime.Clock
 import java.net.URI
 import java.net.URLEncoder
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 object HaOAuthFlow {

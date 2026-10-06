@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
  * Convention plugin for Superdash Android library modules.
  *
  * Applies `com.android.library` and configures the shared baseline:
- * compileSdk 35, minSdk 26, JVM 11, default test values. Modules that
+ * compileSdk 37, minSdk 26, JVM 11, default test values. Modules that
  * need Compose layer `superdash.android.library.compose` on top.
  */
 class SuperdashAndroidLibraryConventionPlugin : Plugin<Project> {
@@ -20,7 +20,7 @@ class SuperdashAndroidLibraryConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jlleitschuh.gradle.ktlint")
 
             extensions.configure<LibraryExtension> {
-                compileSdk = 35
+                compileSdk = 37
 
                 defaultConfig {
                     minSdk = 26

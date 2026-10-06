@@ -1,10 +1,10 @@
 package com.superdash.screensaver
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Locale
+import kotlin.time.Instant
 
 class CalendarLabelTest {
     private val zone = TimeZone.of("UTC")

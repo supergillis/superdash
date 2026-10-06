@@ -1,8 +1,8 @@
 package com.superdash.immich
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Instant
 
 @Serializable
 data class ImmichAsset(

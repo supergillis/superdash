@@ -7,7 +7,7 @@ package com.superdash.feed
  *  [FeedConfig.cameraEntity] is stored as a single free-form string so old
  *  configs don't need migrating, but the kiosk dispatches on the parsed shape:
  *  HA entity ids go through HA's `camera/stream` WS round-trip; raw URLs
- *  (e.g. a go2rtc fragmented-MP4 endpoint) skip HA entirely. */
+ *  (e.g. a go2rtc fragmented-MP4 or RTSP endpoint) skip HA entirely. */
 sealed interface CameraSource {
     data class HaEntity(
         val entityId: String,
@@ -19,8 +19,10 @@ sealed interface CameraSource {
 }
 
 // TODO: can we put this in object CameraSource?
+private val DIRECT_URL_SCHEMES = listOf("http://", "https://", "rtsp://", "rtsps://")
+
 fun parseCameraSource(value: String): CameraSource =
-    if (value.startsWith("http://") || value.startsWith("https://")) {
+    if (DIRECT_URL_SCHEMES.any { value.startsWith(it, ignoreCase = true) }) {
         CameraSource.DirectUrl(value)
     } else {
         CameraSource.HaEntity(value)

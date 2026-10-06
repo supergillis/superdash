@@ -48,7 +48,7 @@
     <string name="settings_feed_dialog_edit_title">Edit camera</string>
     <string name="settings_feed_name_label">Name</string>
     <string name="settings_feed_name_placeholder">Front Door</string>
-    <string name="settings_feed_camera_url_hint">Direct URLs (e.g. go2rtc) skip HA and start playback faster.</string>
+    <string name="settings_feed_camera_url_hint">Direct URLs (e.g. go2rtc HTTP or RTSP) skip HA and start playback faster.</string>
     <string name="settings_feed_overlay_title">Camera overlays</string>
     <string name="settings_feed_overlay_summary">Show a camera feed when a trigger entity fires</string>
     <string name="settings_feed_list_title">Cameras</string>

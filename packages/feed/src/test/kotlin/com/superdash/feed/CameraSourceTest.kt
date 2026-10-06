@@ -19,6 +19,16 @@ class CameraSourceTest {
         assertEquals(CameraSource.DirectUrl("https://stream.example.com/live.m3u8"), source)
     }
 
+    @Test fun `rtsp url parses as DirectUrl`() {
+        val source = parseCameraSource("rtsp://192.168.1.2:8554/main")
+        assertEquals(CameraSource.DirectUrl("rtsp://192.168.1.2:8554/main"), source)
+    }
+
+    @Test fun `rtsps url parses as DirectUrl`() {
+        val source = parseCameraSource("rtsps://camera.example.com:322/stream")
+        assertEquals(CameraSource.DirectUrl("rtsps://camera.example.com:322/stream"), source)
+    }
+
     // An entity_id can never start with "http" because HA forbids periods in
     // domains and "http" alone isn't a valid domain. So prefix-discrimination
     // is unambiguous in practice.

@@ -1,5 +1,7 @@
 package com.superdash.feed
 
+import android.content.Context
+import android.os.SystemClock
 import android.view.ViewGroup
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -42,7 +44,9 @@ import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.ui.PlayerView
 import com.superdash.core.log.Log
 import com.superdash.feed.R
@@ -163,6 +167,7 @@ private fun StreamPlayer(
     val streamInterruptedMessage = stringResource(R.string.feed_stream_interrupted)
     // Build the player once per (url, token) pair so a token refresh while the
     // overlay is open swaps to a fresh player instead of mutating a live one.
+    val createdAtMs = remember(streamUrl, bearerToken) { SystemClock.elapsedRealtime() }
     val player =
         remember(streamUrl, bearerToken) {
             val httpFactory =
@@ -173,7 +178,6 @@ private fun StreamPlayer(
                             setDefaultRequestProperties(mapOf("Authorization" to "Bearer $bearerToken"))
                         }
                     }
-            val sourceFactory = DefaultMediaSourceFactory(context).setDataSourceFactory(httpFactory)
             // Reolink (and similar) cameras advertise H.264 High@5.1 in their SDP
             // even when the actual frames are 1080p or smaller. Many tablet HW
             // decoders reject Level 5.1 outright (NO_EXCEEDS_CAPABILITIES). Enabling
@@ -183,10 +187,9 @@ private fun StreamPlayer(
                 DefaultRenderersFactory(context).setEnableDecoderFallback(true)
             ExoPlayer
                 .Builder(context, renderersFactory)
-                .setMediaSourceFactory(sourceFactory)
                 .build()
                 .apply {
-                    setMediaItem(MediaItem.fromUri(streamUrl))
+                    setMediaSource(mediaSourceFor(context, streamUrl, httpFactory))
                     prepare()
                     playWhenReady = true
                 }
@@ -197,6 +200,11 @@ private fun StreamPlayer(
             object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) {
+                        log.i(
+                            "playback ready",
+                            "scheme" to streamUrl.substringBefore(':'),
+                            "ms" to (SystemClock.elapsedRealtime() - createdAtMs),
+                        )
                         onFirstFrame()
                     }
                 }
@@ -230,6 +238,22 @@ private fun StreamPlayer(
             view.player = player
         },
     )
+}
+
+/** RTSP runs RTP over TCP: UDP over Wi-Fi drops packets and needs inbound ports, which
+ *  shows up as gray smears or a stream that never starts. HTTP sources (go2rtc MP4, HA
+ *  HLS) go through the default factory with the bearer token for HA. */
+private fun mediaSourceFor(
+    context: Context,
+    streamUrl: String,
+    httpFactory: DefaultHttpDataSource.Factory,
+): MediaSource {
+    val item = MediaItem.fromUri(streamUrl)
+    return if (streamUrl.startsWith("rtsp", ignoreCase = true)) {
+        RtspMediaSource.Factory().setForceUseRtpTcp(true).createMediaSource(item)
+    } else {
+        DefaultMediaSourceFactory(context).setDataSourceFactory(httpFactory).createMediaSource(item)
+    }
 }
 
 /** Closes on a tap only. `clickable` also fires when a finger moves and lifts inside

@@ -6,9 +6,16 @@ import android.content.pm.PackageManager
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
+import android.util.Range
 import android.util.Size
+import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraState
@@ -114,13 +121,15 @@ class CameraXPipeline(
             try {
                 val cameraProvider = future.get()
                 provider = cameraProvider
-                val analysis =
+                val builder =
                     ImageAnalysis
                         .Builder()
                         .setTargetResolution(Size(config.width, config.height))
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .build()
-                analysis.setAnalyzer(analysisExecutor) { imageProxy -> onFrame(imageProxy) }
+                applyAeTargetFpsRange(builder, config)
+                val analysis = builder.build()
+                val gate = FrameRateGate(config.maxFps)
+                analysis.setAnalyzer(analysisExecutor) { imageProxy -> onFrame(imageProxy, gate) }
                 val selector =
                     if (config.facingFront) {
                         CameraSelector.DEFAULT_FRONT_CAMERA
@@ -151,6 +160,55 @@ class CameraXPipeline(
         lifecycleOwner?.moveTo(Lifecycle.State.DESTROYED)
         lifecycleOwner = null
         availabilityState.value = CameraAvailability.Off
+    }
+
+    /** Caps the sensor/ISP rate: picks an AE target FPS range for
+     *  [CameraPipelineConfig.maxFps] and applies it via Camera2 interop. When
+     *  the characteristics query fails or reports nothing, no option is
+     *  applied and only the software gate bounds the rate. */
+    @OptIn(ExperimentalCamera2Interop::class)
+    private fun applyAeTargetFpsRange(
+        builder: ImageAnalysis.Builder,
+        config: CameraPipelineConfig,
+    ) {
+        val available =
+            runCatching { availableAeFpsRanges(config.facingFront) }
+                .onFailure { log.w("AE fps range query failed", it) }
+                .getOrDefault(emptyList())
+        val range = selectAeFpsRange(available, config.maxFps) ?: return
+        Camera2Interop
+            .Extender(builder)
+            .setCaptureRequestOption(
+                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                Range(range.first, range.second),
+            )
+        log.i(
+            "applying AE target fps range",
+            "lower" to range.first,
+            "upper" to range.second,
+            "maxFps" to config.maxFps,
+        )
+    }
+
+    private fun availableAeFpsRanges(facingFront: Boolean): List<Pair<Int, Int>> {
+        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val wanted =
+            if (facingFront) {
+                CameraCharacteristics.LENS_FACING_FRONT
+            } else {
+                CameraCharacteristics.LENS_FACING_BACK
+            }
+        val perCamera =
+            manager.cameraIdList.mapNotNull { id ->
+                val characteristics = manager.getCameraCharacteristics(id)
+                if (characteristics.get(CameraCharacteristics.LENS_FACING) != wanted) {
+                    return@mapNotNull null
+                }
+                characteristics
+                    .get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                    ?.map { range -> range.lower to range.upper }
+            }
+        return intersectFpsRanges(perCamera)
     }
 
     /** Re-open the camera if it closes with an error while still wanted.
@@ -201,8 +259,14 @@ class CameraXPipeline(
         }
     }
 
-    private fun onFrame(imageProxy: ImageProxy) {
+    private fun onFrame(
+        imageProxy: ImageProxy,
+        gate: FrameRateGate,
+    ) {
         try {
+            if (!gate.admit(SystemClock.elapsedRealtime())) {
+                return
+            }
             val nv21 = imageProxy.toNv21()
             framesFlow.tryEmit(
                 CameraFrame(

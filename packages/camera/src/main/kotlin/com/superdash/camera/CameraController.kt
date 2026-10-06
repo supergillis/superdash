@@ -102,15 +102,27 @@ class CameraController(
 
     private suspend fun runPipelineControl() {
         val config =
-            combine(settings.enabled, settings.resolution, settings.facing) { enabled, resolution, facing ->
-                Triple(enabled, resolution, facing)
+            combine(
+                settings.enabled,
+                settings.resolution,
+                settings.facing,
+                settings.maxFps,
+            ) { enabled, resolution, facing, maxFps ->
+                PipelineSettings(enabled, resolution, facing, maxFps)
             }.distinctUntilChanged()
         combine(config, restartRequests.onStart { emit(Unit) }) { current, _ -> current }
-            .collect { (enabled, resolution, facing) ->
-                if (enabled) {
-                    val (width, height) = parseResolution(resolution)
+            .collect { wanted ->
+                if (wanted.enabled) {
+                    val (width, height) = parseResolution(wanted.resolution)
                     pipelineWanted = true
-                    pipeline.start(CameraPipelineConfig(width, height, facingFront = facing != "back"))
+                    pipeline.start(
+                        CameraPipelineConfig(
+                            width = width,
+                            height = height,
+                            facingFront = wanted.facing != "back",
+                            maxFps = wanted.maxFps,
+                        ),
+                    )
                 } else {
                     pipelineWanted = false
                     pipeline.stop()
@@ -194,3 +206,10 @@ class CameraController(
         return fallback
     }
 }
+
+private data class PipelineSettings(
+    val enabled: Boolean,
+    val resolution: String,
+    val facing: String,
+    val maxFps: Int,
+)

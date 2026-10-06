@@ -60,6 +60,7 @@ private class FakeSettings : CameraSettings {
     val motionClearDelaySecState = MutableStateFlow(15)
     val wakeOnMotionState = MutableStateFlow(false)
     val allowRemoteEnableState = MutableStateFlow(true)
+    val maxFpsState = MutableStateFlow(10)
 
     override val enabled: Flow<Boolean> = enabledState
     override val facing: Flow<String> = facingState
@@ -69,6 +70,7 @@ private class FakeSettings : CameraSettings {
     override val motionClearDelaySec: Flow<Int> = motionClearDelaySecState
     override val wakeOnMotion: Flow<Boolean> = wakeOnMotionState
     override val allowRemoteEnable: Flow<Boolean> = allowRemoteEnableState
+    override val maxFps: Flow<Int> = maxFpsState
 
     override suspend fun setEnabled(value: Boolean) = enabledState.emit(value)
 
@@ -85,6 +87,8 @@ private class FakeSettings : CameraSettings {
     override suspend fun setWakeOnMotion(value: Boolean) = wakeOnMotionState.emit(value)
 
     override suspend fun setAllowRemoteEnable(value: Boolean) = allowRemoteEnableState.emit(value)
+
+    override suspend fun setMaxFps(value: Int) = maxFpsState.emit(value)
 }
 
 /** Detector scripted to a fixed answer per frame. */
@@ -148,6 +152,50 @@ class CameraControllerTest {
             assertTrue(pipeline.stopCount >= 1)
             // keep controller referenced
             assertEquals(CameraAvailability.Off, controller.availability.value)
+        }
+
+    @Test
+    fun `maxFps propagates into the pipeline config`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            settings.maxFpsState.value = 7
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = emptyMap(),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+
+            settings.enabledState.value = true
+
+            assertEquals(7, pipeline.started?.maxFps)
+            assertEquals(CameraAvailability.Running, controller.availability.value)
+        }
+
+    @Test
+    fun `changing maxFps restarts the pipeline`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val pipeline = FakePipeline()
+            val settings = FakeSettings()
+            val controller =
+                CameraController(
+                    pipeline = pipeline,
+                    settings = settings,
+                    detectorFactories = emptyMap(),
+                    scope = backgroundScope,
+                    nowMs = { 0L },
+                )
+            settings.enabledState.value = true
+            assertEquals(1, pipeline.startCount)
+
+            settings.maxFpsState.value = 5
+
+            assertEquals(2, pipeline.startCount)
+            assertEquals(5, pipeline.started?.maxFps)
+            assertEquals(CameraAvailability.Running, controller.availability.value)
         }
 
     @Test

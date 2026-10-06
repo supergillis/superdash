@@ -52,6 +52,7 @@ internal fun testSettingsActions(): SettingsActions =
                 onResolutionChange = {},
                 onMotionModeChange = {},
                 onMotionSensitivityChange = {},
+                onMaxFpsChange = {},
                 onWakeOnMotionChange = {},
                 onAllowRemoteEnableChange = {},
             ),

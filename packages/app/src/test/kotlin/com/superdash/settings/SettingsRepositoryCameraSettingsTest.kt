@@ -102,4 +102,27 @@ class SettingsRepositoryCameraSettingsTest {
             settings.setAllowRemoteEnable(false)
             assertEquals(false, settings.allowRemoteEnable.first())
         }
+
+    @Test
+    fun `max fps defaults to 10`() =
+        runTest {
+            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
+            assertEquals(10, settings.maxFps.first())
+        }
+
+    @Test
+    fun `max fps coerces below 1 to 1`() =
+        runTest {
+            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
+            settings.setMaxFps(0)
+            assertEquals(1, settings.maxFps.first())
+        }
+
+    @Test
+    fun `max fps coerces above 30 to 30`() =
+        runTest {
+            val settings = SettingsRepositoryCameraSettings(InMemoryKeyValueStore())
+            settings.setMaxFps(120)
+            assertEquals(30, settings.maxFps.first())
+        }
 }

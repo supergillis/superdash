@@ -144,6 +144,7 @@ data class CameraSettingsActions(
     val onResolutionChange: (String) -> Unit,
     val onMotionModeChange: (String) -> Unit,
     val onMotionSensitivityChange: (Int) -> Unit,
+    val onMaxFpsChange: (Int) -> Unit,
     val onWakeOnMotionChange: (Boolean) -> Unit,
     val onAllowRemoteEnableChange: (Boolean) -> Unit,
 )
@@ -417,6 +418,7 @@ private fun SettingsScreen(
                         onResolutionChange = settingsViewModel::setCameraResolution,
                         onMotionModeChange = settingsViewModel::setCameraMotionMode,
                         onMotionSensitivityChange = settingsViewModel::setCameraMotionSensitivity,
+                        onMaxFpsChange = settingsViewModel::setCameraMaxFps,
                         onWakeOnMotionChange = settingsViewModel::setCameraWakeOnMotion,
                         onAllowRemoteEnableChange = settingsViewModel::setCameraAllowRemoteEnable,
                     ),

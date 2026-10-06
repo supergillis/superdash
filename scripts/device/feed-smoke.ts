@@ -14,16 +14,20 @@ const RING_DEBOUNCE_MS = 5_500;
 const { values } = parseArgs({
   options: {
     device: { type: "string", short: "d" },
-    camera: { type: "string", default: "http://192.168.1.2:1984/api/stream.mp4?src=main" },
+    camera: { type: "string" },
   },
 });
+if (!values.camera) {
+  throw new Error("pass --camera <HA camera entity or stream URL> for the test feeds to play");
+}
+const camera = values.camera;
 const device = Device.pick(values.device);
 
 const ringFeed: FeedConfig = {
   id: "test-ring",
   name: "test ring",
   triggerEntity: RING,
-  cameraEntity: values.camera,
+  cameraEntity: camera,
   autoCloseSec: RING_AUTO_CLOSE_SEC,
   order: 10,
 };
@@ -31,7 +35,7 @@ const monitorFeed: FeedConfig = {
   id: "test-monitor",
   name: "test monitor",
   triggerEntity: MONITOR,
-  cameraEntity: values.camera,
+  cameraEntity: camera,
   trigger: { type: "sustained", activeStates: ["on"] },
   autoCloseSec: 0,
   order: 5,

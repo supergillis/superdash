@@ -80,7 +80,7 @@ node scripts/device/sd.ts install
 node scripts/device/sd.ts dump
 node scripts/device/sd.ts set idle_timeout_sec 30
 node scripts/device/sd.ts feed state
-node scripts/device/sd.ts feed show reolink
+node scripts/device/sd.ts feed show "front door"
 node scripts/device/sd.ts ha input_boolean.superdash_test_ring on
 ```
 
@@ -115,7 +115,7 @@ node scripts/device/sd.ts ha input_boolean.superdash_test_ring on
 `scripts/device/feed-smoke.ts` checks feeds end to end, from an HA trigger to the overlay state, in under a minute:
 
 ```bash
-node scripts/device/feed-smoke.ts [--camera <url or camera entity>]
+node scripts/device/feed-smoke.ts --camera <camera entity or stream URL>
 ```
 
 - Needs the HA toggle helpers `input_boolean.superdash_test_ring` and `input_boolean.superdash_test_monitor`.

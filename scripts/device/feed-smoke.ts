@@ -2,6 +2,7 @@
 // End-to-end feed checks on a real device: HA trigger -> app -> overlay state.
 // Needs HA toggle helpers input_boolean.superdash_test_ring and _monitor.
 import { parseArgs } from "node:util";
+import { CheckFailed, type Check, runChecks, sleep } from "./checks.ts";
 import { Device, type FeedConfig, type FeedStateReply } from "./device.ts";
 
 const RING = "input_boolean.superdash_test_ring";
@@ -35,10 +36,6 @@ const monitorFeed: FeedConfig = {
   autoCloseSec: 0,
   order: 5,
 };
-
-class CheckFailed extends Error {}
-
-const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
 /** Polls until the shown feed is [expected], or fails after [timeoutMs]. */
 async function expectShowing(expected: string | null, timeoutMs = 5_000): Promise<FeedStateReply> {
@@ -113,7 +110,7 @@ async function reset(): Promise<void> {
   await expectShowing(null);
 }
 
-const checks: Array<[string, () => Promise<void>]> = [
+const checks: Check[] = [
   [
     "sustained feed shows while its trigger is on and hides when it turns off",
     async () => {
@@ -238,18 +235,4 @@ if (!device.feedState().enabled) {
   throw new Error("feeds are disabled on the device; enable them first");
 }
 
-let failures = 0;
-for (const [name, check] of checks) {
-  const started = Date.now();
-  try {
-    await reset();
-    await check();
-    console.log(`✓ ${name} (${((Date.now() - started) / 1_000).toFixed(1)} s)`);
-  } catch (error) {
-    failures++;
-    console.log(`✗ ${name}\n    ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-await reset();
-console.log(failures === 0 ? `\nall ${checks.length} checks passed` : `\n${failures} of ${checks.length} checks failed`);
-process.exitCode = failures === 0 ? 0 : 1;
+await runChecks(checks, reset);

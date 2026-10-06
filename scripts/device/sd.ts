@@ -25,6 +25,11 @@ const USAGE = `Usage: sd [--device <serial>] <command> [args]
   ha <entity> [on|off]           read an HA entity, or toggle an input_boolean.superdash_test* helper
   ha --list [prefix]             entity ids and states, e.g. --list camera.
   idle | wake                    force the screensaver idle state, or touch to leave it
+  ui                             on-screen elements: center, text, description, id
+  tap <x> <y> | tap <label>      tap a point, or the element with that text, description or id
+  swipe <x1> <y1> <x2> <y2> [ms] swipe between two points (default 250 ms)
+  text <value>                   type into the focused field
+  key <name>                     press a key, e.g. back, home, enter
   screenshot [file]              save a PNG (default build/sd-screenshot.png)
   logs [--clear]                 dump the superdash log tag
 
@@ -116,6 +121,36 @@ function main(argv: string[]): void {
     case "feed":
       feedCommand(device, need(0, "state|show|close|upsert|remove"), rest.slice(1));
       break;
+    case "ui":
+      for (const node of device.ui()) {
+        const label = [node.text, node.desc && `desc=${node.desc}`, node.id && `id=${node.id}`].filter(Boolean).join("  ");
+        console.log(`${String(Math.round(node.x)).padStart(5)},${String(Math.round(node.y)).padEnd(5)} ${label}`);
+      }
+      break;
+    case "tap": {
+      const first = need(0, "x|label");
+      if (rest[1] !== undefined && /^\d+$/.test(first)) {
+        device.tap(Number(first), Number(rest[1]));
+      } else {
+        const node = device.find(first);
+        if (!node) {
+          throw new Error(`nothing on screen labelled ${first}; see sd ui`);
+        }
+        device.tap(node.x, node.y);
+      }
+      break;
+    }
+    case "swipe": {
+      const [fromX, fromY, toX, toY] = [0, 1, 2, 3].map((index) => Number(need(index, "x1 y1 x2 y2"))) as [number, number, number, number];
+      device.swipe(fromX, fromY, toX, toY, rest[4] === undefined ? undefined : Number(rest[4]));
+      break;
+    }
+    case "text":
+      device.text(need(0, "value"));
+      break;
+    case "key":
+      device.key(need(0, "name"));
+      break;
     case "idle":
     case "wake":
       printReply(device.send(command));
@@ -136,9 +171,9 @@ function main(argv: string[]): void {
     }
     case "logs":
       if (values.clear) {
-        device.adb(["logcat", "-c"]);
+        device.clearLogs();
       } else {
-        process.stdout.write(device.adb(["logcat", "-d", "-v", "time", "-s", "superdash"]));
+        process.stdout.write(device.logs());
       }
       break;
     default:

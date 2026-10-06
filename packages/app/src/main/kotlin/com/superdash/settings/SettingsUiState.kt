@@ -2,8 +2,8 @@ package com.superdash.settings
 
 import androidx.compose.runtime.Immutable
 import com.superdash.core.locale.SupportedLanguage
-import com.superdash.doorbell.DoorbellConfig
-import com.superdash.doorbell.DoorbellState
+import com.superdash.feed.FeedConfig
+import com.superdash.feed.FeedState
 import com.superdash.ha.EntityState
 import com.superdash.ha.HaConnectionState
 import com.superdash.kiosk.SidebarPosition
@@ -26,7 +26,7 @@ data class SettingsUiState(
     val haEntities: ImmutableList<EntityState>,
     val device: DeviceSettingsState,
     val voice: VoiceSettingsState,
-    val doorbell: DoorbellSettingsState,
+    val feed: FeedSettingsState,
     val camera: CameraSettingsState,
     val esphome: EsphomeSettingsState,
     val screensaver: ScreensaverSettingsState,
@@ -44,9 +44,8 @@ data class SettingsUiState(
     val voiceEnabled: Boolean get() = voice.voiceEnabled
     val activeWakeWord: String get() = voice.activeWakeWord
     val vadSilenceMs: Int get() = voice.vadSilenceMs
-    val doorbellEnabled: Boolean get() = doorbell.enabled
-    val doorbells: ImmutableList<DoorbellConfig> get() = doorbell.configs
-    val doorbellAutoCloseSec: Int get() = doorbell.autoCloseSec
+    val feedEnabled: Boolean get() = feed.enabled
+    val feeds: ImmutableList<FeedConfig> get() = feed.configs
     val esphomeEnabled: Boolean get() = esphome.enabled
     val dayScreensaverMode: ScreensaverMode get() = screensaver.dayMode
     val nightScreensaverMode: ScreensaverMode get() = screensaver.nightMode
@@ -61,7 +60,7 @@ data class SettingsUiState(
     val immichUrl: String get() = immich.url
     val immichApiKey: String get() = immich.apiKey
     val immichAlbum: String get() = immich.album
-    val doorbellState: DoorbellState get() = overlay.doorbellState
+    val feedState: FeedState get() = overlay.feedState
     val isIdle: Boolean get() = overlay.isIdle
 
     companion object {
@@ -71,7 +70,7 @@ data class SettingsUiState(
                 haEntities = persistentListOf(),
                 device = DeviceSettingsState.empty(),
                 voice = VoiceSettingsState.empty(),
-                doorbell = DoorbellSettingsState.empty(),
+                feed = FeedSettingsState.empty(),
                 camera = CameraSettingsState.empty(),
                 esphome = EsphomeSettingsState.empty(),
                 screensaver = ScreensaverSettingsState.empty(),
@@ -157,17 +156,15 @@ data class VoiceSettingsState(
 }
 
 @Immutable
-data class DoorbellSettingsState(
+data class FeedSettingsState(
     val enabled: Boolean,
-    val configs: ImmutableList<DoorbellConfig>,
-    val autoCloseSec: Int,
+    val configs: ImmutableList<FeedConfig>,
 ) {
     companion object {
-        fun empty(): DoorbellSettingsState =
-            DoorbellSettingsState(
+        fun empty(): FeedSettingsState =
+            FeedSettingsState(
                 enabled = false,
                 configs = persistentListOf(),
-                autoCloseSec = 60,
             )
     }
 }
@@ -296,13 +293,13 @@ data class SidebarSettingsState(
 
 @Immutable
 data class SettingsOverlayState(
-    val doorbellState: DoorbellState,
+    val feedState: FeedState,
     val isIdle: Boolean,
 ) {
     companion object {
         fun empty(): SettingsOverlayState =
             SettingsOverlayState(
-                doorbellState = DoorbellState.Idle,
+                feedState = FeedState.Idle,
                 isIdle = false,
             )
     }

@@ -31,7 +31,7 @@ import com.superdash.SuperdashApp
 import com.superdash.camera.CameraAvailability
 import com.superdash.core.locale.SupportedLanguage
 import com.superdash.core.util.UrlNormalizer
-import com.superdash.doorbell.DoorbellConfig
+import com.superdash.feed.FeedConfig
 import com.superdash.immich.ImmichApiClient
 import com.superdash.immich.ImmichProbeResult
 import com.superdash.kiosk.BatteryOptimizationPrompt
@@ -57,7 +57,7 @@ data class SettingsActions(
     val connection: ConnectionSettingsActions,
     val device: DeviceSettingsActions,
     val voice: VoiceSettingsActions,
-    val doorbell: DoorbellSettingsActions,
+    val feed: FeedSettingsActions,
     val camera: CameraSettingsActions,
     val esphome: EsphomeSettingsActions,
     val screensaver: ScreensaverSettingsActions,
@@ -134,12 +134,11 @@ data class ImmichSettingsActions(
 )
 
 @Immutable
-data class DoorbellSettingsActions(
-    val onDoorbellEnabledChange: (Boolean) -> Unit,
-    val onDoorbellAutoCloseSecChange: (Int) -> Unit,
-    val onUpsertDoorbell: (DoorbellConfig) -> Unit,
-    val onRemoveDoorbell: (String) -> Unit,
-    val onTestDoorbell: (DoorbellConfig) -> Unit,
+data class FeedSettingsActions(
+    val onFeedEnabledChange: (Boolean) -> Unit,
+    val onUpsertFeed: (FeedConfig) -> Unit,
+    val onRemoveFeed: (String) -> Unit,
+    val onTestFeed: (FeedConfig) -> Unit,
 )
 
 @Immutable
@@ -272,7 +271,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         val bearerTokenProvider: suspend () -> String? = { graph.tokenStore.loadAccessToken() }
         val fetchHlsUrl: suspend (String) -> String = { entity -> graph.cameraStreamSource.fetchHlsUrl(entity) }
-        val onCloseDoorbell: () -> Unit = { graph.doorbellOverlayController.close() }
+        val onCloseFeed: () -> Unit = { graph.feedOverlayController.close() }
         val onTapScreensaver: () -> Unit = { graph.eventBus.emit(KioskEvent.UserTouched) }
         val onTestImmich: suspend (String, String, String) -> String = { url, apiKey, album ->
             runImmichTest(this@SettingsActivity, graph.httpClient, url, apiKey, album)
@@ -285,7 +284,7 @@ class SettingsActivity : AppCompatActivity() {
                     mediaSourcePicker = mediaSourcePicker,
                     bearerTokenProvider = bearerTokenProvider,
                     fetchHlsUrl = fetchHlsUrl,
-                    onCloseDoorbell = onCloseDoorbell,
+                    onCloseFeed = onCloseFeed,
                     onTapScreensaver = onTapScreensaver,
                     onTestImmich = onTestImmich,
                     onTestConnection = { url -> testConnection(url) },
@@ -297,7 +296,7 @@ class SettingsActivity : AppCompatActivity() {
                     onBack = { finish() },
                     // Don't finish(). Overlay renders above Settings, so closing
                     // the overlay returns the user to where they triggered Test.
-                    onTestDoorbell = { config -> graph.doorbellOverlayController.show(config) },
+                    onTestFeed = { config -> graph.feedOverlayController.show(config) },
                     onTestScreensaver = { graph.idleController.forceIdle() },
                 )
             }
@@ -344,7 +343,7 @@ private fun SettingsScreen(
     ) -> Unit,
     bearerTokenProvider: suspend () -> String?,
     fetchHlsUrl: suspend (String) -> String,
-    onCloseDoorbell: () -> Unit,
+    onCloseFeed: () -> Unit,
     onTapScreensaver: () -> Unit,
     onTestImmich: suspend (url: String, apiKey: String, album: String) -> String,
     onTestConnection: suspend (String) -> Boolean,
@@ -354,7 +353,7 @@ private fun SettingsScreen(
     onRequestVoiceEnable: () -> Unit,
     onRequestCameraEnable: () -> Unit,
     onBack: () -> Unit,
-    onTestDoorbell: (DoorbellConfig) -> Unit,
+    onTestFeed: (FeedConfig) -> Unit,
     onTestScreensaver: () -> Unit,
 ) {
     val state by settingsViewModel.uiState.collectAsStateWithLifecycle()
@@ -368,7 +367,7 @@ private fun SettingsScreen(
             onRequestVoiceEnable,
             onRequestCameraEnable,
             onBack,
-            onTestDoorbell,
+            onTestFeed,
             onTestScreensaver,
             onTestImmich,
             settingsViewModel,
@@ -409,13 +408,12 @@ private fun SettingsScreen(
                         onClearCommandRecordings = settingsViewModel::clearCommandRecordings,
                         onVadSilenceMsChange = settingsViewModel::setVadSilenceMs,
                     ),
-                doorbell =
-                    DoorbellSettingsActions(
-                        onDoorbellEnabledChange = settingsViewModel::setDoorbellEnabled,
-                        onDoorbellAutoCloseSecChange = settingsViewModel::setDoorbellAutoCloseSec,
-                        onUpsertDoorbell = settingsViewModel::upsertDoorbell,
-                        onRemoveDoorbell = settingsViewModel::removeDoorbell,
-                        onTestDoorbell = onTestDoorbell,
+                feed =
+                    FeedSettingsActions(
+                        onFeedEnabledChange = settingsViewModel::setFeedEnabled,
+                        onUpsertFeed = settingsViewModel::upsertFeed,
+                        onRemoveFeed = settingsViewModel::removeFeed,
+                        onTestFeed = onTestFeed,
                     ),
                 camera =
                     CameraSettingsActions(
@@ -492,14 +490,13 @@ private fun SettingsScreen(
         KioskOverlays(
             state =
                 KioskOverlayState(
-                    doorbellState = state.doorbellState,
-                    doorbellAutoCloseSec = state.doorbellAutoCloseSec,
+                    feedState = state.feedState,
                     haBaseUrl = state.haUrl ?: "",
                     isIdle = state.isIdle,
                 ),
             bearerTokenProvider = bearerTokenProvider,
             fetchHlsUrl = fetchHlsUrl,
-            onCloseDoorbell = onCloseDoorbell,
+            onCloseFeed = onCloseFeed,
             onTapScreensaver = onTapScreensaver,
             screensaverContent = screensaverContent,
         )

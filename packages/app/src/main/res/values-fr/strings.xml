@@ -15,8 +15,8 @@
     <string name="settings_voice_summary">Mot de réveil et assistant vocal</string>
     <string name="settings_screensaver_title">Écran de veille</string>
     <string name="settings_screensaver_summary">Affichage inactif, superpositions et photos</string>
-    <string name="settings_doorbell_title">Sonnette</string>
-    <string name="settings_doorbell_summary">Déclencheurs de superposition caméra</string>
+    <string name="settings_feed_title">Caméras</string>
+    <string name="settings_feed_summary">Déclencheurs de superposition caméra</string>
     <string name="settings_camera_title">Caméra</string>
     <string name="settings_camera_summary">Caméra de la tablette et détection de mouvement</string>
     <string name="settings_esphome_title">ESPHome</string>
@@ -40,22 +40,31 @@
     <string name="settings_value_not_set">Non défini</string>
     <string name="settings_value_off">Désactivé</string>
 
-    <!-- Doorbell -->
-    <string name="settings_doorbell_trigger_entity">Entité de déclenchement</string>
-    <string name="settings_doorbell_camera_entity">Entité caméra</string>
-    <string name="settings_doorbell_camera_entity_or_url">Entité caméra ou URL de flux</string>
-    <string name="settings_doorbell_dialog_add_title">Ajouter une sonnette</string>
-    <string name="settings_doorbell_dialog_edit_title">Modifier la sonnette</string>
-    <string name="settings_doorbell_name_label">Nom</string>
-    <string name="settings_doorbell_name_placeholder">Porte d\'entrée</string>
-    <string name="settings_doorbell_camera_url_hint">Les URL directes (par ex. go2rtc) contournent HA et démarrent la lecture plus vite.</string>
-    <string name="settings_doorbell_overlay_title">Superposition sonnette</string>
-    <string name="settings_doorbell_overlay_summary">Afficher le flux caméra quand la sonnette retentit</string>
-    <string name="settings_doorbell_auto_close_never">Fermeture automatique : jamais</string>
-    <string name="settings_doorbell_auto_close_seconds">Fermeture automatique : %1$ds</string>
-    <string name="settings_doorbell_list_title">Sonnettes</string>
-    <string name="settings_doorbell_list_empty">Ajoutez au moins une sonnette.</string>
-    <string name="settings_doorbell_add_button">+ Ajouter une sonnette</string>
+    <!-- Cameras -->
+    <string name="settings_feed_trigger_entity">Entité de déclenchement</string>
+    <string name="settings_feed_camera_entity">Entité caméra</string>
+    <string name="settings_feed_camera_entity_or_url">Entité caméra ou URL de flux</string>
+    <string name="settings_feed_dialog_add_title">Ajouter une caméra</string>
+    <string name="settings_feed_dialog_edit_title">Modifier la caméra</string>
+    <string name="settings_feed_name_label">Nom</string>
+    <string name="settings_feed_name_placeholder">Porte d\'entrée</string>
+    <string name="settings_feed_camera_url_hint">Les URL directes (par ex. go2rtc) contournent HA et démarrent la lecture plus vite.</string>
+    <string name="settings_feed_overlay_title">Superpositions caméra</string>
+    <string name="settings_feed_overlay_summary">Afficher un flux caméra quand une entité déclenche</string>
+    <string name="settings_feed_list_title">Caméras</string>
+    <string name="settings_feed_list_empty">Ajoutez au moins une caméra.</string>
+    <string name="settings_feed_add_button">+ Ajouter une caméra</string>
+    <string name="settings_feed_mode_label">Mode de déclenchement</string>
+    <string name="settings_feed_mode_momentary">Sonnette</string>
+    <string name="settings_feed_mode_sustained">Tant que actif</string>
+    <string name="settings_feed_active_states_label">États actifs</string>
+    <string name="settings_feed_active_states_hint">Séparés par des virgules. Utilisez * pour tout état sauf indisponible.</string>
+    <string name="settings_feed_auto_close_label">Fermeture auto (secondes)</string>
+    <string name="settings_feed_auto_close_hint">0 garde le flux ouvert jusqu\'à fermeture manuelle.</string>
+    <string name="settings_feed_wake_screen_label">Réveiller l\'écran</string>
+    <string name="settings_feed_wake_screen_hint">Désactivé, le flux apparaît seulement une fois la tablette réveillée.</string>
+    <string name="settings_feed_order_label">Priorité</string>
+    <string name="settings_feed_order_hint">La plus élevée gagne quand plusieurs caméras sont actives.</string>
     <!-- Camera -->
     <string name="settings_camera_enabled_title">Caméra</string>
     <string name="settings_camera_enabled_summary">Exposer la caméra de la tablette et le détecteur de mouvement à Home Assistant</string>
@@ -183,10 +192,13 @@
     <string name="settings_sidebar_action_night_mode_off">Mode nuit désactivé</string>
     <string name="settings_sidebar_action_open_dashboard_view">Ouvrir une vue du tableau de bord</string>
     <string name="settings_sidebar_action_open_dashboard_view_path">Ouvrir une vue du tableau de bord : %1$s</string>
+    <string name="settings_sidebar_action_show_feed">Afficher la caméra</string>
+    <string name="settings_sidebar_no_feeds">Aucune caméra configurée</string>
     <string name="settings_sidebar_icon_moon">Lune</string>
     <string name="settings_sidebar_icon_sun">Soleil</string>
     <string name="settings_sidebar_icon_refresh">Actualiser</string>
     <string name="settings_sidebar_icon_dashboard">Tableau de bord</string>
+    <string name="settings_sidebar_icon_camera">Caméra</string>
 
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Garder l\'écran allumé</string>

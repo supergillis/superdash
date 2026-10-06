@@ -17,11 +17,11 @@ import com.superdash.core.resources.AndroidStringProvider
 import com.superdash.core.resources.StringProvider
 import com.superdash.device.DeviceInfo
 import com.superdash.device.ScreenStateProvider
-import com.superdash.doorbell.DoorbellOverlayController
-import com.superdash.doorbell.DoorbellSettings
-import com.superdash.doorbell.DoorbellWatcher
 import com.superdash.esphome.EsphomeBindings
 import com.superdash.esphome.glue.EsphomePskStore
+import com.superdash.feed.FeedOverlayController
+import com.superdash.feed.FeedSettings
+import com.superdash.feed.FeedWatcher
 import com.superdash.ha.HaAssistClient
 import com.superdash.ha.HaConnectivityController
 import com.superdash.ha.HaMediaSourceClient
@@ -46,7 +46,7 @@ import com.superdash.screensaver.ScreensaverSettings
 import com.superdash.settings.AeadSecretString
 import com.superdash.settings.SettingsRepository
 import com.superdash.settings.SettingsRepositoryCameraSettings
-import com.superdash.settings.SettingsRepositoryDoorbellSettings
+import com.superdash.settings.SettingsRepositoryFeedSettings
 import com.superdash.settings.SettingsRepositoryImmichSettings
 import com.superdash.settings.SettingsRepositoryKioskSettings
 import com.superdash.settings.SettingsRepositoryScreensaverSettings
@@ -87,7 +87,7 @@ class AppGraph(
 
     val strings: StringProvider = AndroidStringProvider(application)
 
-    val doorbellSettings: DoorbellSettings = SettingsRepositoryDoorbellSettings(keyValueStore)
+    val feedSettings: FeedSettings = SettingsRepositoryFeedSettings(keyValueStore)
 
     val cameraSettings: CameraSettings = SettingsRepositoryCameraSettings(keyValueStore)
 
@@ -200,20 +200,22 @@ class AppGraph(
             scope = scope,
         )
 
-    val doorbellWatcher: DoorbellWatcher =
-        DoorbellWatcher(
+    val feedWatcher: FeedWatcher =
+        FeedWatcher(
             scope = scope,
-            doorbellsFlow = doorbellSettings.doorbells,
-            enabledFlow = doorbellSettings.enabled,
+            feedsFlow = feedSettings.feeds,
+            enabledFlow = feedSettings.enabled,
             observeEntity = { entityId -> haClient.observeEntity(entityId) },
             bus = eventBus,
         )
 
-    val doorbellOverlayController: DoorbellOverlayController =
-        DoorbellOverlayController(
+    val feedOverlayController: FeedOverlayController =
+        FeedOverlayController(
             scope = scope,
             bus = eventBus,
-            doorbellsFlow = doorbellSettings.doorbells,
+            feedsFlow = feedSettings.feeds,
+            activeFeedsFlow = feedWatcher.activeFeeds,
+            isIdleFlow = idleController.isIdle,
         )
 
     val deviceInfo: DeviceInfo = DeviceInfo(application)
@@ -252,7 +254,7 @@ class AppGraph(
         EsphomeSubgraph(
             application = application,
             scope = scope,
-            doorbellSettings = doorbellSettings,
+            feedSettings = feedSettings,
             screensaverSettings = screensaverSettings,
             voiceSettings = voiceSettings,
             kioskSettings = kioskSettings,
@@ -262,7 +264,7 @@ class AppGraph(
             screenStateProvider = screenStateProvider,
             idleController = idleController,
             sleepController = sleepController,
-            doorbellOverlayController = doorbellOverlayController,
+            feedOverlayController = feedOverlayController,
             voiceCoordinator = voiceCoordinator,
             haClient = haClient,
             noisePsk = esphomePskStore.psk,

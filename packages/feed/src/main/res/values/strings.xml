@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feed_connecting">Connecting…</string>
+    <string name="feed_close">Close</string>
+    <string name="feed_push_to_talk">Push to talk (coming soon)</string>
+    <string name="feed_stream_interrupted">Stream interrupted</string>
+    <string name="feed_camera_unavailable">Camera unavailable</string>
+</resources>

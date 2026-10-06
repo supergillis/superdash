@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 /** Typed settings view owned by the camera feature. The interface lives here
  *  so the feature module never imports the persistence layer; `app` provides
- *  the implementation (same pattern as DoorbellSettings). */
+ *  the implementation (same pattern as FeedSettings). */
 interface CameraSettings {
     val enabled: Flow<Boolean>
 

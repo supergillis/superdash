@@ -52,7 +52,7 @@ class VoicePipelineCoordinator(
 
     init {
         scope.launch {
-            bus.events.filterIsInstance<KioskEvent.DoorbellRingStarted>().collect {
+            bus.events.filterIsInstance<KioskEvent.FeedActivated>().collect {
                 stopAll()
             }
         }

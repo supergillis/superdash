@@ -9,9 +9,9 @@ import com.superdash.camera.CameraSettings
 import com.superdash.core.locale.SupportedLanguage
 import com.superdash.core.resources.StringProvider
 import com.superdash.core.util.UrlNormalizer
-import com.superdash.doorbell.DoorbellConfig
-import com.superdash.doorbell.DoorbellSettings
-import com.superdash.doorbell.DoorbellState
+import com.superdash.feed.FeedConfig
+import com.superdash.feed.FeedSettings
+import com.superdash.feed.FeedState
 import com.superdash.ha.EntityState
 import com.superdash.ha.HaConnectionState
 import com.superdash.kiosk.KioskSettings
@@ -78,7 +78,7 @@ class SettingsViewModel(
     private val kioskSettings: KioskSettings,
     private val sidebarSettings: SidebarSettings,
     private val voiceSettings: VoiceSettings,
-    private val doorbellSettings: DoorbellSettings,
+    private val feedSettings: FeedSettings,
     private val cameraSettings: CameraSettings,
     private val screensaverSettings: ScreensaverSettings,
     private val esphomePskStore: PskStore,
@@ -91,7 +91,7 @@ class SettingsViewModel(
     voiceModelStateFlow: Flow<VoiceModelState>,
     haStateFlow: Flow<HaConnectionState>,
     entitiesFlow: Flow<Map<String, EntityState>>,
-    doorbellStateFlow: Flow<DoorbellState>,
+    feedStateFlow: Flow<FeedState>,
     isIdleFlow: Flow<Boolean>,
     private val actions: SettingsExternalActions,
     private val strings: StringProvider,
@@ -198,16 +198,14 @@ class SettingsViewModel(
             )
         }
 
-    private val doorbellUiStateFlow: Flow<DoorbellSettingsState> =
+    private val feedUiStateFlow: Flow<FeedSettingsState> =
         combine(
-            doorbellSettings.enabled,
-            doorbellSettings.doorbells,
-            doorbellSettings.autoCloseSec,
-        ) { enabled, configs, autoClose ->
-            DoorbellSettingsState(
+            feedSettings.enabled,
+            feedSettings.feeds,
+        ) { enabled, configs ->
+            FeedSettingsState(
                 enabled = enabled,
                 configs = configs.toImmutableList(),
-                autoCloseSec = autoClose,
             )
         }
 
@@ -285,8 +283,8 @@ class SettingsViewModel(
         }
 
     private val overlayUiStateFlow: Flow<SettingsOverlayState> =
-        combine(doorbellStateFlow, isIdleFlow) { doorbell, idle ->
-            SettingsOverlayState(doorbellState = doorbell, isIdle = idle)
+        combine(feedStateFlow, isIdleFlow) { feed, idle ->
+            SettingsOverlayState(feedState = feed, isIdle = idle)
         }
 
     private val esphomeUiStateFlow: Flow<EsphomeSettingsState> =
@@ -343,18 +341,18 @@ class SettingsViewModel(
             },
             combine(
                 voiceUiStateFlow,
-                doorbellUiStateFlow,
+                feedUiStateFlow,
                 screensaverUiStateFlow,
                 immichUiStateFlow,
                 sidebarUiStateFlow,
             ) {
                 voice,
-                doorbell,
+                feed,
                 screensaver,
                 immich,
                 sidebar,
                 ->
-                FeatureUi(voice, doorbell, screensaver, immich, sidebar)
+                FeatureUi(voice, feed, screensaver, immich, sidebar)
             },
             languageFlow,
         ) { core, features, language ->
@@ -363,7 +361,7 @@ class SettingsViewModel(
                 haEntities = core.conn.entities,
                 device = core.device,
                 voice = features.voice,
-                doorbell = features.doorbell,
+                feed = features.feed,
                 camera = core.camera,
                 esphome = core.esphome,
                 screensaver = features.screensaver,
@@ -384,7 +382,7 @@ class SettingsViewModel(
 
     private data class FeatureUi(
         val voice: VoiceSettingsState,
-        val doorbell: DoorbellSettingsState,
+        val feed: FeedSettingsState,
         val screensaver: ScreensaverSettingsState,
         val immich: ImmichSettingsState,
         val sidebar: SidebarSettingsState,
@@ -538,13 +536,11 @@ class SettingsViewModel(
                 strings.get(R.string.settings_immich_refresh_failed, result.reason)
         }
 
-    fun setDoorbellEnabled(value: Boolean) = launch { doorbellSettings.setEnabled(value) }
+    fun setFeedEnabled(value: Boolean) = launch { feedSettings.setEnabled(value) }
 
-    fun setDoorbellAutoCloseSec(value: Int) = launch { doorbellSettings.setAutoCloseSec(value) }
+    fun upsertFeed(config: FeedConfig) = launch { feedSettings.upsertFeed(config) }
 
-    fun upsertDoorbell(config: DoorbellConfig) = launch { doorbellSettings.upsertDoorbell(config) }
-
-    fun removeDoorbell(id: String) = launch { doorbellSettings.removeDoorbell(id) }
+    fun removeFeed(id: String) = launch { feedSettings.removeFeed(id) }
 
     fun setCameraEnabled(value: Boolean) = launch { cameraSettings.setEnabled(value) }
 
@@ -605,7 +601,7 @@ class SettingsViewModel(
                 kioskSettings = graph.kioskSettings,
                 sidebarSettings = graph.sidebarSettings,
                 voiceSettings = graph.voiceSettings,
-                doorbellSettings = graph.doorbellSettings,
+                feedSettings = graph.feedSettings,
                 cameraSettings = graph.cameraSettings,
                 screensaverSettings = graph.screensaverSettings,
                 esphomePskStore =
@@ -624,7 +620,7 @@ class SettingsViewModel(
                 voiceModelStateFlow = graph.voiceModels.state,
                 haStateFlow = graph.haClient.state,
                 entitiesFlow = graph.haClient.entities,
-                doorbellStateFlow = graph.doorbellOverlayController.state,
+                feedStateFlow = graph.feedOverlayController.state,
                 isIdleFlow = graph.idleController.isIdle,
                 strings = graph.strings,
                 actions =

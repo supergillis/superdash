@@ -3,7 +3,7 @@ package com.superdash
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.superdash.doorbell.DoorbellState
+import com.superdash.feed.FeedState
 import com.superdash.ha.HaConnectionState
 import com.superdash.ha.HaTokens
 import com.superdash.kiosk.SidebarPosition
@@ -29,8 +29,7 @@ class MainViewModel(
     dayScreensaverModeKeyFlow: Flow<String>,
     nightScreensaverModeKeyFlow: Flow<String>,
     nightModeActiveFlow: Flow<Boolean>,
-    doorbellStateFlow: Flow<DoorbellState>,
-    doorbellAutoCloseSecFlow: Flow<Int>,
+    feedStateFlow: Flow<FeedState>,
     voiceEnabledFlow: Flow<Boolean>,
     sidebarPositionFlow: Flow<SidebarPosition>,
     sidebarPinnedFlow: Flow<Boolean>,
@@ -65,14 +64,6 @@ class MainViewModel(
             )
         }
 
-    private val doorbellFlow =
-        combine(doorbellStateFlow, doorbellAutoCloseSecFlow) { state, autoCloseSec ->
-            MainDoorbellState(
-                state = state,
-                autoCloseSec = autoCloseSec,
-            )
-        }
-
     private val sidebarFlow =
         combine(
             sidebarPositionFlow,
@@ -94,9 +85,9 @@ class MainViewModel(
         combine(
             connectionFlow,
             environmentFlow,
-            doorbellFlow,
+            feedStateFlow,
             sidebarFlow,
-        ) { connection, environment, doorbell, sidebar ->
+        ) { connection, environment, feedState, sidebar ->
             val effectiveMode =
                 ScreensaverMode.fromKey(
                     if (environment.nightActive) {
@@ -120,8 +111,7 @@ class MainViewModel(
                 voiceState = environment.voiceState,
                 isIdle = environment.isIdle && effectiveMode != ScreensaverMode.Off,
                 nightModeActive = environment.nightActive,
-                doorbellState = doorbell.state,
-                doorbellAutoCloseSec = doorbell.autoCloseSec,
+                feedState = feedState,
                 haBaseUrl = (appState as? AppState.Configured)?.haUrl ?: "",
                 sidebar = sidebar,
             )
@@ -153,11 +143,6 @@ class MainViewModel(
         val nightActive: Boolean,
     )
 
-    private data class MainDoorbellState(
-        val state: DoorbellState,
-        val autoCloseSec: Int,
-    )
-
     class Factory(
         private val graph: AppGraph,
     ) : ViewModelProvider.Factory {
@@ -173,8 +158,7 @@ class MainViewModel(
                 dayScreensaverModeKeyFlow = graph.screensaverSettings.dayMode,
                 nightScreensaverModeKeyFlow = graph.screensaverSettings.nightMode,
                 nightModeActiveFlow = graph.sleepController.nightModeActive,
-                doorbellStateFlow = graph.doorbellOverlayController.state,
-                doorbellAutoCloseSecFlow = graph.doorbellSettings.autoCloseSec,
+                feedStateFlow = graph.feedOverlayController.state,
                 voiceEnabledFlow = graph.voiceSettings.enabled,
                 sidebarPositionFlow = graph.sidebarSettings.position,
                 sidebarPinnedFlow = graph.sidebarSettings.pinned,

@@ -37,13 +37,12 @@ internal fun testSettingsActions(): SettingsActions =
                 onClearCommandRecordings = {},
                 onVadSilenceMsChange = {},
             ),
-        doorbell =
-            DoorbellSettingsActions(
-                onDoorbellEnabledChange = {},
-                onDoorbellAutoCloseSecChange = {},
-                onUpsertDoorbell = {},
-                onRemoveDoorbell = {},
-                onTestDoorbell = {},
+        feed =
+            FeedSettingsActions(
+                onFeedEnabledChange = {},
+                onUpsertFeed = {},
+                onRemoveFeed = {},
+                onTestFeed = {},
             ),
         camera =
             CameraSettingsActions(

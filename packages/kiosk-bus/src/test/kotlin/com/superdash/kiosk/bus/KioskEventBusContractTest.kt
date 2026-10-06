@@ -69,7 +69,7 @@ class KioskEventBusContractTest {
                 listOf(
                     KioskEvent.UserTouched,
                     KioskEvent.WakeWordDetected("hey_jarvis"),
-                    KioskEvent.DoorbellRingStarted("a", 0L),
+                    KioskEvent.FeedActivated("a", 0L, wakeScreen = true),
                 )
 
             for (variant in variants) {

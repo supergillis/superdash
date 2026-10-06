@@ -91,6 +91,12 @@ sealed interface SidebarAction {
     data class OpenDashboardPath(
         val path: String,
     ) : SidebarAction
+
+    @Serializable
+    @SerialName("show_feed")
+    data class ShowFeed(
+        val feedId: String,
+    ) : SidebarAction
 }
 
 internal val SidebarAction.defaultShortLabel: String
@@ -107,6 +113,7 @@ internal val SidebarAction.defaultShortLabel: String
                     "Day"
                 }
             is SidebarAction.OpenDashboardPath -> "View"
+            is SidebarAction.ShowFeed -> "Camera"
         }
 
 internal fun SidebarAction.emitsUserTouchedFromSidebar(): Boolean =
@@ -118,6 +125,7 @@ internal fun SidebarAction.emitsUserTouchedFromSidebar(): Boolean =
         SidebarAction.ReloadDashboard,
         is SidebarAction.SetNightModeActive,
         is SidebarAction.OpenDashboardPath,
+        is SidebarAction.ShowFeed,
         -> true
     }
 

@@ -13,7 +13,7 @@ class SuperdashApp : Application() {
         log.i("onCreate")
         graph.haConnectivityController.start()
         graph.esphome.start()
-        graph.doorbellWatcher.start()
+        graph.feedWatcher.start()
         graph.screenStateProvider.start()
     }
 

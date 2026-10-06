@@ -57,11 +57,12 @@ internal fun SettingsContent(
         onConfirm: (id: String, title: String) -> Unit,
         onDismiss: () -> Unit,
     ) -> Unit,
+    modifier: Modifier = Modifier,
     forceWideForTest: Boolean? = null,
 ) {
     var destination: SettingsDestination? by remember { mutableStateOf(null) }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isWide =
             forceWideForTest ?: (maxWidth >= SettingsLayout.wideBreakpoint)
         val navigateUp = {

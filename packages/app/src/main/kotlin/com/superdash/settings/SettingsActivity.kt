@@ -8,8 +8,13 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -471,10 +476,16 @@ private fun SettingsScreen(
         }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Android 15 draws apps edge to edge, so keep Settings clear of the status
+        // bar and the taskbar. Overlays stay full screen.
         SettingsContent(
             state = state,
             actions = actions,
             mediaSourcePicker = mediaSourcePicker,
+            modifier =
+                Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         )
         KioskOverlays(
             state =

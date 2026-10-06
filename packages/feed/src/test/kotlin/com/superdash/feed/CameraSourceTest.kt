@@ -20,8 +20,8 @@ class CameraSourceTest {
     }
 
     @Test fun `rtsp url parses as DirectUrl`() {
-        val source = parseCameraSource("rtsp://192.168.1.2:8554/main")
-        assertEquals(CameraSource.DirectUrl("rtsp://192.168.1.2:8554/main"), source)
+        val source = parseCameraSource("rtsp://192.0.2.10:8554/front_door")
+        assertEquals(CameraSource.DirectUrl("rtsp://192.0.2.10:8554/front_door"), source)
     }
 
     @Test fun `rtsps url parses as DirectUrl`() {

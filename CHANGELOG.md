@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/supergillis/superdash/compare/v1.0.0...v1.1.0) (2026-10-06)
+
+
+### Features
+
+* **feed:** play rtsp:// camera URLs directly ([#69](https://github.com/supergillis/superdash/issues/69)) ([3c8dd4d](https://github.com/supergillis/superdash/commit/3c8dd4de2e4b261d06e02c37c2527a7becb2c7b7))
+
+
+### Bug Fixes
+
+* **feed:** stop waiting on an HA camera stream after 15 seconds ([#72](https://github.com/supergillis/superdash/issues/72)) ([9adddc1](https://github.com/supergillis/superdash/commit/9adddc135c6f81ea27aabbcca7db52b80e013bc2))
+* **screensaver:** stop idle polling while paused and cap video waits ([#75](https://github.com/supergillis/superdash/issues/75)) ([9845fc5](https://github.com/supergillis/superdash/commit/9845fc54949f2a245a63074312f1b0bad1d9a844))
+* translate missing strings and darken Settings status bar icons ([#73](https://github.com/supergillis/superdash/issues/73)) ([46ce9d8](https://github.com/supergillis/superdash/commit/46ce9d89d85e28fba9824c64e449917b001a6173))
+
 ## [1.0.0](https://github.com/supergillis/superdash/compare/v0.3.0...v1.0.0) (2026-10-06)
 
 

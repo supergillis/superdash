@@ -88,7 +88,16 @@ fun SidebarRailLayout(
         modifier =
             modifier
                 .fillMaxSize()
-                .detectEdgeSwipe(edge = position, onTriggered = onOpen),
+                // While idle the swipe belongs to the screensaver (previous photo). Opening
+                // the hidden sidebar too would leave it open on wake.
+                .detectEdgeSwipe(
+                    edge = position,
+                    onTriggered = {
+                        if (!idle) {
+                            onOpen()
+                        }
+                    },
+                ),
     ) {
         if (pinned) {
             ReservedSidebarContentLayout(

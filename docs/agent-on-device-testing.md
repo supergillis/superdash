@@ -63,6 +63,62 @@ Open settings through the edge swipe.
 - Password fields show hidden characters.
 - Clear hidden fields fully before retyping.
 
+## Device Tooling
+
+`scripts/device/sd.ts` drives a debug build over adb. It is TypeScript run directly by Node 26, so it starts instantly; the Kotlin scripts under `scripts/voice-fixtures` take seconds per run.
+
+The control surface is off by default. Build with the Gradle flag to turn it on:
+
+```bash
+./gradlew :packages:app:assembleDebug -Psuperdash.debugTools=true
+```
+
+`sd install` does that, upgrade-installs, and launches. Release builds never contain it.
+
+```bash
+node scripts/device/sd.ts install
+node scripts/device/sd.ts dump
+node scripts/device/sd.ts set idle_timeout_sec 30
+node scripts/device/sd.ts feed state
+node scripts/device/sd.ts feed show reolink
+node scripts/device/sd.ts ha input_boolean.superdash_test_ring on
+```
+
+| Command | Does |
+|---|---|
+| `dump`, `get <key>` | Read settings. Secrets are redacted. |
+| `set <key> <value> [--type t]` | Write a raw setting. The type is inferred from the stored value. |
+| `remove <key>` | Delete a setting so the default applies. |
+| `feed state` | Enabled and idle flags, shown feed, active triggers, configured feeds. |
+| `feed show`, `feed close` | Force a feed open or closed. |
+| `feed upsert <json\|@file>`, `feed remove` | Edit feeds. |
+| `ha <entity> [on\|off]` | Read an HA entity, or toggle an `input_boolean.superdash_test*` helper. |
+| `ha --list [prefix]` | Entity ids and states, filtered by prefix. |
+| `idle`, `wake` | Force the screensaver idle state, or touch to leave it. |
+| `screenshot`, `logs` | Capture visual state and the `superdash` log tag. |
+
+- Writes apply live. The app observes the same DataStore.
+- Replies come back through `am broadcast`, so there is no logcat scraping.
+- `set` skips the feature setters: no range clamping, and `immich_api_key` is stored unencrypted. Prefer the UI for those.
+- `ha` reads the app's own entity cache. A toggle returns once the app has seen the new state.
+- Use an `input_boolean.superdash_test*` helper as a feed trigger to test without a real doorbell. Create it once in HA under Settings, Devices, Helpers, Toggle.
+- Debug receivers require `android.permission.DUMP`, which the adb shell holds and other apps cannot.
+- The device is `--device`, then `$ANDROID_SERIAL`, then the only connected device.
+- Type-check with `npm install && npm run typecheck` in `scripts/device`.
+
+### Feed Smoke Test
+
+`scripts/device/feed-smoke.ts` checks feeds end to end, from an HA trigger to the overlay state, in under a minute:
+
+```bash
+node scripts/device/feed-smoke.ts [--camera <url or camera entity>]
+```
+
+- Needs the HA toggle helpers `input_boolean.superdash_test_ring` and `input_boolean.superdash_test_monitor`.
+- Creates or updates the `test ring` and `test monitor` feeds, and leaves both helpers off.
+- Covers show and hide, close and re-arm, auto-close, priority, the idle gate, night mode, and the `feed_showing` ESPHome sensor.
+- Run it after any change to `packages/feed` or the overlay wiring.
+
 ## App State
 
 DataStore files live under:
@@ -76,9 +132,7 @@ DataStore files live under:
 | `app_settings.preferences_pb` | App settings. |
 | `ha_secrets.bin` | Encrypted HA tokens. |
 
-Do not edit DataStore files by hand.
-
-Drive settings through the UI.
+Do not edit DataStore files by hand. Use `sd` or the UI.
 
 ## ESPHome Check
 

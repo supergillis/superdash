@@ -2,6 +2,7 @@ emulator := "emulator-5554"
 avd := "superdash-tablet"
 adb := env_var_or_default("ADB", "adb")
 emulator_bin := env_var_or_default("EMULATOR", "emulator")
+node := env_var_or_default("NODE", "node")
 apk := "packages/app/build/outputs/apk/debug/app-debug.apk"
 whisper_model := "ggml-tiny.en-q5_1.bin"
 whisper_model_dir := "packages/app/src/main/assets/models/whisper"
@@ -91,3 +92,7 @@ host-mic-on:
 
 host-mic-off:
     {{adb}} -s {{emulator}} emu avd hostmicoff
+
+# Drive a debug build over adb; see docs/agent-on-device-testing.md.
+sd *args:
+    {{node}} scripts/device/sd.ts {{args}}

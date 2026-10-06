@@ -1,33 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Debug receivers require DUMP: the adb shell holds it, other apps cannot. -->
     <application>
         <receiver
             android:name=".voice.WakeWordTestReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.DUMP">
             <intent-filter>
                 <action android:name="com.superdash.DEBUG_WAKE_TEST" />
             </intent-filter>
         </receiver>
         <receiver
             android:name=".voice.AssistPipelineTestReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.DUMP">
             <intent-filter>
                 <action android:name="com.superdash.DEBUG_ASSIST_TEST" />
             </intent-filter>
         </receiver>
         <receiver
             android:name=".voice.WakeAssistPipelineTestReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.DUMP">
             <intent-filter>
                 <action android:name="com.superdash.DEBUG_WAKE_ASSIST_TEST" />
             </intent-filter>
         </receiver>
         <receiver
             android:name=".voice.DebugVoiceSettingsReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.DUMP">
             <intent-filter>
                 <action android:name="com.superdash.DEBUG_VOICE_SETTINGS" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".debug.DebugToolsReceiver"
+            android:enabled="${debugToolsEnabled}"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
     </application>
 </manifest>

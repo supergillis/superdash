@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** The subset of [ScreensaverIdleController] that wake-event consumers depend
@@ -35,7 +36,7 @@ class ScreensaverIdleController(
 
     @Volatile private var lastTouchAt = clock()
 
-    @Volatile private var paused = false
+    private val paused = MutableStateFlow(false)
 
     init {
         scope.launch {
@@ -45,9 +46,16 @@ class ScreensaverIdleController(
                     return@collectLatest
                 }
                 while (true) {
+                    if (paused.value) {
+                        // Suspend instead of polling: a paused, overdue timer would
+                        // otherwise tick every 100 ms all night.
+                        mutableIsIdle.value = false
+                        paused.first { !it }
+                        continue
+                    }
                     val elapsedMs = clock() - lastTouchAt
                     val targetMs = timeoutSec * 1_000L
-                    val shouldIdle = !paused && elapsedMs >= targetMs
+                    val shouldIdle = elapsedMs >= targetMs
                     mutableIsIdle.value = shouldIdle
                     val nextTickMs = if (shouldIdle) 1_000L else (targetMs - elapsedMs).coerceAtLeast(100L)
                     delay(nextTickMs)
@@ -80,18 +88,18 @@ class ScreensaverIdleController(
      *  button, at which point MainActivity is paused (and would otherwise have
      *  the polling loop short-circuit isIdle to false on the next tick). */
     fun forceIdle() {
-        paused = false
+        paused.value = false
         lastTouchAt = 0L
         mutableIsIdle.value = true
     }
 
     fun pause() {
-        paused = true
+        paused.value = true
         mutableIsIdle.value = false
     }
 
     fun resume() {
-        paused = false
         lastTouchAt = clock()
+        paused.value = false
     }
 }

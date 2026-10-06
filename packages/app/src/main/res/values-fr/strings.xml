@@ -48,7 +48,7 @@
     <string name="settings_feed_dialog_edit_title">Modifier la caméra</string>
     <string name="settings_feed_name_label">Nom</string>
     <string name="settings_feed_name_placeholder">Porte d\'entrée</string>
-    <string name="settings_feed_camera_url_hint">Les URL directes (par ex. go2rtc) contournent HA et démarrent la lecture plus vite.</string>
+    <string name="settings_feed_camera_url_hint">Les URL directes (par ex. go2rtc HTTP ou RTSP) contournent HA et démarrent la lecture plus vite.</string>
     <string name="settings_feed_overlay_title">Superpositions caméra</string>
     <string name="settings_feed_overlay_summary">Afficher un flux caméra quand une entité déclenche</string>
     <string name="settings_feed_list_title">Caméras</string>

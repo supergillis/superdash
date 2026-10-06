@@ -48,7 +48,7 @@
     <string name="settings_feed_dialog_edit_title">Camera bewerken</string>
     <string name="settings_feed_name_label">Naam</string>
     <string name="settings_feed_name_placeholder">Voordeur</string>
-    <string name="settings_feed_camera_url_hint">Directe URL\'s (bijv. go2rtc) slaan HA over en starten sneller op.</string>
+    <string name="settings_feed_camera_url_hint">Directe URL\'s (bijv. go2rtc HTTP of RTSP) slaan HA over en starten sneller op.</string>
     <string name="settings_feed_overlay_title">Camera-overlays</string>
     <string name="settings_feed_overlay_summary">Toon een camerabeeld wanneer een entiteit triggert</string>
     <string name="settings_feed_list_title">Camera\'s</string>

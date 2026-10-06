@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.superdash"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.superdash"

@@ -2,7 +2,6 @@ package com.superdash.screensaver
 
 import com.superdash.core.json.coreJson
 import com.superdash.ha.EntityState
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -10,6 +9,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.time.Instant
 
 class CalendarSnapshotTest {
     private val json = coreJson

@@ -3,14 +3,14 @@ package com.superdash.screensaver
 import com.superdash.ha.EntityState
 import com.superdash.ha.attributes.CalendarEventAttributes
 import com.superdash.ha.haJson
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 /** Pure parser of HA `calendar.*` entity → typed snapshot of the next event.
  *

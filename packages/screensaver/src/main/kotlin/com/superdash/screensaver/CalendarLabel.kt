@@ -1,11 +1,11 @@
 package com.superdash.screensaver
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.time.Instant
 
 private const val MAX_MESSAGE_CHARS = 31
 private const val SEP = " · "
@@ -61,13 +61,13 @@ private fun prefixFor(
     val dayName = DateTimeFormatter.ofPattern("EEE", locale).format(javaStart)
     val monthName = DateTimeFormatter.ofPattern("MMM", locale).format(javaStart)
     return when {
-        snapshot.allDay && dayDelta == 0 -> todayLabel
-        snapshot.allDay && dayDelta == 1 -> tomorrowLabel
-        snapshot.allDay && dayDelta in 2..6 -> dayName
+        snapshot.allDay && dayDelta == 0L -> todayLabel
+        snapshot.allDay && dayDelta == 1L -> tomorrowLabel
+        snapshot.allDay && dayDelta in 2L..6L -> dayName
         snapshot.allDay -> "${startLocal.dayOfMonth} $monthName"
-        dayDelta == 0 -> time
-        dayDelta == 1 -> "$tomorrowLabel $time"
-        dayDelta in 2..6 -> "$dayName $time"
+        dayDelta == 0L -> time
+        dayDelta == 1L -> "$tomorrowLabel $time"
+        dayDelta in 2L..6L -> "$dayName $time"
         else -> "${startLocal.dayOfMonth} $monthName $time"
     }
 }

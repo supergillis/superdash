@@ -1,8 +1,8 @@
 package com.superdash.immich
 
-import kotlinx.datetime.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import kotlin.time.Instant
 
 class ImmichCatalogEntryTest {
     @Test

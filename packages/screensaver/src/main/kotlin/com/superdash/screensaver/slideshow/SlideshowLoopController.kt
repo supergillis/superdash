@@ -1,5 +1,6 @@
 package com.superdash.screensaver.slideshow
 
+import com.superdash.core.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -20,6 +21,8 @@ import kotlinx.coroutines.selects.select
  *
  *  Not thread-safe: navigation requests serialize through a conflated
  *  channel and the loop is the sole writer to [currentItem]. */
+private val log = Log("SlideshowLoop")
+
 class SlideshowLoopController(
     private val source: SlideshowSource,
     private val intervalMs: Long,
@@ -43,10 +46,12 @@ class SlideshowLoopController(
     }
 
     fun requestForward() {
+        log.i("navigate", "direction" to "forward")
         requests.trySend(NavRequest.Forward)
     }
 
     fun requestBack() {
+        log.i("navigate", "direction" to "back")
         requests.trySend(NavRequest.Back)
     }
 

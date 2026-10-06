@@ -47,6 +47,18 @@ function shellToken(value: string): string {
   return value;
 }
 
+export interface UiNode {
+  text: string;
+  desc: string;
+  id: string;
+  x: number;
+  y: number;
+}
+
+function decodeXml(value: string): string {
+  return value.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+}
+
 export class Device {
   readonly serial: string;
 
@@ -103,6 +115,55 @@ export class Device {
       throw new Error(match[2]);
     }
     return match[2];
+  }
+
+  tap(x: number, y: number): void {
+    this.adb(["shell", "input", "tap", String(Math.round(x)), String(Math.round(y))]);
+  }
+
+  swipe(fromX: number, fromY: number, toX: number, toY: number, durationMs = 250): void {
+    const points = [fromX, fromY, toX, toY, durationMs].map((value) => String(Math.round(value)));
+    this.adb(["shell", "input", "swipe", ...points]);
+  }
+
+  /** Types into the focused field. `input text` treats %s as a space. */
+  text(value: string): void {
+    const escaped = value.replace(/%/g, "%%").replace(/ /g, "%s").replace(/'/g, "'\\''");
+    this.adb(["shell", `input text '${escaped}'`]);
+  }
+
+  key(name: string): void {
+    this.adb(["shell", "input", "keyevent", shellToken(`KEYCODE_${name.toUpperCase()}`)]);
+  }
+
+  /** The on-screen accessibility tree, flattened to labelled nodes with their centers. */
+  ui(): UiNode[] {
+    const xml = this.adb(["exec-out", "uiautomator", "dump", "/dev/tty"]).toString();
+    const nodes: UiNode[] = [];
+    for (const [, attributes] of xml.matchAll(/<node ([^>]*?)\/?>/g)) {
+      const attribute = (name: string) => decodeXml(new RegExp(`${name}="([^"]*)"`).exec(attributes ?? "")?.[1] ?? "");
+      const bounds = /\[(\d+),(\d+)\]\[(\d+),(\d+)\]/.exec(attribute("bounds"));
+      const node = { text: attribute("text"), desc: attribute("content-desc").trim(), id: attribute("resource-id") };
+      if (bounds && (node.text || node.desc || node.id)) {
+        const [left, top, right, bottom] = bounds.slice(1).map(Number) as [number, number, number, number];
+        nodes.push({ ...node, x: (left + right) / 2, y: (top + bottom) / 2 });
+      }
+    }
+    return nodes;
+  }
+
+  /** The first node whose text, description or id equals [label]. */
+  find(label: string): UiNode | undefined {
+    return this.ui().find((node) => node.text === label || node.desc === label || node.id === label);
+  }
+
+  /** Lines since the last `logs --clear`, for the superdash tag. */
+  logs(): string {
+    return this.adb(["logcat", "-d", "-v", "time", "-s", "superdash"]).toString();
+  }
+
+  clearLogs(): void {
+    this.adb(["logcat", "-c"]);
   }
 
   feedState(): FeedStateReply {

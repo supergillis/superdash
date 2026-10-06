@@ -51,6 +51,39 @@ class ScreensaverIdleControllerTest {
             coroutineContext.cancelChildren()
         }
 
+    @Test fun `touchIfAwake while idle keeps the screensaver up`() =
+        runTest {
+            val timeout = MutableStateFlow(60)
+            var now = 0L
+            val controller = ScreensaverIdleController(timeout, this, { now })
+            runCurrent()
+            now = 60_001L
+            advanceTimeBy(61_000)
+            runCurrent()
+            assertTrue(controller.isIdle.value)
+            controller.touchIfAwake()
+            now += 2_000L
+            advanceTimeBy(2_000)
+            runCurrent()
+            assertTrue(controller.isIdle.value)
+            coroutineContext.cancelChildren()
+        }
+
+    @Test fun `touchIfAwake while awake resets the timer`() =
+        runTest {
+            val timeout = MutableStateFlow(60)
+            var now = 0L
+            val controller = ScreensaverIdleController(timeout, this, { now })
+            runCurrent()
+            now = 50_000L
+            controller.touchIfAwake()
+            now = 70_000L
+            advanceTimeBy(70_000)
+            runCurrent()
+            assertFalse(controller.isIdle.value)
+            coroutineContext.cancelChildren()
+        }
+
     @Test fun `touch before timeout keeps idle false`() =
         runTest {
             val timeout = MutableStateFlow(60)

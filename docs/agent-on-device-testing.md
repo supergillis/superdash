@@ -95,6 +95,10 @@ node scripts/device/sd.ts ha input_boolean.superdash_test_ring on
 | `ha <entity> [on\|off]` | Read an HA entity, or toggle an `input_boolean.superdash_test*` helper. |
 | `ha --list [prefix]` | Entity ids and states, filtered by prefix. |
 | `idle`, `wake` | Force the screensaver idle state, or touch to leave it. |
+| `ui` | On-screen elements with their center, text, description and id. |
+| `tap <x> <y>`, `tap <label>` | Tap a point, or the element with that text, description or id. |
+| `swipe <x1> <y1> <x2> <y2> [ms]` | Swipe between two points. |
+| `text <value>`, `key <name>` | Type into the focused field, or press a key such as `back`. |
 | `screenshot`, `logs` | Capture visual state and the `superdash` log tag. |
 
 - Writes apply live. The app observes the same DataStore.
@@ -118,6 +122,19 @@ node scripts/device/feed-smoke.ts [--camera <url or camera entity>]
 - Creates or updates the `test ring` and `test monitor` feeds, and leaves both helpers off.
 - Covers show and hide, close and re-arm, auto-close, priority, the idle gate, night mode, and the `feed_showing` ESPHome sensor.
 - Run it after any change to `packages/feed` or the overlay wiring.
+
+### Gesture Smoke Test
+
+`scripts/device/gesture-smoke.ts` drives real touches through the app:
+
+```bash
+node scripts/device/gesture-smoke.ts
+```
+
+- Covers the sidebar edge swipe and its thresholds, swipes and taps on a feed, and swipe, edge swipe and tap on the screensaver.
+- Reads labels from every `strings.xml`, so it works in any device language.
+- Needs one configured feed and a slideshow screensaver mode for the screensaver checks.
+- Run it after any change to touch handling, `EdgeSwipeDetector`, overlays or the screensaver.
 
 ## App State
 

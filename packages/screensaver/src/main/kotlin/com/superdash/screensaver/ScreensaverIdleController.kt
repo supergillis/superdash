@@ -63,6 +63,15 @@ class ScreensaverIdleController(
         }
     }
 
+    /** Resets the inactivity timer while the screen is in use, but never leaves idle.
+     *  While the screensaver shows it owns the gesture: a tap wakes it, a swipe
+     *  changes the photo. Waking on finger-down would end every swipe before it began. */
+    fun touchIfAwake() {
+        if (!mutableIsIdle.value) {
+            lastTouchAt = clock()
+        }
+    }
+
     /** Force the screensaver to show right now, regardless of elapsed inactivity.
      *  Backdates [lastTouchAt] so the polling loop also computes "idle". This means
      *  the next [touch] (e.g. a tap on the screensaver itself) cleanly dismisses.

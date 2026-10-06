@@ -3,7 +3,9 @@ package com.superdash.kiosk.ui
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -85,6 +87,8 @@ fun Modifier.detectEdgeSwipe(
     val edgeZonePx = remember(density) { with(density) { 32.dp.toPx() } }
     val minPrimaryPx = remember(density) { with(density) { 80.dp.toPx() } }
     val maxCrossAxisPx = remember(density) { with(density) { 120.dp.toPx() } }
+    // pointerInput restarts only when the edge changes, so read the latest callback.
+    val currentOnTriggered by rememberUpdatedState(onTriggered)
     return this.pointerInput(edge) {
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -118,7 +122,7 @@ fun Modifier.detectEdgeSwipe(
                     params = params,
                 ) is EdgeSwipeResult.Triggered
             ) {
-                onTriggered()
+                currentOnTriggered()
             }
         }
     }

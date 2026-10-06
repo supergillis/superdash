@@ -3,7 +3,8 @@ package com.superdash.feed
 import android.view.ViewGroup
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -75,7 +77,7 @@ fun FeedOverlay(
             modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .clickable(onClick = onClose),
+                .closeOnTap(onClose),
         contentAlignment = Alignment.Center,
     ) {
         when {
@@ -229,3 +231,26 @@ private fun StreamPlayer(
         },
     )
 }
+
+/** Closes on a tap only. `clickable` also fires when a finger moves and lifts inside
+ *  the overlay, so any swipe across the feed would close it, and a closed sustained
+ *  feed stays hidden until its trigger re-arms. The close button stays accessible. */
+private fun Modifier.closeOnTap(onClose: () -> Unit): Modifier =
+    pointerInput(onClose) {
+        awaitEachGesture {
+            val down = awaitFirstDown()
+            var moved = false
+            while (true) {
+                val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                    moved = true
+                }
+                if (!change.pressed) {
+                    if (!moved) {
+                        onClose()
+                    }
+                    break
+                }
+            }
+        }
+    }

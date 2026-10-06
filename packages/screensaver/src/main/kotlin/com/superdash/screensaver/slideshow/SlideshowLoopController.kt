@@ -29,6 +29,7 @@ class SlideshowLoopController(
     historyCapacity: Int,
     private val scope: CoroutineScope,
     initialViewport: SlideshowViewport = SlideshowViewport.Landscape,
+    private val videoTimeoutMs: Long = VIDEO_TIMEOUT_MS,
 ) {
     private val history = SlideshowHistory(capacity = historyCapacity)
     private val mutableCurrentItem = MutableStateFlow<SlideshowItem?>(null)
@@ -79,13 +80,22 @@ class SlideshowLoopController(
                     }
                 }
                 while (isActive) {
-                    val nextRequest =
+                    // A video normally ends with notifyVideoFinished(). The cap only
+                    // rescues a stalled player that never reports completion.
+                    val waitMs =
                         if (history.current is SlideshowVideo) {
-                            requests.receive()
+                            videoTimeoutMs
                         } else {
-                            select<NavRequest> {
-                                requests.onReceive { request -> request }
-                                onTimeout(intervalMs) { NavRequest.Forward }
+                            intervalMs
+                        }
+                    val nextRequest =
+                        select<NavRequest> {
+                            requests.onReceive { request -> request }
+                            onTimeout(waitMs) {
+                                if (history.current is SlideshowVideo) {
+                                    log.w("video did not finish; advancing", null, "timeoutMs" to waitMs)
+                                }
+                                NavRequest.Forward
                             }
                         }
                     handle(nextRequest)
@@ -113,6 +123,11 @@ class SlideshowLoopController(
                 mutableCurrentItem.value = history.current
             }
         }
+    }
+
+    companion object {
+        /** Videos carry no duration, so this is a fixed ceiling on one video. */
+        const val VIDEO_TIMEOUT_MS = 5 * 60_000L
     }
 
     private enum class NavRequest {

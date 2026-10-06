@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -130,6 +131,34 @@ class ScreensaverIdleControllerTest {
             controller.touch()
             runCurrent()
             assertFalse(controller.isIdle.value)
+            coroutineContext.cancelChildren()
+        }
+
+    @Test fun `a paused controller stops polling the clock`() =
+        runTest {
+            val timeout = MutableStateFlow(60)
+            var now = 0L
+            var clockReads = 0
+            val controller =
+                ScreensaverIdleController(timeout, this, {
+                    clockReads++
+                    now
+                })
+            runCurrent()
+            now = 120_000L
+            controller.pause()
+            advanceTimeBy(1_000)
+            runCurrent()
+            val readsAfterPause = clockReads
+            advanceTimeBy(60_000)
+            runCurrent()
+            assertEquals(readsAfterPause, clockReads)
+            assertFalse(controller.isIdle.value)
+            controller.resume()
+            now += 61_000L
+            advanceTimeBy(61_000)
+            runCurrent()
+            assertTrue(controller.isIdle.value)
             coroutineContext.cancelChildren()
         }
 

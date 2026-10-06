@@ -2,7 +2,10 @@ package com.superdash.feed
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -156,5 +159,35 @@ class FeedStreamResolverTest {
                     )
                 }
             }
+        }
+
+    @Test
+    fun `an HA camera that never answers fails after the timeout`() =
+        runTest {
+            val result =
+                resolveFeedStream(
+                    config = config("camera.front"),
+                    haBaseUrl = "https://ha.local",
+                    fetchHlsUrl = { awaitCancellation() },
+                    bearerTokenProvider = { "token" },
+                )
+            assertEquals(FeedStreamState.Failed(null), result)
+            assertEquals(HLS_FETCH_TIMEOUT_MS, currentTime)
+        }
+
+    @Test
+    fun `an HA camera that answers just before the timeout plays`() =
+        runTest {
+            val result =
+                resolveFeedStream(
+                    config = config("camera.front"),
+                    haBaseUrl = "https://ha.local",
+                    fetchHlsUrl = {
+                        delay(HLS_FETCH_TIMEOUT_MS - 1)
+                        "/api/hls/abc/playlist.m3u8"
+                    },
+                    bearerTokenProvider = { "token" },
+                )
+            assertEquals(FeedStreamState.Ready("https://ha.local/api/hls/abc/playlist.m3u8", "token"), result)
         }
 }

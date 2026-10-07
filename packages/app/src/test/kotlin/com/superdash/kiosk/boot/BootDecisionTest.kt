@@ -54,4 +54,26 @@ class BootDecisionTest {
         assertFalse(
             BootDecision.shouldLaunch(null, snap()),
         )
+
+    @Test fun `boot keeps the service alive when start on boot is on`() =
+        assertTrue(BootDecision.shouldKeepAlive(Intent.ACTION_BOOT_COMPLETED, snap(startOnBoot = true)))
+
+    @Test fun `boot keeps the service alive for launch on wake alone`() =
+        assertTrue(
+            BootDecision.shouldKeepAlive(
+                Intent.ACTION_BOOT_COMPLETED,
+                snap(startOnBoot = false, launchOnWake = true),
+            ),
+        )
+
+    @Test fun `boot with both settings off does not keep the service alive`() =
+        assertFalse(
+            BootDecision.shouldKeepAlive(
+                Intent.ACTION_BOOT_COMPLETED,
+                snap(startOnBoot = false, launchOnWake = false),
+            ),
+        )
+
+    @Test fun `a screen unlock never starts the service`() =
+        assertFalse(BootDecision.shouldKeepAlive(Intent.ACTION_USER_PRESENT, snap(launchOnWake = true)))
 }

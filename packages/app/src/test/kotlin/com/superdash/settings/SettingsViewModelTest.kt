@@ -652,6 +652,20 @@ class SettingsViewModelTest {
             assertEquals(false, viewModel.uiState.value.camera.cameraPermissionGranted)
         }
 
+    @Test
+    fun `device state carries launch on unlock and the background launch flag`() =
+        runTest {
+            val viewModel = buildViewModel(kiosk = FakeKioskSettings(launchOnWakeFlow = MutableStateFlow(true)))
+            backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+            assertEquals(true, viewModel.uiState.value.device.launchOnWake)
+            assertEquals(true, viewModel.uiState.value.device.canLaunchFromBackground)
+
+            viewModel.setCanLaunchFromBackground(false)
+            advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.device.canLaunchFromBackground)
+        }
+
     private class FakeKioskSettings(
         keepScreenOnFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),
         startOnBootFlow: MutableStateFlow<Boolean> = MutableStateFlow(true),

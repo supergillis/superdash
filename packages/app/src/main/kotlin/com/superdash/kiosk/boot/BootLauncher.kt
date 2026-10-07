@@ -18,6 +18,11 @@ object BootDecision {
             "com.htc.intent.action.QUICKBOOT_POWERON",
         )
 
+    /** Boot starts the keep-alive service whenever either launch setting is on, so the
+     *  runtime screen-unlock receiver exists even when the boot launch itself is blocked. */
+    fun shouldKeepAlive(action: String?, snapshot: SettingsRepository.Snapshot): Boolean =
+        action in LAUNCH_ACTIONS && (snapshot.startOnBoot || snapshot.launchOnWake)
+
     fun shouldLaunch(action: String?, snapshot: SettingsRepository.Snapshot): Boolean {
         if (action == null) {
             return false
@@ -41,6 +46,9 @@ object BootLauncher {
             PowerManager.PARTIAL_WAKE_LOCK or
                 PowerManager.ACQUIRE_CAUSES_WAKEUP or
                 PowerManager.ON_AFTER_RELEASE
+        if (!BackgroundLaunch.isAllowed(context)) {
+            log.w("background launch will be blocked; allow display over other apps or set superdash as home")
+        }
         val wakeLock = powerManager.newWakeLock(mask, "superdash:BootWakeLock")
         try {
             wakeLock.acquire(10_000L)

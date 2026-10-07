@@ -17,6 +17,8 @@ internal fun testSettingsActions(): SettingsActions =
             DeviceSettingsActions(
                 onKeepScreenOnChange = {},
                 onStartOnBootChange = {},
+                onLaunchOnWakeChange = {},
+                onAllowBackgroundLaunch = {},
             ),
         voice =
             VoiceSettingsActions(

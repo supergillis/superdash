@@ -267,9 +267,25 @@ class SettingsViewModel(
             )
         }
 
+    private val canLaunchFromBackground = MutableStateFlow(true)
+
+    fun setCanLaunchFromBackground(value: Boolean) {
+        canLaunchFromBackground.value = value
+    }
+
     private val deviceUiStateFlow: Flow<DeviceSettingsState> =
-        combine(kioskSettings.keepScreenOn, kioskSettings.startOnBoot) { keep, boot ->
-            DeviceSettingsState(keepScreenOn = keep, startOnBoot = boot)
+        combine(
+            kioskSettings.keepScreenOn,
+            kioskSettings.startOnBoot,
+            kioskSettings.launchOnWake,
+            canLaunchFromBackground,
+        ) { keep, boot, wake, canLaunch ->
+            DeviceSettingsState(
+                keepScreenOn = keep,
+                startOnBoot = boot,
+                launchOnWake = wake,
+                canLaunchFromBackground = canLaunch,
+            )
         }
 
     private val immichUiStateFlow: Flow<ImmichSettingsState> =
@@ -456,6 +472,8 @@ class SettingsViewModel(
     fun setKeepScreenOn(value: Boolean) = launch { kioskSettings.setKeepScreenOn(value) }
 
     fun setStartOnBoot(value: Boolean) = launch { kioskSettings.setStartOnBoot(value) }
+
+    fun setLaunchOnWake(value: Boolean) = launch { kioskSettings.setLaunchOnWake(value) }
 
     fun setVoiceEnabled(value: Boolean) = launch { voiceSettings.setEnabled(value) }
 

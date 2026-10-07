@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.superdash.SuperdashApp
 import com.superdash.core.log.Log
+import com.superdash.kiosk.KioskService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,6 +31,9 @@ class BootReceiver : BroadcastReceiver() {
                         "startOnBoot" to snapshot.startOnBoot,
                         "launchOnWake" to snapshot.launchOnWake,
                     )
+                    if (BootDecision.shouldKeepAlive(intent.action, snapshot)) {
+                        KioskService.start(context)
+                    }
                     BootStartupHandler(
                         loadSnapshot = { snapshot },
                         launch = { BootLauncher.launch(context) },

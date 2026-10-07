@@ -206,6 +206,10 @@
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Garder l\'écran allumé</string>
     <string name="settings_device_launch_on_boot">Lancer au démarrage</string>
+    <string name="settings_device_launch_on_wake">Ouvrir au déverrouillage</string>
+    <string name="settings_device_launch_on_wake_summary">Ramène superdash au premier plan quand l\'écran est déverrouillé.</string>
+    <string name="settings_device_background_launch_title">Autoriser le démarrage automatique</string>
+    <string name="settings_device_background_launch_summary">Android empêche superdash de s\'ouvrir tout seul. Touchez pour autoriser la superposition sur d\'autres applis, ou définissez superdash comme écran d\'accueil.</string>
 
     <!-- Voice -->
     <string name="settings_voice_enabled_title">Voix activée</string>

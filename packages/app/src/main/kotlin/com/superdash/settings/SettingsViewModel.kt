@@ -277,9 +277,15 @@ class SettingsViewModel(
         combine(
             kioskSettings.keepScreenOn,
             kioskSettings.startOnBoot,
+            kioskSettings.launchOnWake,
             canLaunchFromBackground,
-        ) { keep, boot, canLaunch ->
-            DeviceSettingsState(keepScreenOn = keep, startOnBoot = boot, canLaunchFromBackground = canLaunch)
+        ) { keep, boot, wake, canLaunch ->
+            DeviceSettingsState(
+                keepScreenOn = keep,
+                startOnBoot = boot,
+                launchOnWake = wake,
+                canLaunchFromBackground = canLaunch,
+            )
         }
 
     private val immichUiStateFlow: Flow<ImmichSettingsState> =
@@ -466,6 +472,8 @@ class SettingsViewModel(
     fun setKeepScreenOn(value: Boolean) = launch { kioskSettings.setKeepScreenOn(value) }
 
     fun setStartOnBoot(value: Boolean) = launch { kioskSettings.setStartOnBoot(value) }
+
+    fun setLaunchOnWake(value: Boolean) = launch { kioskSettings.setLaunchOnWake(value) }
 
     fun setVoiceEnabled(value: Boolean) = launch { voiceSettings.setEnabled(value) }
 

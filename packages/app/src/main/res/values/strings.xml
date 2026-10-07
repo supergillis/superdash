@@ -207,8 +207,10 @@
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Keep screen on</string>
     <string name="settings_device_launch_on_boot">Launch on boot</string>
+    <string name="settings_device_launch_on_wake">Launch on unlock</string>
+    <string name="settings_device_launch_on_wake_summary">Bring superdash to the front when the screen is unlocked.</string>
     <string name="settings_device_background_launch_title">Allow starting on its own</string>
-    <string name="settings_device_background_launch_summary">Android blocks superdash from opening at boot. Tap to allow display over other apps, or set superdash as the home app.</string>
+    <string name="settings_device_background_launch_summary">Android blocks superdash from opening on its own. Tap to allow display over other apps, or set superdash as the home app.</string>
 
     <!-- Voice -->
     <string name="settings_voice_enabled_title">Voice enabled</string>

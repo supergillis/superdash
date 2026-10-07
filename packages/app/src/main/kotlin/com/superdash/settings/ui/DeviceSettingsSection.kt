@@ -21,7 +21,13 @@ fun DeviceSettingsSection(
         checked = state.startOnBoot,
         onCheckedChange = actions.onStartOnBootChange,
     )
-    if (state.startOnBoot && !state.canLaunchFromBackground) {
+    SettingsSwitchRow(
+        label = stringResource(R.string.settings_device_launch_on_wake),
+        checked = state.launchOnWake,
+        onCheckedChange = actions.onLaunchOnWakeChange,
+        supportingText = stringResource(R.string.settings_device_launch_on_wake_summary),
+    )
+    if ((state.startOnBoot || state.launchOnWake) && !state.canLaunchFromBackground) {
         SettingsActionRow(
             label = stringResource(R.string.settings_device_background_launch_title),
             supportingText = stringResource(R.string.settings_device_background_launch_summary),

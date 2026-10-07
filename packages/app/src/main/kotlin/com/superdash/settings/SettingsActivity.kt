@@ -86,6 +86,7 @@ data class ConnectionSettingsActions(
 data class DeviceSettingsActions(
     val onKeepScreenOnChange: (Boolean) -> Unit,
     val onStartOnBootChange: (Boolean) -> Unit,
+    val onLaunchOnWakeChange: (Boolean) -> Unit,
     val onAllowBackgroundLaunch: () -> Unit,
 )
 
@@ -398,6 +399,7 @@ private fun SettingsScreen(
                     DeviceSettingsActions(
                         onKeepScreenOnChange = settingsViewModel::setKeepScreenOn,
                         onStartOnBootChange = settingsViewModel::setStartOnBoot,
+                        onLaunchOnWakeChange = settingsViewModel::setLaunchOnWake,
                         onAllowBackgroundLaunch = onAllowBackgroundLaunch,
                     ),
                 voice =

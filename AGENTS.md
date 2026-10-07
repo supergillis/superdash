@@ -305,7 +305,7 @@ Use:
 - `state`
 - `entities`
 - `observeEntity()`
-- `rawFrames`
+- `frames(id)`
 - `callResult()`
 
 Do not create extra WebSocket clients.

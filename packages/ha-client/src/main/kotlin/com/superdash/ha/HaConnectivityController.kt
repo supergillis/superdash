@@ -35,9 +35,10 @@ class HaConnectivityController(
                             // A token save must wake the reconnect loop. connect() is a
                             // no-op once the loop is running, so after a WebView re-auth
                             // (tokens go non-null -> non-null) it alone would leave a loop
-                            // parked in NeedsReauth stuck. forceReconnect() emits the
-                            // reconnect signal; it is harmless when already connected.
-                            haClient.forceReconnect()
+                            // parked in NeedsReauth stuck. checkConnection() wakes it and
+                            // only probes a live socket, so the routine token refresh does
+                            // not cut a healthy connection.
+                            haClient.checkConnection()
                         } else {
                             haClient.disconnect()
                         }
@@ -55,8 +56,8 @@ class HaConnectivityController(
         val cb =
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    log.i("network available, force reconnect")
-                    haClient.forceReconnect()
+                    log.i("network available, check connection")
+                    haClient.checkConnection()
                 }
             }
         cm.registerDefaultNetworkCallback(cb)

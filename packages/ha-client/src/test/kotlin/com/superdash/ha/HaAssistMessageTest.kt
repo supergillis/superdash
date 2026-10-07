@@ -4,6 +4,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -71,7 +73,7 @@ class HaAssistMessageTest {
     }
 
     @Test fun `state_changed frame for unrelated subscription does not throw`() {
-        // Regression: rawFrames carries every WS frame including HA's state_changed
+        // Regression: the WS carries frames of every subscription including HA's state_changed
         // subscription, which has shape event = { event_type, data, origin, ... }
         // No inner `type` field. Decoding it as AssistPipelineEvent would throw.
         // and kill the whole assist run. Pre-filter on id must skip it cleanly.
@@ -220,7 +222,7 @@ class HaAssistMessageTest {
         private val frames = MutableSharedFlow<JsonObject>()
         val sent = mutableListOf<JsonObject>()
 
-        override val rawFrames: Flow<JsonObject> = frames
+        override fun frames(id: Int): Flow<JsonObject> = frames.onlyFramesWithId(id)
 
         override fun nextCommandId(): Int = 7
 
@@ -242,7 +244,7 @@ class HaAssistMessageTest {
     ) : HaAssistTransport {
         private val frames = MutableSharedFlow<JsonObject>()
 
-        override val rawFrames: Flow<JsonObject> = frames
+        override fun frames(id: Int): Flow<JsonObject> = frames.onlyFramesWithId(id)
 
         override fun nextCommandId(): Int = 7
 
@@ -264,7 +266,7 @@ class HaAssistMessageTest {
         private val frames = MutableSharedFlow<JsonObject>()
         val binary = mutableListOf<ByteArray>()
 
-        override val rawFrames: Flow<JsonObject> = frames
+        override fun frames(id: Int): Flow<JsonObject> = frames.onlyFramesWithId(id)
 
         override fun nextCommandId(): Int = 7
 
@@ -301,7 +303,7 @@ class HaAssistMessageTest {
         private val frames = Channel<JsonObject>(Channel.UNLIMITED)
         val binary = mutableListOf<ByteArray>()
 
-        override val rawFrames: Flow<JsonObject> = frames.receiveAsFlow()
+        override fun frames(id: Int): Flow<JsonObject> = frames.receiveAsFlow().onlyFramesWithId(id)
 
         override fun nextCommandId(): Int = 7
 
@@ -326,3 +328,8 @@ class HaAssistMessageTest {
         }
     }
 }
+
+/** Fake transports serve only the frames of the id the client asked for, so a client
+ *  that subscribes with the wrong run id never sees its run's frames and the test hangs. */
+internal fun Flow<JsonObject>.onlyFramesWithId(id: Int): Flow<JsonObject> =
+    filter { frame -> (frame["id"] as? kotlinx.serialization.json.JsonPrimitive)?.intOrNull == id }

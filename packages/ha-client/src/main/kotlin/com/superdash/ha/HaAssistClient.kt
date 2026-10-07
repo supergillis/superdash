@@ -97,7 +97,8 @@ class HaAssistClient internal constructor(
 
             val eventJob =
                 launch(start = CoroutineStart.UNDISPATCHED) {
-                    transport.rawFrames
+                    transport
+                        .frames(runId)
                         .mapNotNull { parsePipelineFrame(it, runId) }
                         .collect { evt ->
                             log.i(
@@ -185,7 +186,8 @@ class HaAssistClient internal constructor(
             // Forward run events; close the flow on terminal events.
             val eventJob =
                 launch(start = CoroutineStart.UNDISPATCHED) {
-                    transport.rawFrames
+                    transport
+                        .frames(runId)
                         .mapNotNull { parsePipelineFrame(it, runId) }
                         .collect { evt ->
                             log.i(
@@ -319,10 +321,10 @@ class HaAssistClient internal constructor(
 
         /** Pure parser used both by the runtime client and the unit tests. */
         fun parsePipelineFrame(frame: JsonObject, runId: Int): AssistEvent? {
-            // Cheap pre-filter: skip frames not for our run before paying for full decode.
-            // Without this, state_changed subscription frames (id=2, event_type-shaped
-            // payload) would be decoded as AssistPipelineFrame and throw on the nested
-            // event { type } that doesn't exist there, killing the whole assist run.
+            // Defensive check: the transport already routes by run id, so a mismatch
+            // should not happen. Keep it so a frame for another command (for example
+            // a state_changed event, whose payload has no nested event { type }) is
+            // never decoded as an AssistPipelineFrame.
             val frameId = (frame["id"] as? JsonPrimitive)?.intOrNull
             if (frameId != runId) {
                 return null
@@ -418,7 +420,7 @@ class HaAssistClient internal constructor(
 }
 
 internal interface HaAssistTransport {
-    val rawFrames: Flow<JsonObject>
+    fun frames(id: Int): Flow<JsonObject>
 
     fun nextCommandId(): Int
 
@@ -430,7 +432,7 @@ internal interface HaAssistTransport {
 private class HaWebSocketTransport(
     private val ws: HaWebSocketClient,
 ) : HaAssistTransport {
-    override val rawFrames: Flow<JsonObject> = ws.rawFrames
+    override fun frames(id: Int): Flow<JsonObject> = ws.frames(id)
 
     override fun nextCommandId(): Int = ws.nextCommandId()
 

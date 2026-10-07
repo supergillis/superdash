@@ -354,7 +354,7 @@ class HaAssistRunPipelineContractTest {
         private val nextId = AtomicInteger(42)
         private var runId: Int = -1
 
-        override val rawFrames: Flow<JsonObject> = frames
+        override fun frames(id: Int): Flow<JsonObject> = frames.onlyFramesWithId(id)
 
         override fun nextCommandId(): Int = nextId.incrementAndGet()
 

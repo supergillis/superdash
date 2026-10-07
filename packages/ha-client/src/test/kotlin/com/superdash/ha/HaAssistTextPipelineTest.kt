@@ -60,7 +60,7 @@ class HaAssistTextPipelineTest {
         private val frames = MutableSharedFlow<JsonObject>()
         val sent = mutableListOf<JsonObject>()
 
-        override val rawFrames: Flow<JsonObject> = frames
+        override fun frames(id: Int): Flow<JsonObject> = frames.onlyFramesWithId(id)
 
         override fun nextCommandId(): Int = 7
 

@@ -9,24 +9,26 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.update
@@ -38,14 +40,19 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.int
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
 
 private const val PING_INTERVAL_MS = 30_000L
 private const val PONG_TIMEOUT_MS = 10_000L
+private const val PROBE_PONG_TIMEOUT_MS = 5_000L
 private const val COMMAND_RESULT_TIMEOUT_MS = 15_000L
 private const val RECENT_EVENTS_CAP = 50
 private const val MAX_BACKOFF_MS = 30_000L
@@ -62,11 +69,14 @@ class HaWebSocketClient(
     private val haUrl: StateFlow<String?>,
     private val tokens: HaTokenProvider,
     private val httpClient: HttpClient,
+    context: CoroutineContext = Dispatchers.IO,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // A Job in the injected context would replace the SupervisorJob and let one failed child cancel the scope.
+    private val scope = CoroutineScope(SupervisorJob() + context.minusKey(Job))
     private val json = haJson
     private val nextId = AtomicInteger(1)
     private val reconnectSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val probeRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private var loopJob: Job? = null
 
     // Job refs are written from multiple coroutines (reconnect loop, URL-change
@@ -77,6 +87,7 @@ class HaWebSocketClient(
     private val pongs = MutableSharedFlow<Int>(extraBufferCapacity = 8)
 
     private val runConnectionJobRef = AtomicReference<Job?>(null)
+    private val reconnectRequested = AtomicBoolean(false)
     private val _state = MutableStateFlow<HaConnectionState>(HaConnectionState.Disconnected)
     private val _entities = MutableStateFlow<Map<String, EntityState>>(emptyMap())
     private val _areas = MutableStateFlow<Map<String, HaArea>>(emptyMap())
@@ -92,12 +103,7 @@ class HaWebSocketClient(
     private val recentEventsLock = Any()
     private val _recentEvents = MutableStateFlow<List<String>>(emptyList())
     private val _activeSession = MutableStateFlow<WebSocketSession?>(null)
-    private val _rawFrames =
-        MutableSharedFlow<JsonObject>(
-            replay = 0,
-            extraBufferCapacity = 64,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        )
+    private val routes = ConcurrentHashMap<Int, Channel<JsonObject>>()
 
     val state: StateFlow<HaConnectionState> = _state.asStateFlow()
     val entities: StateFlow<Map<String, EntityState>> = _entities.asStateFlow()
@@ -106,9 +112,32 @@ class HaWebSocketClient(
     val deviceRegistry: StateFlow<Map<String, HaDeviceRegistryEntry>> = _deviceRegistry.asStateFlow()
     val voiceExposure: StateFlow<HaVoiceExposureSnapshot> = _voiceExposure.asStateFlow()
     val recentEvents: StateFlow<List<String>> = _recentEvents.asStateFlow()
-    val rawFrames: SharedFlow<JsonObject> = _rawFrames.asSharedFlow()
 
     fun nextCommandId(): Int = nextId.getAndIncrement()
+
+    /** Frames carrying command [id], in arrival order, none dropped. The route is
+     *  registered when collection starts and removed when it completes or is
+     *  cancelled. Only one collector per id. */
+    fun frames(id: Int): Flow<JsonObject> =
+        flow {
+            val route = Channel<JsonObject>(Channel.UNLIMITED)
+            check(routes.putIfAbsent(id, route) == null) { "HaWs: id $id already has a collector" }
+            try {
+                emitAll(route)
+            } finally {
+                routes.remove(id, route)
+                route.cancel()
+            }
+        }
+
+    /** Delivers [frame] to the collector registered for its id; frames with no
+     *  id or no owner (state_changed events, stale replies) are dropped. */
+    internal fun routeFrame(frame: JsonObject) {
+        val frameId = (frame["id"] as? JsonPrimitive)?.intOrNull ?: return
+        routes[frameId]?.trySend(frame)
+    }
+
+    internal val activeRouteCountForTest: Int get() = routes.size
 
     /** Throws if not connected; caller should observe state.value. */
     suspend fun send(payload: JsonObject) {
@@ -124,10 +153,9 @@ class HaWebSocketClient(
     /** Issue an HA WebSocket command and await the matching `result` frame.
      *
      *  Allocates a fresh command id, frames `{id, type, ...params}`, and waits
-     *  for a `result`-typed frame on [rawFrames] with the same id. Subscribe-
-     *  before-send is gated via `onSubscription` so a synchronous reply
-     *  does not race the collector. `rawFrames` is replay=0 and would
-     *  otherwise drop a fast result. Throws if not connected. */
+     *  for a `result`-typed frame on [frames] with the same id. The route is
+     *  registered before the command is sent so a synchronous reply cannot
+     *  be missed. Throws if not connected. */
     suspend fun callResult(
         type: String,
         params: JsonObjectBuilder.() -> Unit = {},
@@ -140,18 +168,24 @@ class HaWebSocketClient(
                 params()
             }
         return try {
-            withTimeout(COMMAND_RESULT_TIMEOUT_MS) {
-                rawFrames
-                    .onSubscription { send(framed) }
-                    .first { frame ->
-                        frame["id"]?.jsonPrimitive?.int == commandId &&
-                            frame["type"]?.jsonPrimitive?.content == "result"
-                    }
-            }
+            awaitResult(commandId) { send(framed) }
         } catch (t: TimeoutCancellationException) {
             throw HaCommandTimeoutException(type, commandId)
         }
     }
+
+    internal suspend fun awaitResult(
+        commandId: Int,
+        sendCommand: suspend () -> Unit,
+    ): JsonObject =
+        withTimeout(COMMAND_RESULT_TIMEOUT_MS) {
+            val result =
+                async(start = CoroutineStart.UNDISPATCHED) {
+                    frames(commandId).first { frame -> frame["type"]?.jsonPrimitive?.content == "result" }
+                }
+            sendCommand()
+            result.await()
+        }
 
     /** Throws if not connected. */
     suspend fun sendBinary(bytes: ByteArray) {
@@ -188,7 +222,7 @@ class HaWebSocketClient(
             .drop(1)
             .collect { newUrl ->
                 log.i("HA URL changed; forcing reconnect", "url" to (newUrl ?: "<null>"))
-                runConnectionJobRef.get()?.cancel(UrlChangedCancellation())
+                requestReconnect("HA URL changed")
                 reconnectSignal.tryEmit(Unit)
             }
     }
@@ -199,8 +233,27 @@ class HaWebSocketClient(
         _state.value = HaConnectionState.Disconnected
     }
 
-    fun forceReconnect() {
+    /** Cheap liveness check for callers that fire often (token saves, network
+     *  callbacks). While connected it pings and drops the socket only if no
+     *  pong arrives in time; while waiting to reconnect it wakes the loop. */
+    fun checkConnection() {
+        probeRequests.tryEmit(Unit)
         reconnectSignal.tryEmit(Unit)
+    }
+
+    /** Drops the live connection and reconnects. Healthy sockets are cut too,
+     *  so routine callers use [checkConnection] instead. */
+    fun forceReconnect() {
+        requestReconnect("reconnect requested")
+        reconnectSignal.tryEmit(Unit)
+    }
+
+    /** Cancels the in-flight connection job and tells the loop to reconnect at
+     *  once instead of treating the end of the connection as a failure. */
+    private fun requestReconnect(reason: String) {
+        val job = runConnectionJobRef.get() ?: return
+        reconnectRequested.set(true)
+        job.cancel(CancellationException(reason))
     }
 
     private suspend fun reconnectLoop() {
@@ -213,9 +266,15 @@ class HaWebSocketClient(
                 continue
             }
             _state.value = HaConnectionState.Connecting
+            reconnectRequested.set(false)
             try {
                 runConnectionTracked(url)
+                _state.value = HaConnectionState.Connecting
                 delayMs = 1_000L
+                if (reconnectRequested.getAndSet(false)) {
+                    log.i("connection cancelled for reconnect")
+                    continue
+                }
             } catch (t: NotAuthenticatedExceptionWrapper) {
                 log.w("not authenticated; awaiting reconnect signal")
                 _state.value = HaConnectionState.NeedsReauth("not authenticated")
@@ -232,13 +291,6 @@ class HaWebSocketClient(
                 continue
             } catch (t: Throwable) {
                 if (t is CancellationException) {
-                    // A URL change cancels the in-flight connection job but must not
-                    // tear down the outer reconnect loop. Other CancellationException
-                    // values come from a real disconnect() and must propagate.
-                    if (isUrlChangedCancellation(t)) {
-                        log.i("connection cancelled for URL change")
-                        continue
-                    }
                     throw t
                 }
                 log.w("connection failed", t)
@@ -267,9 +319,6 @@ class HaWebSocketClient(
         }
     }
 
-    private fun isUrlChangedCancellation(t: CancellationException): Boolean =
-        t is UrlChangedCancellation || t.cause is UrlChangedCancellation
-
     private suspend fun runConnection(baseUrl: String) {
         val wsUrl = "${baseUrl.replace("http://", "ws://").replace("https://", "wss://")}/api/websocket"
         httpClient.webSocket({ url(wsUrl) }) {
@@ -291,35 +340,37 @@ class HaWebSocketClient(
                     val pingJob =
                         launch {
                             runPingLoop(
-                                // The ping is sent from awaitPong's onSubscription so the
-                                // pong collector is attached before the ping goes out. Sending
-                                // in sendPing (before subscribing) lets a fast pong land while
-                                // pongs has replay=0 and no collector, causing a spurious
-                                // timeout/disconnect. Mirrors runPingLoopForTest.
-                                sendPing = { /* sent via onSubscription below */ },
-                                awaitPong = { pingId ->
-                                    pongs
-                                        .onSubscription { session.sendCommand(PingCommand(pingId)) }
-                                        .first { it == pingId }
-                                },
-                                onTimeout = { pingId ->
-                                    log.w("ping timed out; closing websocket", null, "pingId" to pingId)
-                                    session.cancel(CancellationException("HA websocket ping timed out"))
-                                },
+                                awaitPong = { pingId -> awaitPong(session, pingId) },
+                                onTimeout = { pingId -> closeDeadSocket(session, "ping", pingId) },
                             )
                         }
                     pingJobRef.set(pingJob)
+                    val probeJob =
+                        launch {
+                            serveProbes(
+                                awaitPong = { pingId -> awaitPong(session, pingId) },
+                                onTimeout = { pingId -> closeDeadSocket(session, "probe", pingId) },
+                            )
+                        }
                     try {
                         receiveLoop()
                     } finally {
                         pingJobRef.compareAndSet(pingJob, null)
                         pingJob.cancel()
+                        probeJob.cancel()
                     }
                 }
             } finally {
                 _activeSession.value = null
+                closeOpenRoutes()
             }
         }
+    }
+
+    /** Fails every waiting [frames] collector so callers see a dropped socket
+     *  immediately instead of waiting out their own timeout. */
+    internal fun closeOpenRoutes() {
+        routes.values.forEach { route -> route.close(IOException("connection closed")) }
     }
 
     private suspend fun WebSocketSession.handshake() {
@@ -494,7 +545,6 @@ class HaWebSocketClient(
     /** Drives the websocket keepalive. Pure suspend: the caller owns the
      *  coroutine, so the loop ends when its enclosing scope is cancelled. */
     internal suspend fun runPingLoop(
-        sendPing: suspend (pingId: Int) -> Unit,
         awaitPong: suspend (pingId: Int) -> Unit,
         onTimeout: (pingId: Int) -> Unit,
         pingIntervalMs: Long = PING_INTERVAL_MS,
@@ -502,17 +552,59 @@ class HaWebSocketClient(
     ) {
         while (true) {
             delay(pingIntervalMs)
-            val pingId = nextId.getAndIncrement()
-            sendPing(pingId)
-            val gotPong =
-                withTimeoutOrNull(pongTimeoutMs) {
-                    awaitPong(pingId)
-                }
-            if (gotPong == null) {
-                onTimeout(pingId)
+            if (!pingOnce(awaitPong, onTimeout, pongTimeoutMs)) {
                 break
             }
         }
+    }
+
+    /** Answers each [checkConnection] request with one liveness ping outside
+     *  the keepalive schedule, one at a time. Runs until its scope is cancelled. */
+    internal suspend fun serveProbes(
+        awaitPong: suspend (pingId: Int) -> Unit,
+        onTimeout: (pingId: Int) -> Unit,
+        pongTimeoutMs: Long = PROBE_PONG_TIMEOUT_MS,
+    ) {
+        probeRequests.collect {
+            pingOnce(awaitPong, onTimeout, pongTimeoutMs)
+        }
+    }
+
+    private fun closeDeadSocket(
+        session: WebSocketSession,
+        source: String,
+        pingId: Int,
+    ) {
+        log.w("no pong; closing websocket", null, "source" to source, "pingId" to pingId)
+        session.cancel(CancellationException("HA websocket $source timed out"))
+    }
+
+    private suspend fun pingOnce(
+        awaitPong: suspend (pingId: Int) -> Unit,
+        onTimeout: (pingId: Int) -> Unit,
+        pongTimeoutMs: Long,
+    ): Boolean {
+        val pingId = nextId.getAndIncrement()
+        val gotPong =
+            withTimeoutOrNull(pongTimeoutMs) {
+                awaitPong(pingId)
+            }
+        if (gotPong == null) {
+            onTimeout(pingId)
+        }
+        return gotPong != null
+    }
+
+    // The ping is sent from onSubscription so the pong collector is attached
+    // before the ping goes out. Sending first lets a fast pong land while pongs
+    // has replay=0 and no collector, causing a spurious timeout and disconnect.
+    private suspend fun awaitPong(
+        session: WebSocketSession,
+        pingId: Int,
+    ) {
+        pongs
+            .onSubscription { session.sendCommand(PingCommand(pingId)) }
+            .first { it == pingId }
     }
 
     private suspend fun WebSocketSession.receiveLoop() {
@@ -524,7 +616,7 @@ class HaWebSocketClient(
             recordRecent("← $text")
             val rawObj = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull()
             if (rawObj != null) {
-                _rawFrames.emit(rawObj)
+                routeFrame(rawObj)
             }
             val parsed =
                 runCatching { json.decodeFromString<HaWsFrame>(text) }.getOrNull()
@@ -601,8 +693,8 @@ class HaWebSocketClient(
         pongTimeoutMs: Long = 50L,
     ) {
         runPingLoop(
-            sendPing = { pingId -> sendPing(pingId) },
             awaitPong = { pingId ->
+                sendPing(pingId)
                 pongs
                     .onSubscription { respond(pingId) }
                     .first { it == pingId }
@@ -622,10 +714,6 @@ class HaWebSocketClient(
     internal class NotAuthenticatedExceptionWrapper(
         cause: Throwable,
     ) : Exception(cause)
-
-    /** Internal cancellation reason used to distinguish a URL-driven cancel
-     *  (loop continues) from disconnect()/scope cancel (loop tears down). */
-    private class UrlChangedCancellation : CancellationException("HA URL changed")
 }
 
 class AuthInvalidException(

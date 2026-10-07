@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/supergillis/superdash/compare/v1.1.0...v1.1.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **ha-client:** route websocket frames by id and probe dead sockets ([#79](https://github.com/supergillis/superdash/issues/79)) ([b6b4163](https://github.com/supergillis/superdash/commit/b6b41639d067d0aaff867058c02bc4617e5c7975))
+* **kiosk:** make start on boot and launch on wake actually launch ([#77](https://github.com/supergillis/superdash/issues/77)) ([ec4e56d](https://github.com/supergillis/superdash/commit/ec4e56d7826bbe238ffb7b3b06e5514d622c2baa))
+
 ## [1.1.0](https://github.com/supergillis/superdash/compare/v1.0.0...v1.1.0) (2026-10-06)
 
 

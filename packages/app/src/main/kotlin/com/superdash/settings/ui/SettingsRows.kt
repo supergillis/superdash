@@ -32,6 +32,7 @@ fun SettingsValueRow(
     value: String,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    warningText: String? = null,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,
 ) {
@@ -44,6 +45,13 @@ fun SettingsValueRow(
                     Text(
                         supportingText,
                         style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                if (warningText != null) {
+                    Text(
+                        warningText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
             }
@@ -66,6 +74,7 @@ fun SettingsTextEditRow(
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    warningText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
     visualTransformation: VisualTransformation = VisualTransformation.None,
@@ -78,6 +87,7 @@ fun SettingsTextEditRow(
         value = value,
         modifier = modifier,
         supportingText = supportingText,
+        warningText = warningText,
         onClick = { editing = true },
     )
 
@@ -106,13 +116,27 @@ fun SettingsSwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    warningText: String? = null,
     enabled: Boolean = true,
 ) {
     ListItem(
         headlineContent = { Text(label) },
         supportingContent =
-            if (supportingText != null) {
-                { Text(supportingText) }
+            if (supportingText != null || warningText != null) {
+                {
+                    Column {
+                        if (supportingText != null) {
+                            Text(supportingText)
+                        }
+                        if (warningText != null) {
+                            Text(
+                                warningText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                }
             } else {
                 null
             },

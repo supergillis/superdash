@@ -7,6 +7,7 @@ import com.superdash.immich.ImmichAsset
 import com.superdash.immich.ImmichAssetOrientation
 import com.superdash.immich.ImmichCatalogEntry
 import com.superdash.immich.formattedLocation
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,6 +21,7 @@ import kotlin.random.Random
 private val log = Log("ImmichSource")
 
 private const val DEFAULT_CATALOG_TTL_MS = 24L * 60 * 60 * 1000
+private const val MAX_REFRESH_RETRY_DELAY_MS = 15L * 60 * 1000
 private const val IMMICH_IMAGE = "IMAGE"
 private const val IMMICH_VIDEO = "VIDEO"
 private const val ENRICHMENT_CACHE_SIZE = 16
@@ -51,6 +53,7 @@ class ImmichSlideshowSource(
     private var shuffledIndices: IntArray = IntArray(0)
     private var cursor: Int = 0
     private var catalogFetchedAtMs: Long = 0L
+    private var lastFailedRefreshAtMs: Long? = null
     private var resolvedAlbumId: String? = null
     private var loadedFromDisk: Boolean = false
 
@@ -181,10 +184,23 @@ class ImmichSlideshowSource(
                 catalogStore.clear()
             }
         }
-        if (catalog.isEmpty() || isStale()) {
-            runCatching { refreshCatalogLocked() }
-                .onFailure { log.e("background catalog refresh failed", it) }
+        if (catalog.isEmpty() || (isStale() && !isInRefreshBackoff())) {
+            try {
+                refreshCatalogLocked()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                lastFailedRefreshAtMs = now()
+                log.e("background catalog refresh failed", e)
+            }
         }
+    }
+
+    // Stops a failing server from being hit on every next(). Only used while a
+    // catalog is on screen, so an empty catalog still recovers on the next slide.
+    private fun isInRefreshBackoff(): Boolean {
+        val failedAtMs = lastFailedRefreshAtMs ?: return false
+        return now() - failedAtMs < minOf(catalogTtlMs(), MAX_REFRESH_RETRY_DELAY_MS)
     }
 
     private fun isStale(): Boolean = now() - catalogFetchedAtMs > catalogTtlMs()
@@ -241,7 +257,7 @@ class ImmichSlideshowSource(
             url = mediaUrl(entry),
             requestHeaders = mediaHeaders(entry),
             title = asset.originalFileName,
-            date = Instant.ofEpochMilli(asset.fileCreatedAt.toEpochMilliseconds()),
+            date = asset.fileCreatedAt?.let { Instant.ofEpochMilli(it.toEpochMilliseconds()) },
             locationLabel = asset.exifInfo?.formattedLocation,
         )
     }

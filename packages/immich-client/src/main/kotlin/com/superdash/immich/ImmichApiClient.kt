@@ -17,8 +17,14 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
+import java.io.IOException
 
 private val log = Log("ImmichApi")
+
+class ImmichHttpException(
+    val statusCode: Int,
+    val endpoint: String,
+) : IOException("immich $endpoint returned $statusCode")
 
 class ImmichApiClient(
     private val httpClient: HttpClient,
@@ -53,7 +59,7 @@ class ImmichApiClient(
         var page: String? = "1"
         var pagesFetched = 0
         while (page != null) {
-            val response = fetchPageWithRetry(page, albumId) ?: break
+            val response = fetchPageWithRetry(page, albumId)
             out += response.assets.items
             pagesFetched++
             // Guard against a misbehaving server that returns a non-null nextPage
@@ -71,23 +77,26 @@ class ImmichApiClient(
     private suspend fun fetchPageWithRetry(
         page: String,
         albumId: String?,
-    ): ImmichSearchPage? {
-        var lastError: Exception? = null
-        repeat(CATALOG_PAGE_ATTEMPTS) { attempt ->
+    ): ImmichSearchPage {
+        var attempt = 1
+        while (true) {
             try {
                 return fetchSearchPage(page, albumId)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                lastError = e
-                if (attempt < CATALOG_PAGE_ATTEMPTS - 1) {
-                    sleep(CATALOG_PAGE_RETRY_DELAY_MS)
+                if (e.isAuthFailure() || attempt >= CATALOG_PAGE_ATTEMPTS) {
+                    log.w("catalog page failed", e, "page" to page, "attempt" to attempt)
+                    throw e
                 }
+                attempt++
+                sleep(CATALOG_PAGE_RETRY_DELAY_MS)
             }
         }
-        log.w("catalog page failed after retries", lastError, "page" to page)
-        return null
     }
+
+    private fun Exception.isAuthFailure(): Boolean =
+        this is ImmichHttpException && statusCode in AUTH_FAILURE_STATUS_CODES
 
     private suspend fun fetchSearchPage(
         page: String,
@@ -111,17 +120,15 @@ class ImmichApiClient(
                     },
                 )
             }
-        if (response.status.value !in 200..299) {
-            throw IllegalStateException("search/metadata returned ${response.status.value}")
-        }
-        return response.body()
+        return response.requireSuccess("/api/search/metadata").body()
     }
 
-    suspend fun getAsset(id: String): ImmichAsset =
-        authGet("/api/assets/$id").body()
+    suspend fun getAsset(id: String): ImmichAsset {
+        val path = "/api/assets/$id"
+        return authGet(path).requireSuccess(path).body()
+    }
 
-    suspend fun listAlbums(): List<ImmichAlbum> =
-        authGet("/api/albums").body<List<ImmichAlbum>>()
+    suspend fun listAlbums(): List<ImmichAlbum> = authGet("/api/albums").requireSuccess("/api/albums").body()
 
     suspend fun getAlbumByName(name: String): ImmichAlbum? =
         listAlbums().find { it.albumName.equals(name, ignoreCase = true) }
@@ -186,6 +193,13 @@ class ImmichApiClient(
             .getOrElse { false }
     }
 
+    private fun HttpResponse.requireSuccess(endpoint: String): HttpResponse {
+        if (status.value !in 200..299) {
+            throw ImmichHttpException(status.value, endpoint)
+        }
+        return this
+    }
+
     private suspend fun authGet(path: String): HttpResponse =
         httpClient.get {
             url("$baseUrl$path")
@@ -204,6 +218,7 @@ class ImmichApiClient(
         const val CATALOG_PAGE_SIZE = 1000
         const val CATALOG_PAGE_ATTEMPTS = 3
         const val CATALOG_PAGE_RETRY_DELAY_MS = 1_000L
+        val AUTH_FAILURE_STATUS_CODES = setOf(401, 403)
 
         // Hard cap on pagination loops. At 1000 assets/page this admits 200k assets,
         // far beyond a realistic slideshow library. Guards against a misbehaving server

@@ -10,6 +10,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import io.ktor.serialization.JsonConvertException
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +23,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.reflect.KClass
+import kotlin.time.Instant
 
 class ImmichApiClientTest {
     private val json = coreJson
@@ -174,30 +177,182 @@ class ImmichApiClientTest {
             assertEquals(2_000L, sleepMs) // two 1s sleeps between three attempts
         }
 
+    private data class PageFailureCase(
+        val name: String,
+        val responses: List<MockResponse>,
+        val expectedCalls: Int,
+        val expectedStatusCode: Int?,
+        val expectedFailure: KClass<out Throwable>,
+    )
+
+    private data class MockResponse(
+        val status: HttpStatusCode,
+        val body: String,
+    )
+
+    private val pageOne =
+        MockResponse(
+            HttpStatusCode.OK,
+            """{"assets":{"items":[{"id":"a","type":"IMAGE","originalFileName":"a.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":"2"}}""",
+        )
+    private val serverError = MockResponse(HttpStatusCode.InternalServerError, "boom")
+    private val malformedPage = MockResponse(HttpStatusCode.OK, """{"assets":{"items":[{"id":""")
+
+    private fun clientReplying(
+        calls: MutableList<String>,
+        respondTo: (String, Int) -> MockResponse,
+    ): ImmichApiClient {
+        val engine =
+            MockEngine { request ->
+                calls += request.url.encodedPath
+                val reply = respondTo(request.url.encodedPath, calls.size)
+                respond(
+                    content = reply.body,
+                    status = reply.status,
+                    headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                )
+            }
+        return ImmichApiClient(
+            HttpClient(engine) { install(ContentNegotiation) { json() } },
+            "http://immich",
+            "key",
+            sleep = {},
+        )
+    }
+
     @Test
-    fun `listCatalog aborts after 3 failed attempts on a page and returns partial`() =
-        runTest {
-            var calls = 0
-            val engine =
-                MockEngine { _ ->
-                    calls++
-                    if (calls == 1) {
-                        respond(
-                            content = """{"assets":{"items":[{"id":"a","type":"IMAGE","originalFileName":"a.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":"2"}}""",
-                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
-                        )
-                    } else {
-                        respond("boom", status = HttpStatusCode.InternalServerError)
+    fun `listCatalog throws instead of returning a partial catalog when a page fails`() {
+        listOf(
+            PageFailureCase(
+                "first page fails every attempt",
+                listOf(serverError),
+                expectedCalls = 3,
+                expectedStatusCode = 500,
+                expectedFailure = ImmichHttpException::class,
+            ),
+            PageFailureCase(
+                "second page fails every attempt",
+                listOf(pageOne, serverError),
+                expectedCalls = 1 + 3,
+                expectedStatusCode = 500,
+                expectedFailure = ImmichHttpException::class,
+            ),
+            PageFailureCase(
+                "second page is malformed json",
+                listOf(pageOne, malformedPage),
+                expectedCalls = 1 + 3,
+                expectedStatusCode = null,
+                expectedFailure = JsonConvertException::class,
+            ),
+            PageFailureCase(
+                "second page is unauthorized",
+                listOf(pageOne, MockResponse(HttpStatusCode.Unauthorized, "no")),
+                expectedCalls = 1 + 1,
+                expectedStatusCode = 401,
+                expectedFailure = ImmichHttpException::class,
+            ),
+        ).forEach { case ->
+            runTest {
+                val calls = mutableListOf<String>()
+                val client =
+                    clientReplying(calls) { _, callNumber ->
+                        case.responses[(callNumber - 1).coerceAtMost(case.responses.lastIndex)]
                     }
-                }
-            val httpClient = HttpClient(engine) { install(ContentNegotiation) { json() } }
-            val client = ImmichApiClient(httpClient, "http://immich", "key", sleep = {})
 
-            val catalog = client.listCatalog()
+                val failure = runCatching { client.listCatalog() }.exceptionOrNull()
 
-            assertEquals(listOf("a"), catalog.map { it.id })
-            assertEquals(1 + 3, calls) // page 1 once + page 2 attempted 3 times
+                assertEquals(case.name, case.expectedCalls, calls.size)
+                assertEquals(case.name, case.expectedStatusCode, (failure as? ImmichHttpException)?.statusCode)
+                assertEquals(case.name, case.expectedFailure, failure?.let { it::class })
+            }
         }
+    }
+
+    @Test
+    fun `listCatalog returns every page when a later page fails once and then succeeds`() =
+        runTest {
+            val lastPage =
+                MockResponse(
+                    HttpStatusCode.OK,
+                    """{"assets":{"items":[{"id":"b","type":"VIDEO","originalFileName":"b.mp4","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":null}}""",
+                )
+            val replies = listOf(pageOne, serverError, lastPage)
+            val client = clientReplying(mutableListOf()) { _, callNumber -> replies[callNumber - 1] }
+
+            assertEquals(listOf("a", "b"), client.listCatalog().map { it.id })
+        }
+
+    private data class StatusCase(
+        val operation: String,
+        val status: HttpStatusCode,
+        val expectedCalls: Int,
+    )
+
+    @Test
+    fun `non success responses throw ImmichHttpException and only 401 and 403 skip retries`() {
+        val operations: Map<String, suspend (ImmichApiClient) -> Any?> =
+            mapOf(
+                "getAsset" to { client -> client.getAsset("some-id") },
+                "listAlbums" to { client -> client.listAlbums() },
+                "getAlbumByName" to { client -> client.getAlbumByName("Screensaver") },
+                "listCatalog" to { client -> client.listCatalog() },
+            )
+        listOf(
+            StatusCase("getAsset", HttpStatusCode.Unauthorized, expectedCalls = 1),
+            StatusCase("getAsset", HttpStatusCode.Forbidden, expectedCalls = 1),
+            StatusCase("getAsset", HttpStatusCode.NotFound, expectedCalls = 1),
+            StatusCase("getAsset", HttpStatusCode.InternalServerError, expectedCalls = 1),
+            StatusCase("listAlbums", HttpStatusCode.Unauthorized, expectedCalls = 1),
+            StatusCase("listAlbums", HttpStatusCode.Forbidden, expectedCalls = 1),
+            StatusCase("listAlbums", HttpStatusCode.NotFound, expectedCalls = 1),
+            StatusCase("listAlbums", HttpStatusCode.InternalServerError, expectedCalls = 1),
+            StatusCase("getAlbumByName", HttpStatusCode.Unauthorized, expectedCalls = 1),
+            StatusCase("getAlbumByName", HttpStatusCode.Forbidden, expectedCalls = 1),
+            StatusCase("getAlbumByName", HttpStatusCode.NotFound, expectedCalls = 1),
+            StatusCase("getAlbumByName", HttpStatusCode.InternalServerError, expectedCalls = 1),
+            StatusCase("listCatalog", HttpStatusCode.Unauthorized, expectedCalls = 1),
+            StatusCase("listCatalog", HttpStatusCode.Forbidden, expectedCalls = 1),
+            StatusCase("listCatalog", HttpStatusCode.NotFound, expectedCalls = 3),
+            StatusCase("listCatalog", HttpStatusCode.InternalServerError, expectedCalls = 3),
+        ).forEach { case ->
+            runTest {
+                val calls = mutableListOf<String>()
+                val client = clientReplying(calls) { _, _ -> MockResponse(case.status, "nope") }
+
+                val failure = runCatching { operations.getValue(case.operation)(client) }.exceptionOrNull()
+
+                val label = "${case.operation} ${case.status.value}"
+                assertEquals(label, case.status.value, (failure as? ImmichHttpException)?.statusCode)
+                assertEquals(label, case.expectedCalls, calls.size)
+            }
+        }
+    }
+
+    private data class FileCreatedAtCase(
+        val name: String,
+        val fileCreatedAtJson: String,
+        val expected: Instant?,
+    )
+
+    @Test
+    fun `asset decodes when fileCreatedAt is missing or null`() {
+        listOf(
+            FileCreatedAtCase("missing", "", null),
+            FileCreatedAtCase("null", ""","fileCreatedAt":null""", null),
+            FileCreatedAtCase(
+                "valid",
+                ""","fileCreatedAt":"2024-05-06T07:08:09Z"""",
+                Instant.parse("2024-05-06T07:08:09Z"),
+            ),
+        ).forEach { case ->
+            val asset =
+                json.decodeFromString<ImmichAsset>(
+                    """{"id":"a","type":"IMAGE","originalFileName":"a.jpg"${case.fileCreatedAtJson}}""",
+                )
+
+            assertEquals(case.name, case.expected, asset.fileCreatedAt)
+        }
+    }
 
     @Test
     fun `listCatalog for album fetches via search-metadata with albumIds filter and paginates`() =

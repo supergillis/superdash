@@ -56,7 +56,6 @@ Owns:
 - WebSocket client.
 - Assist client.
 - Media source client.
-- WebView bridge.
 
 Start with:
 

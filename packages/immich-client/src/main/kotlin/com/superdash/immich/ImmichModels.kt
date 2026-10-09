@@ -9,7 +9,7 @@ data class ImmichAsset(
     val id: String,
     val type: String,
     val originalFileName: String,
-    val fileCreatedAt: Instant,
+    val fileCreatedAt: Instant? = null,
     val dateTimeOriginal: Instant? = null,
     val isFavorite: Boolean = false,
     val exifInfo: ImmichExif? = null,

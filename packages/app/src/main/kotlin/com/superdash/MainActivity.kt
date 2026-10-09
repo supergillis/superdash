@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.webkit.WebView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
@@ -31,7 +32,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.superdash.camera.CameraAvailability
 import com.superdash.core.log.Log
 import com.superdash.ha.HaOAuthInterceptor
-import com.superdash.ha.JsBridge
 import com.superdash.ha.exchangeAndSaveAuthCode
 import com.superdash.kiosk.BatteryOptimizationPrompt
 import com.superdash.kiosk.KioskService
@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var graph: AppGraph
     private lateinit var eventBus: KioskEventBus
     private lateinit var kioskWindow: KioskWindowController
-    private val jsBridge = JsBridge()
+    private var dashboardWebView: WebView? = null
     private lateinit var oauthInterceptor: HaOAuthInterceptor
     private lateinit var tapDetector: GestureDetector
 
@@ -137,7 +137,12 @@ class MainActivity : AppCompatActivity() {
                 MainScreen(
                     viewModel = mainViewModel,
                     oauthInterceptor = oauthInterceptor,
-                    bridge = jsBridge,
+                    onWebViewCreated = { dashboardWebView = it },
+                    onWebViewReleased = { released ->
+                        if (dashboardWebView === released) {
+                            dashboardWebView = null
+                        }
+                    },
                     screensaverContent = screensaverContent,
                     bearerTokenProvider = bearerTokenProvider,
                     fetchHlsUrl = fetchHlsUrl,
@@ -177,12 +182,21 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 queue.commands.collect { command ->
                     when (command) {
-                        is ActivityCommand.RefreshWebView -> jsBridge.send("""{"type":"reload"}""")
+                        is ActivityCommand.RefreshWebView -> reloadDashboard()
                         is ActivityCommand.RestartApp -> restartAppFromActivity()
                     }
                 }
             }
         }
+    }
+
+    private fun reloadDashboard() {
+        val webView = dashboardWebView
+        if (webView == null) {
+            log.w("reload dropped, no dashboard WebView")
+            return
+        }
+        webView.reload()
     }
 
     override fun onResume() {
@@ -285,7 +299,8 @@ class MainActivity : AppCompatActivity() {
 private fun MainScreen(
     viewModel: MainViewModel,
     oauthInterceptor: HaOAuthInterceptor,
-    bridge: JsBridge,
+    onWebViewCreated: (WebView) -> Unit,
+    onWebViewReleased: (WebView) -> Unit,
     screensaverContent: @Composable () -> Unit,
     bearerTokenProvider: suspend () -> String?,
     fetchHlsUrl: suspend (String) -> String,
@@ -305,7 +320,8 @@ private fun MainScreen(
     MainContent(
         state = state,
         oauthInterceptor = oauthInterceptor,
-        bridge = bridge,
+        onWebViewCreated = onWebViewCreated,
+        onWebViewReleased = onWebViewReleased,
         screensaverContent = screensaverContent,
         bearerTokenProvider = bearerTokenProvider,
         fetchHlsUrl = fetchHlsUrl,
@@ -321,7 +337,8 @@ private fun MainScreen(
 private fun MainContent(
     state: MainUiState,
     oauthInterceptor: HaOAuthInterceptor,
-    bridge: JsBridge,
+    onWebViewCreated: (WebView) -> Unit,
+    onWebViewReleased: (WebView) -> Unit,
     screensaverContent: @Composable () -> Unit,
     bearerTokenProvider: suspend () -> String?,
     fetchHlsUrl: suspend (String) -> String,
@@ -356,7 +373,8 @@ private fun MainContent(
                 MainKioskContent(
                     state = state,
                     oauthInterceptor = oauthInterceptor,
-                    bridge = bridge,
+                    onWebViewCreated = onWebViewCreated,
+                    onWebViewReleased = onWebViewReleased,
                     onSubmitUrl = onSubmitUrl,
                 )
             },
@@ -388,7 +406,8 @@ private fun MainContent(
 private fun MainKioskContent(
     state: MainUiState,
     oauthInterceptor: HaOAuthInterceptor,
-    bridge: JsBridge,
+    onWebViewCreated: (WebView) -> Unit,
+    onWebViewReleased: (WebView) -> Unit,
     onSubmitUrl: (String) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -408,7 +427,8 @@ private fun MainKioskContent(
                         dashboardPath = state.dashboardPath,
                         tokens = state.tokens,
                         oauthInterceptor = oauthInterceptor,
-                        bridge = bridge,
+                        onWebViewCreated = onWebViewCreated,
+                        onWebViewReleased = onWebViewReleased,
                         modifier = Modifier.fillMaxSize(),
                     )
             }

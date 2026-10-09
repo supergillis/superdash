@@ -48,34 +48,6 @@ iframe#ha {
     }
     sizeIframe();
     window.addEventListener("resize", sizeIframe);
-
-    // Relay the WebMessagePort that Kotlin posts to the top-level shell
-    // into the HA iframe. The iframe is same-origin with the shell, so
-    // postMessage targeted at "*" inside this same-origin scope is fine.
-    window.addEventListener("message", function (event) {
-        if (event.data !== "__superdash_init__") {
-            return;
-        }
-        if (!event.ports || !event.ports[0]) {
-            return;
-        }
-        if (event.source === iframe.contentWindow) {
-            return;
-        }
-        var port = event.ports[0];
-        var deliver = function () {
-            try {
-                iframe.contentWindow.postMessage("__superdash_init__", "*", [port]);
-            } catch (e) {
-                iframe.addEventListener("load", deliver, { once: true });
-            }
-        };
-        if (iframe.contentWindow && iframe.contentDocument && iframe.contentDocument.readyState !== "loading") {
-            deliver();
-        } else {
-            iframe.addEventListener("load", deliver, { once: true });
-        }
-    });
 })();
 </script>
 </body>

@@ -14,7 +14,6 @@ Home Assistant code lives in `packages/ha-client`.
 | `HaOAuthInterceptor.kt` | WebView callback handling. |
 | `HaAssistClient.kt` | Assist pipeline client. |
 | `HaMediaSourceClient.kt` | Media source browsing. |
-| `JsBridge.kt` | Native bridge for kiosk shell commands. |
 
 ## WebSocket
 

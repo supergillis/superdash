@@ -19,6 +19,7 @@ import com.superdash.core.util.UrlNormalizer
 import com.superdash.kiosk.ui.ConnectionStatusRow
 import com.superdash.settings.ConnectionSettingsActions
 import com.superdash.settings.ConnectionSettingsState
+import com.superdash.settings.isUnencryptedUrl
 import kotlinx.coroutines.launch
 
 @Composable
@@ -29,12 +30,14 @@ fun ConnectionSettingsSection(
     var testResult by remember { mutableStateOf<Boolean?>(null) }
     val scope = rememberCoroutineScope()
     val notSet = stringResource(R.string.settings_value_not_set)
+    val unencryptedWarning = stringResource(R.string.settings_unencrypted_url_warning)
 
     SettingsTextEditRow(
         label = stringResource(R.string.settings_connection_ha_url_label),
         value = state.haUrl?.takeIf { it.isNotBlank() } ?: notSet,
         dialogTitle = stringResource(R.string.settings_connection_ha_url_dialog_title),
         initialValue = state.haUrl.orEmpty(),
+        warningText = unencryptedWarning.takeIf { isUnencryptedUrl(state.haUrl) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         transformOnSave = { value -> UrlNormalizer.normalize(value) ?: "" },
         onSave = actions.onHaUrlChange,

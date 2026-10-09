@@ -5,7 +5,7 @@ import com.superdash.core.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 import kotlin.math.roundToInt
 
 private val screensaverModeOptions = listOf("off", "photos", "immich", "media_library", "clock", "black")
@@ -426,6 +426,13 @@ internal fun esphomeEntities(
         ),
     )
 
+internal fun noiseConfigFor(psk: ByteArray?): EsphomeNoiseConfig =
+    if (psk == null || psk.isEmpty()) {
+        EsphomeNoiseConfig.PlainOnly
+    } else {
+        EsphomeNoiseConfig.NoiseOnly(psk)
+    }
+
 /** Owns the ESPHome stack and binds it to host-provided sources and sinks. */
 class EsphomeBindings(
     appContext: Context,
@@ -452,11 +459,6 @@ class EsphomeBindings(
             friendlyName = device.friendlyName,
         )
 
-    @Volatile private var currentConfig: EsphomeNoiseConfig = EsphomeNoiseConfig.PlainOnly
-
-    @Volatile private var currentMdns: EsphomeMdns =
-        EsphomeMdns(appContext, deviceInfo, noiseEnabled = false)
-
     private val server: EsphomeServer =
         EsphomeServer(
             scope = scope,
@@ -474,35 +476,9 @@ class EsphomeBindings(
                     camera = camera,
                 )
             },
-            noiseConfig = { currentConfig },
-            mdns = currentMdns,
+            noiseConfig = noisePsk.map(::noiseConfigFor),
+            mdnsFactory = { noiseEnabled -> EsphomeMdns(appContext, deviceInfo, noiseEnabled) },
         )
 
-    init {
-        scope.launch {
-            noisePsk.collect { psk ->
-                val newConfig =
-                    if (psk == null || psk.isEmpty()) {
-                        EsphomeNoiseConfig.PlainOnly
-                    } else {
-                        EsphomeNoiseConfig.NoiseOnly(psk)
-                    }
-                if (newConfig == currentConfig) {
-                    return@collect
-                }
-                currentConfig = newConfig
-                currentMdns =
-                    EsphomeMdns(
-                        appContext,
-                        deviceInfo,
-                        noiseEnabled = newConfig is EsphomeNoiseConfig.NoiseOnly,
-                    )
-                server.swapMdns(currentMdns)
-            }
-        }
-    }
-
     fun start() = server.start()
-
-    fun stop() = server.stop()
 }

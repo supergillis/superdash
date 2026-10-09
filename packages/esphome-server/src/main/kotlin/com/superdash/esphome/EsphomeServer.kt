@@ -2,6 +2,7 @@ package com.superdash.esphome
 
 import com.superdash.core.log.Log
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -14,8 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 
 private val log = Log("EsphomeServer")
@@ -29,111 +34,93 @@ internal class EsphomeServer(
     private val enabled: Flow<Boolean>,
     private val deviceInfo: EsphomeDeviceInfo,
     private val entities: () -> List<EsphomeEntity>,
-    private val noiseConfig: () -> EsphomeNoiseConfig,
-    private val mdns: EsphomeMdns,
+    private val noiseConfig: Flow<EsphomeNoiseConfig>,
+    private val mdnsFactory: (noiseEnabled: Boolean) -> EsphomeMdns,
     private val port: Int = 6053,
+    private val selectorFactory: () -> SelectorManager = { SelectorManager(Dispatchers.IO) },
 ) {
     private var supervisor: Job? = null
 
-    @Volatile private var mdnsHolder: EsphomeMdns = mdns
-
-    @Volatile private var mdnsActive: Boolean = false
-
-    fun swapMdns(newMdns: EsphomeMdns) {
-        val old = mdnsHolder
-        mdnsHolder = newMdns
-        if (mdnsActive) {
-            old.stop()
-            newMdns.start()
-        }
-    }
-
+    /** A null listener config means the server is stopped. If the noise config or
+     *  the enabled flow fails, the server stays stopped until the app restarts,
+     *  rather than falling back to plaintext. */
     fun start() {
         supervisor?.cancel()
         supervisor =
             scope.launch {
-                enabled.collectLatest { isEnabled ->
-                    if (!isEnabled) {
-                        mdnsHolder.stop()
-                        mdnsActive = false
-                        log.i("disabled")
-                        return@collectLatest
+                combine(enabled, noiseConfig) { isEnabled, config -> config.takeIf { isEnabled } }
+                    .catch {
+                        log.e("listener config failed; server stays stopped", it)
+                        emit(null)
+                    }.distinctUntilChanged()
+                    .collectLatest { config ->
+                        if (config == null) {
+                            log.i("stopped")
+                            return@collectLatest
+                        }
+                        runWithRestart { runServer(config) }
                     }
-                    runWithRestart { runServer() }
-                }
             }
     }
 
-    fun stop() {
-        supervisor?.cancel()
-        supervisor = null
-        mdnsHolder.stop()
-        mdnsActive = false
-    }
-
-    /** All client-connection coroutines run in this enclosing `supervisorScope`,
-     *  so toggling `enabled` to false cancels the `collectLatest` block, which
-     *  cancels this whole scope, which propagates cancellation to every active
-     *  client connection. Without the wrapping scope, client launches would
-     *  inherit the outer application scope and outlive the toggle. We use
-     *  `supervisorScope` rather than `coroutineScope` so that an exception
-     *  thrown by one client connection does not cancel the accept loop or
-     *  sibling connections; whole-listener failures (bind, mDNS) still
-     *  propagate out to [runWithRestart] in [start]. */
-    private suspend fun runServer() =
-        kotlinx.coroutines.supervisorScope {
-            val selector = SelectorManager(Dispatchers.IO)
-            val server = aSocket(selector).tcp().bind(port = port)
-            mdnsHolder.start()
-            mdnsActive = true
-            log.i("listening", "port" to port)
-            try {
-                while (true) {
-                    val socket =
-                        try {
-                            server.accept()
-                        } catch (throwable: Throwable) {
-                            throw throwable
-                        }
-                    launch {
-                        log.i("client accepted", "remote" to socket.remoteAddress.toString())
-                        val input = socket.openReadChannel()
-                        val output = socket.openWriteChannel(autoFlush = true)
-                        try {
-                            val transport =
-                                withTimeout(DEFAULT_IDLE_TIMEOUT_MS) {
-                                    buildTransport(input, output, noiseConfig(), deviceInfo)
-                                }
-                            if (transport == null) {
-                                log.w("rejecting client: preamble does not match active mode")
-                                return@launch
-                            }
-                            EsphomeConnection(
-                                transport = transport,
-                                deviceInfo = deviceInfo,
-                                entities = entities(),
-                            ).run()
-                        } catch (timeout: TimeoutCancellationException) {
-                            log.w("client setup timed out", null, "afterMs" to DEFAULT_IDLE_TIMEOUT_MS)
-                        } catch (t: Throwable) {
-                            if (isExpectedDisconnect(t)) {
-                                log.i("client disconnected")
-                            } else {
-                                log.w("client setup failed", t)
-                            }
-                        } finally {
-                            runCatching { socket.close() }
-                            runCatching { output.close() }
+    /** Cancelling the surrounding `collectLatest` block cancels [supervisorScope]
+     *  and every client connection in it. A client failure does not stop the accept
+     *  loop, while a bind or mDNS failure propagates to [runWithRestart]. The mDNS
+     *  advertisement lives exactly as long as the listener. */
+    internal suspend fun runServer(config: EsphomeNoiseConfig) {
+        selectorFactory().use { selector ->
+            aSocket(selector).tcp().bind(port = port).use { server ->
+                val mdns = mdnsFactory(config is EsphomeNoiseConfig.NoiseOnly)
+                try {
+                    mdns.start()
+                    log.i("listening", "port" to port)
+                    supervisorScope {
+                        while (true) {
+                            val socket = server.accept()
+                            launch { serveClient(socket, config) }
                         }
                     }
+                } finally {
+                    mdns.stop()
                 }
-            } finally {
-                runCatching { server.close() }
-                selector.close()
-                mdnsHolder.stop()
-                mdnsActive = false
             }
         }
+    }
+
+    private suspend fun serveClient(
+        socket: Socket,
+        config: EsphomeNoiseConfig,
+    ) {
+        log.i("client accepted", "remote" to socket.remoteAddress.toString())
+        val input = socket.openReadChannel()
+        val output = socket.openWriteChannel(autoFlush = true)
+        try {
+            val transport =
+                withTimeout(DEFAULT_IDLE_TIMEOUT_MS) {
+                    buildTransport(input, output, config, deviceInfo)
+                }
+            if (transport == null) {
+                log.w("rejecting client: preamble does not match active mode")
+                return
+            }
+            EsphomeConnection(
+                transport = transport,
+                deviceInfo = deviceInfo,
+                entities = entities(),
+            ).run()
+        } catch (timeout: TimeoutCancellationException) {
+            log.w("client setup timed out", null, "afterMs" to DEFAULT_IDLE_TIMEOUT_MS)
+        } catch (t: Throwable) {
+            if (isExpectedDisconnect(t)) {
+                log.i("client disconnected")
+            } else {
+                log.w("client setup failed", t)
+            }
+        } finally {
+            runCatching { socket.close() }
+            runCatching { output.close() }
+        }
+    }
 }
 
 private suspend fun buildTransport(

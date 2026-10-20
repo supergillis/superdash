@@ -1,7 +1,12 @@
 #include <jni.h>
 
+#include <array>
 #include <cstdint>
+#include <memory>
+#include <stdexcept>
 #include <vector>
+
+#include "jni_exceptions.h"
 
 extern "C" {
 #include "tensorflow/lite/experimental/microfrontend/lib/frontend.h"
@@ -31,24 +36,6 @@ struct SuperdashFrontend {
     FrontendState state;
 };
 
-jclass findClass(JNIEnv *env, const char *name) {
-    jclass clazz = env->FindClass(name);
-    if (clazz == nullptr) {
-        // FindClass already raised NoClassDefFoundError; surface it to Kotlin
-        // by clearing and re-throwing as RuntimeException with the class name
-        // so the failure is visible instead of aborting the process.
-        if (env->ExceptionCheck()) {
-            env->ExceptionClear();
-        }
-        jclass runtime = env->FindClass("java/lang/RuntimeException");
-        if (runtime != nullptr) {
-            env->ThrowNew(runtime, name);
-        }
-        return nullptr;
-    }
-    return clazz;
-}
-
 void configureFrontend(FrontendConfig *config, int step_size_ms) {
     config->window.size_ms = kFeatureDurationMs;
     config->window.step_size_ms = step_size_ms;
@@ -67,68 +54,45 @@ void configureFrontend(FrontendConfig *config, int step_size_ms) {
     config->log_scale.scale_shift = kLogScaleScaleShift;
 }
 
-}  // namespace
-
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_superdash_voice_features_AudioFeatureExtractor_nativeInit(
-        JNIEnv *env,
-        jobject,
-        jint sample_rate_hz,
-        jint step_size_ms) {
-    auto *frontend = new SuperdashFrontend();
+jlong initFrontend(jint sample_rate_hz, jint step_size_ms) {
+    auto frontend = std::make_unique<SuperdashFrontend>();
     configureFrontend(&frontend->config, step_size_ms);
     if (!FrontendPopulateState(&frontend->config, &frontend->state, sample_rate_hz)) {
-        delete frontend;
-        jclass exception_class = findClass(env, "java/lang/IllegalStateException");
-        if (exception_class == nullptr) {
-            return 0;
-        }
-        env->ThrowNew(exception_class, "Failed to initialize audio feature extractor");
-        return 0;
+        throw std::runtime_error("Failed to initialize audio feature extractor");
     }
-    return reinterpret_cast<jlong>(frontend);
+    return reinterpret_cast<jlong>(frontend.release());
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_superdash_voice_features_AudioFeatureExtractor_nativeRelease(
-        JNIEnv *,
-        jobject,
-        jlong handle) {
+SuperdashFrontend *openFrontend(jlong handle) {
     if (handle == 0) {
-        return;
+        throw std::runtime_error("AudioFeatureExtractor already closed");
     }
-    auto *frontend = reinterpret_cast<SuperdashFrontend *>(handle);
-    FrontendFreeStateContents(&frontend->state);
-    delete frontend;
+    return reinterpret_cast<SuperdashFrontend *>(handle);
 }
 
-extern "C" JNIEXPORT jobject JNICALL
-Java_com_superdash_voice_features_AudioFeatureExtractor_nativeExtract(
-        JNIEnv *env,
-        jobject,
-        jlong handle,
-        jshortArray samples) {
-    auto *frontend = reinterpret_cast<SuperdashFrontend *>(handle);
-    if (frontend == nullptr) {
-        jclass exception_class = findClass(env, "java/lang/IllegalStateException");
-        if (exception_class == nullptr) {
-            return nullptr;
-        }
-        env->ThrowNew(exception_class, "AudioFeatureExtractor already closed");
-        return nullptr;
-    }
+jobject extractFeatures(JNIEnv *env, jlong handle, jshortArray samples) {
+    SuperdashFrontend *frontend = openFrontend(handle);
 
     const jsize sample_count = env->GetArrayLength(samples);
     std::vector<int16_t> audio(static_cast<size_t>(sample_count));
     env->GetShortArrayRegion(samples, 0, sample_count, reinterpret_cast<jshort *>(audio.data()));
+    if (env->ExceptionCheck()) {
+        return nullptr;
+    }
 
-    jclass array_list_class = findClass(env, "java/util/ArrayList");
-    if (array_list_class == nullptr) {
+    jclass array_list_class = env->FindClass("java/util/ArrayList");
+    if (array_list_class == nullptr || env->ExceptionCheck()) {
         return nullptr;
     }
     jmethodID array_list_constructor = env->GetMethodID(array_list_class, "<init>", "()V");
     jmethodID array_list_add = env->GetMethodID(array_list_class, "add", "(Ljava/lang/Object;)Z");
+    if (array_list_constructor == nullptr || array_list_add == nullptr || env->ExceptionCheck()) {
+        return nullptr;
+    }
     jobject result = env->NewObject(array_list_class, array_list_constructor);
+    if (result == nullptr || env->ExceptionCheck()) {
+        return nullptr;
+    }
 
     size_t offset = 0;
     while (offset < audio.size()) {
@@ -148,27 +112,26 @@ Java_com_superdash_voice_features_AudioFeatureExtractor_nativeExtract(
             }
             break;
         }
-
-        jfloatArray frame = env->NewFloatArray(static_cast<jsize>(output.size));
-        if (env->ExceptionCheck()) {
-            // OutOfMemoryError or similar. Let it propagate; values is dropped on return.
-            return nullptr;
+        if (output.size != kFeatureSize) {
+            throw std::runtime_error("Unexpected audio feature size");
         }
-        std::vector<float> values(output.size);
-        for (size_t i = 0; i < output.size; ++i) {
+
+        std::array<float, kFeatureSize> values;
+        for (size_t i = 0; i < values.size(); ++i) {
             values[i] = static_cast<float>(output.values[i]) / kFrontendFloatScale;
         }
-        env->SetFloatArrayRegion(frame, 0, static_cast<jsize>(values.size()), values.data());
-        if (env->ExceptionCheck()) {
-            env->DeleteLocalRef(frame);
+        jfloatArray frame = env->NewFloatArray(static_cast<jsize>(values.size()));
+        if (frame == nullptr || env->ExceptionCheck()) {
             return nullptr;
         }
-        env->CallBooleanMethod(result, array_list_add, frame);
-        if (env->ExceptionCheck()) {
-            env->DeleteLocalRef(frame);
-            return nullptr;
+        env->SetFloatArrayRegion(frame, 0, static_cast<jsize>(values.size()), values.data());
+        if (!env->ExceptionCheck()) {
+            env->CallBooleanMethod(result, array_list_add, frame);
         }
         env->DeleteLocalRef(frame);
+        if (env->ExceptionCheck()) {
+            return nullptr;
+        }
 
         if (!made_progress) {
             break;
@@ -176,4 +139,49 @@ Java_com_superdash_voice_features_AudioFeatureExtractor_nativeExtract(
     }
 
     return result;
+}
+
+}  // namespace
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_superdash_voice_features_AudioFeatureExtractor_nativeInit(
+        JNIEnv *env,
+        jobject,
+        jint sample_rate_hz,
+        jint step_size_ms) {
+    return guardNative<jlong>(env, 0, [&] { return initFrontend(sample_rate_hz, step_size_ms); });
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_superdash_voice_features_AudioFeatureExtractor_nativeRelease(
+        JNIEnv *,
+        jobject,
+        jlong handle) {
+    if (handle == 0) {
+        return;
+    }
+    auto *frontend = reinterpret_cast<SuperdashFrontend *>(handle);
+    FrontendFreeStateContents(&frontend->state);
+    delete frontend;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_superdash_voice_features_AudioFeatureExtractor_nativeReset(
+        JNIEnv *env,
+        jobject,
+        jlong handle) {
+    if (handle == 0) {
+        throwJava(env, "java/lang/IllegalStateException", "AudioFeatureExtractor already closed");
+        return;
+    }
+    FrontendReset(&reinterpret_cast<SuperdashFrontend *>(handle)->state);
+}
+
+extern "C" JNIEXPORT jobject JNICALL
+Java_com_superdash_voice_features_AudioFeatureExtractor_nativeExtract(
+        JNIEnv *env,
+        jobject,
+        jlong handle,
+        jshortArray samples) {
+    return guardNative<jobject>(env, nullptr, [&] { return extractFeatures(env, handle, samples); });
 }

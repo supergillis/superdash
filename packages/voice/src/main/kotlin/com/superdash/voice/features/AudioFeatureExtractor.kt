@@ -14,6 +14,11 @@ class AudioFeatureExtractor(
         return nativeExtract(handle, samples)
     }
 
+    fun reset() {
+        check(handle != 0L) { "AudioFeatureExtractor already closed" }
+        nativeReset(handle)
+    }
+
     override fun close() {
         if (handle != 0L) {
             nativeRelease(handle)
@@ -27,6 +32,8 @@ class AudioFeatureExtractor(
     ): Long
 
     private external fun nativeRelease(handle: Long)
+
+    private external fun nativeReset(handle: Long)
 
     private external fun nativeExtract(
         handle: Long,

@@ -1,45 +1,56 @@
 #include <jni.h>
 
+#include "jni_exceptions.h"
+
+namespace {
+
+jstring emptyString(JNIEnv *env) {
+    jstring empty = env->NewStringUTF("");
+    if (env->ExceptionCheck()) {
+        return nullptr;
+    }
+    return empty;
+}
+
+}  // namespace
+
 #if SUPERDASH_WHISPER_REAL
 #include "whisper.h"
 #include <string>
 #include <vector>
-#endif
 
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_superdash_voice_WhisperCppNative_runtimeAvailable(JNIEnv *, jclass) {
-#if SUPERDASH_WHISPER_REAL
-    return JNI_TRUE;
-#else
-    return JNI_FALSE;
-#endif
-}
+namespace {
 
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_superdash_voice_WhisperCppNative_createNative(JNIEnv * env, jobject, jstring modelPath) {
-#if SUPERDASH_WHISPER_REAL
-    const char * path = env->GetStringUTFChars(modelPath, nullptr);
-    if (path == nullptr || env->ExceptionCheck()) {
+class ModelPath {
+public:
+    ModelPath(JNIEnv *env, jstring path) : env_(env), path_(path), chars_(env->GetStringUTFChars(path, nullptr)) {}
+    ~ModelPath() {
+        if (chars_ != nullptr) {
+            env_->ReleaseStringUTFChars(path_, chars_);
+        }
+    }
+    ModelPath(const ModelPath &) = delete;
+    ModelPath &operator=(const ModelPath &) = delete;
+    const char *get() const { return chars_; }
+
+private:
+    JNIEnv *env_;
+    jstring path_;
+    const char *chars_;
+};
+
+jlong createContext(JNIEnv *env, jstring modelPath) {
+    ModelPath path(env, modelPath);
+    if (path.get() == nullptr || env->ExceptionCheck()) {
         return 0;
     }
-    whisper_context * context = whisper_init_from_file(path);
-    env->ReleaseStringUTFChars(modelPath, path);
-    return reinterpret_cast<jlong>(context);
-#else
-    return 0;
-#endif
+    return reinterpret_cast<jlong>(whisper_init_from_file(path.get()));
 }
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_superdash_voice_WhisperCppNative_transcribeNative(JNIEnv * env, jobject, jlong handle, jshortArray input) {
-#if SUPERDASH_WHISPER_REAL
-    auto * context = reinterpret_cast<whisper_context *>(handle);
+jstring transcribe(JNIEnv *env, jlong handle, jshortArray input) {
+    auto *context = reinterpret_cast<whisper_context *>(handle);
     if (context == nullptr) {
-        jstring empty = env->NewStringUTF("");
-        if (env->ExceptionCheck()) {
-            return nullptr;
-        }
-        return empty;
+        return emptyString(env);
     }
 
     jsize sampleCount = env->GetArrayLength(input);
@@ -63,13 +74,9 @@ Java_com_superdash_voice_WhisperCppNative_transcribeNative(JNIEnv * env, jobject
     params.language = "en";
     params.n_threads = 4;
 
-    int result = whisper_full(context, params, samples.data(), samples.size());
-    if (result != 0) {
-        jstring empty = env->NewStringUTF("");
-        if (env->ExceptionCheck()) {
-            return nullptr;
-        }
-        return empty;
+    // An empty transcript lets the HA audio fallback run.
+    if (whisper_full(context, params, samples.data(), samples.size()) != 0) {
+        return emptyString(env);
     }
 
     std::string text;
@@ -82,12 +89,35 @@ Java_com_superdash_voice_WhisperCppNative_transcribeNative(JNIEnv * env, jobject
         return nullptr;
     }
     return out;
+}
+
+}  // namespace
+#endif
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_superdash_voice_WhisperCppNative_runtimeAvailable(JNIEnv *, jclass) {
+#if SUPERDASH_WHISPER_REAL
+    return JNI_TRUE;
 #else
-    jstring empty = env->NewStringUTF("");
-    if (env->ExceptionCheck()) {
-        return nullptr;
-    }
-    return empty;
+    return JNI_FALSE;
+#endif
+}
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_superdash_voice_WhisperCppNative_createNative(JNIEnv * env, jobject, jstring modelPath) {
+#if SUPERDASH_WHISPER_REAL
+    return guardNative<jlong>(env, 0, [&] { return createContext(env, modelPath); });
+#else
+    return 0;
+#endif
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_superdash_voice_WhisperCppNative_transcribeNative(JNIEnv * env, jobject, jlong handle, jshortArray input) {
+#if SUPERDASH_WHISPER_REAL
+    return guardNative<jstring>(env, nullptr, [&] { return transcribe(env, handle, input); });
+#else
+    return emptyString(env);
 #endif
 }
 

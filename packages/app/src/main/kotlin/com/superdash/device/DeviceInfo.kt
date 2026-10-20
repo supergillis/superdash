@@ -7,6 +7,7 @@ import android.app.Application
  *  manufacturer/model. Consumed by ESPHome native API for device metadata. */
 class DeviceInfo(
     application: Application,
+    fallbackId: () -> String,
 ) {
     val appVersionName: String =
         runCatching {
@@ -17,10 +18,14 @@ class DeviceInfo(
 
     @SuppressLint("HardwareIds")
     val androidId: String =
-        runCatching {
-            android.provider.Settings.Secure
-                .getString(application.contentResolver, android.provider.Settings.Secure.ANDROID_ID)
-        }.getOrNull() ?: "unknown"
+        resolveStableDeviceId(
+            androidId =
+                runCatching {
+                    android.provider.Settings.Secure
+                        .getString(application.contentResolver, android.provider.Settings.Secure.ANDROID_ID)
+                }.getOrNull(),
+            fallbackId = fallbackId,
+        )
 
     val deviceManufacturer: String = android.os.Build.MANUFACTURER ?: ""
 
@@ -28,3 +33,9 @@ class DeviceInfo(
 
     val deviceName: String = deviceModel.ifEmpty { "superdash" }
 }
+
+/** A shared constant id would give every such tablet one MAC and merge them in HA. */
+internal fun resolveStableDeviceId(
+    androidId: String?,
+    fallbackId: () -> String,
+): String = androidId?.takeIf { it.isNotBlank() } ?: fallbackId()

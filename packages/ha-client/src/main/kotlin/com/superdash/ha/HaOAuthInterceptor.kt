@@ -21,8 +21,15 @@ class HaOAuthInterceptor(
         return handleParsed(javaUri)
     }
 
-    fun buildAuthorizeUrl(): URI {
+    /** True when the last authorize URL was an automatic retry after a failed
+     *  exchange. Any other authorize URL resets it, so each user-started flow
+     *  gets one automatic retry. */
+    var lastAuthorizeWasAutomatic: Boolean = false
+        private set
+
+    fun buildAuthorizeUrl(automatic: Boolean = false): URI {
         val base = haBaseUrl() ?: error("haBaseUrl not set")
+        lastAuthorizeWasAutomatic = automatic
         val state = generateState()
         pendingState = state
         return HaOAuthFlow.authorizeUrl(base, state = state)

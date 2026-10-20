@@ -11,7 +11,13 @@ private val log = Log("CommandAudioGate")
 private const val FRAME_MS = 10
 
 internal data class CommandAudioGateConfig(
-    val dropInitialFrames: Int,
+    /** Frames at the start of the input that are pre-roll and always dropped. */
+    val preRollFrames: Int,
+    /** Live frames after the pre-roll that belong to the wake word tail. */
+    val wakeTailDropFrames: Int,
+    /** Live frames the stream lost before the consumer read them. They already
+     *  took the place of the wake tail, so the tail drop shrinks by that many. */
+    val lostLiveFrames: () -> Int = { 0 },
     val speechStartPreBufferFrames: Int,
     val initialCommandTimeoutMs: Int,
     val trailingSilenceMs: Int,
@@ -25,7 +31,8 @@ internal fun commandAudioGated(
     flow {
         log.i(
             "commandAudioGated subscribed",
-            "dropInitialFrames" to config.dropInitialFrames,
+            "preRollFrames" to config.preRollFrames,
+            "wakeTailDropFrames" to config.wakeTailDropFrames,
             "speechStartPreBufferFrames" to config.speechStartPreBufferFrames,
             "initialCommandTimeoutMs" to config.initialCommandTimeoutMs,
             "trailingSilenceMs" to config.trailingSilenceMs,
@@ -42,7 +49,9 @@ internal fun commandAudioGated(
             emitAll(
                 audio.transformWhile { frame ->
                     consumed += 1
-                    if (consumed <= config.dropInitialFrames) {
+                    val dropFrames =
+                        config.preRollFrames + maxOf(0, config.wakeTailDropFrames - config.lostLiveFrames())
+                    if (consumed <= dropFrames) {
                         true
                     } else {
                         eligibleFrames += 1

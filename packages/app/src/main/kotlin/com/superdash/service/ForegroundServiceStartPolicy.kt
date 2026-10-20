@@ -1,5 +1,9 @@
 package com.superdash.service
 
+import android.app.ForegroundServiceStartNotAllowedException
+import android.os.Build
+import androidx.annotation.ChecksSdkIntAtLeast
+
 /** Reusable start policy for while-in-use foreground services (mic, camera):
  *  gates start requests on both a feature-enabled flag and a runtime
  *  permission, and swallows the foreground-start exceptions the OS throws
@@ -23,17 +27,25 @@ internal object ForegroundServiceStartPolicy {
             null
         }
 
-    fun tryStartForeground(block: () -> Unit): Boolean =
+    fun tryStartForeground(
+        sdkInt: Int = Build.VERSION.SDK_INT,
+        block: () -> Unit,
+    ): Boolean =
         try {
             block()
             true
         } catch (e: SecurityException) {
             false
         } catch (e: IllegalStateException) {
-            // ForegroundServiceStartNotAllowedException (API 31+): the system
-            // restarted the service while the app was in the background. A
-            // background foreground service can never start, so fail
-            // gracefully instead of crashing.
+            // Before API 31 the not-allowed case is a bare IllegalStateException.
+            // From API 31 only the dedicated type is a graceful failure, any other
+            // IllegalStateException is a real bug and must surface.
+            if (isApi31OrNewer(sdkInt) && e !is ForegroundServiceStartNotAllowedException) {
+                throw e
+            }
             false
         }
+
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S, parameter = 0)
+    private fun isApi31OrNewer(sdkInt: Int): Boolean = sdkInt >= Build.VERSION_CODES.S
 }

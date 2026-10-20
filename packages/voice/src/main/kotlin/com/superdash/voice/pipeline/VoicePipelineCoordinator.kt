@@ -85,10 +85,7 @@ class VoicePipelineCoordinator(
     private var activeGeneration: Long = 0L
 
     /** Queues the wake job and returns it so the caller can tie the command
-     *  stream's lifetime to the run: the stream is closed when this job
-     *  completes, which reclaims it even when the provider never collects
-     *  (e.g. provider-missing) without relying on a wall-clock timeout that
-     *  a slow first provider load would trip. */
+     *  stream's lifetime to the run. */
     fun onWake(context: VoiceRunContext, audio: Flow<ShortArray>): Job {
         log.i("onWake (queueing job)", "word" to context.wakeWord, "runId" to context.id.value)
         bus.emit(KioskEvent.WakeWordDetected(context.wakeWord))
@@ -101,6 +98,8 @@ class VoicePipelineCoordinator(
                 failedRunId = null
                 generation
             }
+        // A cancelled run may still be speaking its answer.
+        ttsPlayer.stop()
         val job = scope.launch(start = CoroutineStart.LAZY) { runWakeJob(context, ourGeneration, audio) }
         job.invokeOnCompletion {
             synchronized(transitionLock) {
@@ -117,15 +116,18 @@ class VoicePipelineCoordinator(
         return job
     }
 
+    internal fun holdsTransitionLock(): Boolean = Thread.holdsLock(transitionLock)
+
     fun stopAll() {
         synchronized(transitionLock) {
             activeJob?.cancel()
             activeRunId = null
             activeGeneration = 0L
             generation += 1L
-            ttsPlayer.stop()
             mutableState.value = VoiceState.Idle
         }
+        // Outside the lock to keep foreign player code from blocking onWake or transitions.
+        ttsPlayer.stop()
     }
 
     private suspend fun runWakeJob(

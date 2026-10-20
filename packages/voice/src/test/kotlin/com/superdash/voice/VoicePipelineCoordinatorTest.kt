@@ -3,6 +3,7 @@ package com.superdash.voice
 import com.superdash.kiosk.bus.KioskEvent
 import com.superdash.kiosk.bus.KioskEventBus
 import com.superdash.voice.action.VoiceActionEvent
+import com.superdash.voice.action.executors.TtsPlay
 import com.superdash.voice.action.recognizedWordsFromText
 import com.superdash.voice.pipeline.VoicePipelineCoordinator
 import com.superdash.voice.pipeline.VoiceProviderAttempt
@@ -144,6 +145,67 @@ class VoicePipelineCoordinatorTest {
             // Even if the cancelled job's catch path runs, the generation
             // guard prevents failTransition from overwriting Idle with Failed.
             assertEquals(VoiceState.Idle, coordinator.state.value)
+        }
+
+    @Test
+    fun `stopAll does not hold the transition lock while stopping tts`() =
+        runTest {
+            lateinit var coordinator: VoicePipelineCoordinator
+            var lockHeldDuringStop: Boolean? = null
+            val tts =
+                object : TtsPlay {
+                    override suspend fun play(url: String) {}
+
+                    override fun stop() {
+                        lockHeldDuringStop = coordinator.holdsTransitionLock()
+                    }
+                }
+            coordinator =
+                VoicePipelineCoordinator(
+                    voiceProviderRunner = VoiceProviderRunner { _, _ -> MutableSharedFlow<VoiceActionEvent>().asRunEvents() },
+                    ttsPlayer = tts,
+                    bus = KioskEventBus(),
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                    assistRunTimeoutMs = Long.MAX_VALUE,
+                )
+
+            coordinator.stopAll()
+
+            assertEquals(false, lockHeldDuringStop)
+        }
+
+    @Test
+    fun `wake during tts playback stops the player`() =
+        runTest {
+            var stopCalls = 0
+            val tts =
+                object : TtsPlay {
+                    override suspend fun play(url: String) {
+                        CompletableDeferred<Unit>().await()
+                    }
+
+                    override fun stop() {
+                        stopCalls += 1
+                    }
+                }
+            val coordinator =
+                VoicePipelineCoordinator(
+                    voiceProviderRunner =
+                        VoiceProviderRunner { _, _ ->
+                            flow { emit(VoiceProviderRunEvent.Action(VoiceActionEvent.TtsReady("/api/tts_proxy/old.mp3"))) }
+                        },
+                    ttsPlayer = tts,
+                    bus = KioskEventBus(),
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                    assistRunTimeoutMs = Long.MAX_VALUE,
+                )
+            coordinator.onWake(testRunContext("first"), shortFramesFlow())
+            runCurrent()
+            val stopCallsBeforeSecondWake = stopCalls
+
+            coordinator.onWake(testRunContext("second"), shortFramesFlow())
+
+            assertEquals(stopCallsBeforeSecondWake + 1, stopCalls)
         }
 
     @Test

@@ -80,14 +80,20 @@ class ForegroundServiceStartPolicyTest {
     }
 
     @Test
-    fun `background foreground start rejection is not treated as started`() {
-        val started =
-            ForegroundServiceStartPolicy.tryStartForeground {
-                // ForegroundServiceStartNotAllowedException is an IllegalStateException.
-                throw IllegalStateException("startForeground not allowed from background")
+    fun `plain illegal state is swallowed before API 31 and rethrown from API 31`() {
+        val outcomes =
+            listOf(29, 30, 31, 34).map { sdkInt ->
+                sdkInt to
+                    try {
+                        ForegroundServiceStartPolicy.tryStartForeground(sdkInt) {
+                            throw IllegalStateException("not a foreground start rejection")
+                        }
+                    } catch (e: IllegalStateException) {
+                        null
+                    }
             }
 
-        assertFalse(started)
+        assertEquals(listOf(29 to false, 30 to false, 31 to null, 34 to null), outcomes)
     }
 
     @Test

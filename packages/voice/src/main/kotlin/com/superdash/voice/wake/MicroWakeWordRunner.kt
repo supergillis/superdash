@@ -5,9 +5,8 @@ import com.superdash.core.log.Log
 import com.superdash.voice.features.AudioFeatureExtractor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.mapNotNull
 import org.tensorflow.lite.Interpreter
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -22,6 +21,15 @@ private val log = Log("MicroWakeWord")
 data class WakeEvent(
     val word: String,
 )
+
+/** A full buffer suspends inference instead of dropping a fire. */
+internal fun wakeFires(
+    audio: Flow<ShortArray>,
+    step: (ShortArray) -> WakeEvent?,
+): Flow<WakeEvent> =
+    audio
+        .mapNotNull(step)
+        .flowOn(Dispatchers.Default.limitedParallelism(1))
 
 class MicroWakeWordRunner(
     private val context: Context,
@@ -68,18 +76,7 @@ class MicroWakeWordRunner(
      *  single-threaded dispatcher (TF Lite Interpreter is not thread-safe), and
      *  a [WakeEvent] is emitted whenever the sliding-window probability exceeds
      *  the configured threshold. */
-    override fun detect(audio: Flow<ShortArray>): Flow<WakeEvent> =
-        channelFlow {
-            audio
-                .onEach { samples ->
-                    val maybeFire = step(samples)
-                    if (maybeFire != null) {
-                        trySend(maybeFire)
-                    }
-                }.flowOn(
-                    Dispatchers.Default.limitedParallelism(1),
-                ).collect { /* drives the onEach side-effect; values themselves discarded */ }
-        }
+    override fun detect(audio: Flow<ShortArray>): Flow<WakeEvent> = wakeFires(audio, ::step)
 
     private fun step(samples: ShortArray): WakeEvent? =
         synchronized(nativeLock) {

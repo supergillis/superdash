@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.superdash.R
 import com.superdash.SuperdashApp
 import com.superdash.core.log.Log
+import com.superdash.service.ForegroundServiceStartPolicy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -34,7 +35,7 @@ class VoiceService : LifecycleService() {
         log.i("onCreate")
         ensureChannel()
         val foregroundStarted =
-            VoiceServiceStartPolicy.tryStartForeground {
+            ForegroundServiceStartPolicy.tryStartForeground {
                 ServiceCompat.startForeground(
                     this,
                     NOTIFICATION_ID,

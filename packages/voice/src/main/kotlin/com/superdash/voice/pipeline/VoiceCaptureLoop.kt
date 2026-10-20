@@ -104,8 +104,9 @@ class VoiceCaptureLoop(
                                         audio = commandAudio.audio,
                                         config =
                                             CommandAudioGateConfig(
-                                                dropInitialFrames =
-                                                    commandAudio.preRollFrameCount + COMMAND_WAKE_TAIL_DROP_FRAMES,
+                                                preRollFrames = commandAudio.preRollFrameCount,
+                                                wakeTailDropFrames = COMMAND_WAKE_TAIL_DROP_FRAMES,
+                                                lostLiveFrames = { commandAudio.droppedLiveFrames },
                                                 speechStartPreBufferFrames = COMMAND_SPEECH_START_PRE_BUFFER_FRAMES,
                                                 initialCommandTimeoutMs = COMMAND_INITIAL_SILENCE_TIMEOUT_MS,
                                                 trailingSilenceMs = silenceMs,
@@ -118,13 +119,6 @@ class VoiceCaptureLoop(
                                         commandAudioTransform(context, gatedAudio),
                                     )
                                 coordinatorOwnsStream = true
-                                // The coordinator now owns the stream. Cancel the
-                                // wall-clock uncollected-stream timeout so a slow
-                                // first provider load (~50 MB model warm-up) cannot
-                                // self-close the stream mid-load and drop the first
-                                // command. Cleanup is re-homed to the run's lifecycle:
-                                // closing on completion reclaims the stream whether or
-                                // not the provider ever collected it.
                                 commandAudio.markHandedOff()
                                 runJob.invokeOnCompletion { commandAudio.close() }
                             } finally {

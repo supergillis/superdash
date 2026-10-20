@@ -26,7 +26,8 @@ class CommandAudioGateTest {
                     audio = input.asFlow(),
                     config =
                         CommandAudioGateConfig(
-                            dropInitialFrames = preRollWake.size + wakeTail.size,
+                            preRollFrames = preRollWake.size,
+                            wakeTailDropFrames = wakeTail.size,
                             speechStartPreBufferFrames = 60,
                             initialCommandTimeoutMs = 5_000,
                             trailingSilenceMs = 500,
@@ -49,6 +50,37 @@ class CommandAudioGateTest {
             assertFalse(values.any { it == 9 })
         }
 
+    @Test fun `lost live frames shrink the wake tail drop but never the pre roll`() =
+        runTest {
+            val wakeTailSize = 25
+            val cases = listOf(0, 10, 25, 100)
+
+            val outputs =
+                cases.map { lost ->
+                    val preRollWake = frames(count = 10, value = 1)
+                    val wakeTail = List(wakeTailSize) { index -> frames(count = 1, value = (100 + index).toShort()).single() }
+                    val command = frames(count = 40, value = 3)
+                    val trailingSilence = frames(count = 80, value = 0)
+                    val input = preRollWake + wakeTail.drop(lost) + command + trailingSilence
+                    commandAudioGated(
+                        audio = input.asFlow(),
+                        config =
+                            CommandAudioGateConfig(
+                                preRollFrames = preRollWake.size,
+                                wakeTailDropFrames = wakeTailSize,
+                                lostLiveFrames = { lost },
+                                speechStartPreBufferFrames = 60,
+                                initialCommandTimeoutMs = 5_000,
+                                trailingSilenceMs = 500,
+                            ),
+                        detectorFactory = { FakeSpeechDetector(speechByCall = List(40) { true } + List(80) { false }) },
+                    ).toList().map { it.first().toInt() }
+                }
+
+            val expected = List(40) { 3 } + List(EXPECTED_TRAILING_FRAMES) { 0 }
+            assertEquals(cases.map { expected }, outputs)
+        }
+
     @Test fun `preserves command start after leading command silence`() =
         runTest {
             val preRollWake = frames(count = 80, value = 1)
@@ -62,7 +94,8 @@ class CommandAudioGateTest {
                     audio = input.asFlow(),
                     config =
                         CommandAudioGateConfig(
-                            dropInitialFrames = preRollWake.size,
+                            preRollFrames = preRollWake.size,
+                            wakeTailDropFrames = 0,
                             speechStartPreBufferFrames = 60,
                             initialCommandTimeoutMs = 5_000,
                             trailingSilenceMs = 500,
@@ -93,7 +126,8 @@ class CommandAudioGateTest {
                     audio = input.asFlow(),
                     config =
                         CommandAudioGateConfig(
-                            dropInitialFrames = 80,
+                            preRollFrames = 80,
+                            wakeTailDropFrames = 0,
                             speechStartPreBufferFrames = 60,
                             initialCommandTimeoutMs = 1_000,
                             trailingSilenceMs = 500,
@@ -124,7 +158,8 @@ class CommandAudioGateTest {
                     audio = input.asFlow(),
                     config =
                         CommandAudioGateConfig(
-                            dropInitialFrames = 0,
+                            preRollFrames = 0,
+                            wakeTailDropFrames = 0,
                             speechStartPreBufferFrames = 60,
                             initialCommandTimeoutMs = 1_000,
                             trailingSilenceMs = 500,
@@ -149,7 +184,8 @@ class CommandAudioGateTest {
                     audio = input.asFlow(),
                     config =
                         CommandAudioGateConfig(
-                            dropInitialFrames = 0,
+                            preRollFrames = 0,
+                            wakeTailDropFrames = 0,
                             speechStartPreBufferFrames = 0,
                             initialCommandTimeoutMs = 1_000,
                             trailingSilenceMs = 500,
@@ -187,6 +223,7 @@ class CommandAudioGateTest {
 
     private companion object {
         private const val FRAME_SAMPLES = 160
+        private const val EXPECTED_TRAILING_FRAMES = 42
 
         private fun frames(count: Int, value: Short): List<ShortArray> =
             List(count) { ShortArray(FRAME_SAMPLES) { value } }

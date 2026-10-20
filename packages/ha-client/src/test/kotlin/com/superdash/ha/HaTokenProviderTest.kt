@@ -104,6 +104,23 @@ class HaTokenProviderTest {
         assertThrows(NotAuthenticatedException::class.java) { runBlocking { p.get() } }
     }
 
+    @Test fun `refresh failing with 500 throws the typed exchange error`() {
+        val store = RecordingTokenStore(HaTokens("near-expiry", "r1", (now + 10.seconds).toEpochMilliseconds()))
+        val engine =
+            MockEngine { _ ->
+                respond(
+                    content = ByteReadChannel("""{"error":"server_error"}"""),
+                    status = HttpStatusCode.InternalServerError,
+                    headers = headersOf("Content-Type", "application/json"),
+                )
+            }
+        val httpClient = HttpClient(engine) { install(ContentNegotiation) { json() } }
+        val p = HaTokenProvider(store, httpClient, { baseUrl }, fixedClock)
+        val thrown = assertThrows(HaTokenExchangeException::class.java) { runBlocking { p.get() } }
+        assertEquals(500, thrown.status)
+        assertEquals("server_error", thrown.error)
+    }
+
     @Test fun `force refresh returns fresh token`() =
         runBlocking {
             val (p, store) =

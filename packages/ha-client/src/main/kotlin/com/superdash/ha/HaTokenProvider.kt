@@ -2,8 +2,7 @@ package com.superdash.ha
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.forms.submitForm
-import io.ktor.http.parameters
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Clock
@@ -44,14 +43,10 @@ class HaTokenProvider(
 
     private suspend fun doRefresh(cur: HaTokens): HaTokens {
         val response =
-            httpClient.submitForm(
-                url = "${baseUrl()}/auth/token",
-                formParameters =
-                    parameters {
-                        append("grant_type", "refresh_token")
-                        append("refresh_token", cur.refreshToken)
-                        append("client_id", "${baseUrl()}/")
-                    },
+            postTokenRequest(
+                httpClient,
+                baseUrl(),
+                mapOf("grant_type" to "refresh_token", "refresh_token" to cur.refreshToken),
             )
         if (response.status.value in 400..499) {
             // HA rejected the refresh token itself (revoked / invalid_grant). That is
@@ -61,12 +56,15 @@ class HaTokenProvider(
             // Transient failures (network, 5xx) still propagate to the caller's backoff.
             throw NotAuthenticatedException
         }
-        val resp: HaTokenResponse = response.body()
+        if (!response.status.isSuccess()) {
+            throw response.toTokenExchangeException()
+        }
+        val tokenResponse: HaTokenResponse = response.body()
         val updated =
             HaTokens(
-                accessToken = resp.accessToken,
-                refreshToken = resp.refreshToken ?: cur.refreshToken,
-                expiresAtEpochMs = (clock.now() + resp.expiresIn.seconds).toEpochMilliseconds(),
+                accessToken = tokenResponse.accessToken,
+                refreshToken = tokenResponse.refreshToken ?: cur.refreshToken,
+                expiresAtEpochMs = (clock.now() + tokenResponse.expiresIn.seconds).toEpochMilliseconds(),
             )
         store.save(updated)
         return updated

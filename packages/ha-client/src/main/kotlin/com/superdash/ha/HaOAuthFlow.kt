@@ -2,8 +2,7 @@ package com.superdash.ha
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.forms.submitForm
-import io.ktor.http.parameters
+import io.ktor.http.isSuccess
 import java.net.URI
 import java.net.URLEncoder
 import kotlin.time.Clock
@@ -32,14 +31,14 @@ object HaOAuthFlow {
     /** Returns the auth code + state if [url] is our callback for [haBaseUrl], else null. */
     fun isCallback(url: URI, haBaseUrl: String): CallbackParams? {
         val base = URI(haBaseUrl)
-        if (url.scheme != base.scheme) {
+        if (!url.scheme.equals(base.scheme, ignoreCase = true)) {
             return null
         }
         // RFC 3986: host is case-insensitive. Avoid dropping mixed-case HA callbacks.
         if (url.host == null || !url.host.equals(base.host, ignoreCase = true)) {
             return null
         }
-        if (url.port != base.port) {
+        if (effectivePort(url) != effectivePort(base)) {
             return null
         }
         val rawQuery = url.rawQuery ?: return null
@@ -57,23 +56,29 @@ object HaOAuthFlow {
         code: String,
         clock: Clock = Clock.System,
     ): HaTokens {
-        val resp: HaTokenResponse =
-            client
-                .submitForm(
-                    url = "$haBaseUrl/auth/token",
-                    formParameters =
-                        parameters {
-                            append("grant_type", "authorization_code")
-                            append("code", code)
-                            append("client_id", "$haBaseUrl/")
-                        },
-                ).body()
+        val response =
+            postTokenRequest(
+                client,
+                haBaseUrl,
+                mapOf("grant_type" to "authorization_code", "code" to code),
+            )
+        if (!response.status.isSuccess()) {
+            throw response.toTokenExchangeException()
+        }
+        val tokenResponse: HaTokenResponse = response.body()
         return HaTokens(
-            accessToken = resp.accessToken,
-            refreshToken = resp.refreshToken ?: error("HA token exchange returned no refresh_token"),
-            expiresAtEpochMs = (clock.now() + resp.expiresIn.seconds).toEpochMilliseconds(),
+            accessToken = tokenResponse.accessToken,
+            refreshToken = tokenResponse.refreshToken ?: error("HA token exchange returned no refresh_token"),
+            expiresAtEpochMs = (clock.now() + tokenResponse.expiresIn.seconds).toEpochMilliseconds(),
         )
     }
+
+    private fun effectivePort(uri: URI): Int =
+        when {
+            uri.port != -1 -> uri.port
+            uri.scheme.equals("https", ignoreCase = true) -> 443
+            else -> 80
+        }
 
     private fun parseQuery(query: String): Map<String, String> =
         query.split("&").associate { pair ->

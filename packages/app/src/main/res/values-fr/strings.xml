@@ -322,4 +322,6 @@
         <item quantity="other">%1$d éléments actualisés</item>
     </plurals>
     <string name="settings_immich_refresh_failed">Échec de l\'actualisation : %1$s</string>
+    <string name="settings_secure_storage_unavailable">Stockage sécurisé indisponible, réessayez</string>
+    <string name="settings_value_unavailable">Indisponible</string>
 </resources>

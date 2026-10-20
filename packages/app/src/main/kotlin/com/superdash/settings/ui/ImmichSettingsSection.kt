@@ -45,13 +45,14 @@ fun ImmichSettingsSection(
     SettingsTextEditRow(
         label = stringResource(R.string.settings_immich_api_key_label),
         value =
-            if (state.apiKey.isBlank()) {
-                notSet
-            } else {
-                stringResource(R.string.settings_immich_api_key_set)
+            when {
+                state.apiKey == null -> stringResource(R.string.settings_value_unavailable)
+                state.apiKey.isBlank() -> notSet
+                else -> stringResource(R.string.settings_immich_api_key_set)
             },
         dialogTitle = stringResource(R.string.settings_immich_api_key_dialog_title),
-        initialValue = state.apiKey,
+        initialValue = state.apiKey.orEmpty(),
+        enabled = state.apiKey != null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         visualTransformation = PasswordVisualTransformation(),
         transformOnSave = { value -> value.trim() },
@@ -79,7 +80,7 @@ fun ImmichSettingsSection(
     ImmichRefreshRow(onRefresh = actions.onRefreshImmichCatalog)
     ImmichTestRow(
         url = state.url,
-        apiKey = state.apiKey,
+        apiKey = state.apiKey.orEmpty(),
         album = state.album,
         onTestImmich = actions.onTestImmich,
     )

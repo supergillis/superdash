@@ -79,6 +79,7 @@ fun SettingsTextEditRow(
     singleLine: Boolean = true,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     transformOnSave: (String) -> String = { it },
+    enabled: Boolean = true,
 ) {
     var editing by remember { mutableStateOf(false) }
 
@@ -88,6 +89,7 @@ fun SettingsTextEditRow(
         modifier = modifier,
         supportingText = supportingText,
         warningText = warningText,
+        enabled = enabled,
         onClick = { editing = true },
     )
 

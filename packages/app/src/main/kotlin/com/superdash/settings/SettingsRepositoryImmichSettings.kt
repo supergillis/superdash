@@ -2,10 +2,15 @@ package com.superdash.settings
 
 import com.superdash.core.persistence.KeyValueStore
 import com.superdash.core.persistence.Setting
+import com.superdash.core.persistence.mutate
 import com.superdash.core.persistence.observe
 import com.superdash.core.persistence.write
+import com.superdash.core.security.KeyUnavailableException
+import com.superdash.core.security.retryWhileKeyUnavailable
 import com.superdash.immich.ImmichSettings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 /**
@@ -21,7 +26,18 @@ internal class SettingsRepositoryImmichSettings(
 ) : ImmichSettings {
     override val url: Flow<String> = store.observe(URL)
 
-    override val apiKey: Flow<String> = store.observe(API_KEY).map { stored -> secret.reveal(stored) }
+    /** Null while the key cannot be revealed. For the settings screen, which must not wait on it. */
+    val revealedApiKey: Flow<String?> =
+        store
+            .observe(API_KEY)
+            .map { stored -> secret.reveal(stored) }
+            .flowOn(Dispatchers.IO)
+
+    override val apiKey: Flow<String> =
+        revealedApiKey
+            .map { revealed ->
+                revealed ?: throw KeyUnavailableException(IllegalStateException("api key not revealed"))
+            }.retryWhileKeyUnavailable("ImmichSettings")
 
     override val album: Flow<String> = store.observe(ALBUM)
 
@@ -29,7 +45,16 @@ internal class SettingsRepositoryImmichSettings(
 
     override suspend fun setUrl(value: String) = store.write(URL, value)
 
-    override suspend fun setApiKey(value: String) = store.write(API_KEY, secret.conceal(value))
+    // Saving an empty field while the stored key is unreadable must not erase that key.
+    override suspend fun setApiKey(value: String) {
+        store.mutate(API_KEY) { stored ->
+            if (value.isEmpty() && secret.reveal(stored) == null) {
+                stored
+            } else {
+                secret.conceal(value)
+            }
+        }
+    }
 
     override suspend fun setAlbum(value: String) = store.write(ALBUM, value)
 

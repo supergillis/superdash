@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,19 +19,25 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.superdash.AppGraph
 import com.superdash.MainActivity
 import com.superdash.R
 import com.superdash.SuperdashApp
 import com.superdash.camera.CameraAvailability
 import com.superdash.core.locale.SupportedLanguage
+import com.superdash.core.log.Log
 import com.superdash.core.util.UrlNormalizer
 import com.superdash.feed.FeedConfig
 import com.superdash.immich.ImmichApiClient
@@ -52,6 +59,9 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
+
+private val log = Log("SettingsActivity")
 
 @Immutable
 data class SettingsActions(
@@ -332,7 +342,15 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun reauthenticateHa(graph: AppGraph) {
         lifecycleScope.launch {
-            graph.tokenStore.clear()
+            try {
+                graph.tokenStore.clear()
+            } catch (e: IOException) {
+                log.w("clearing tokens failed", e)
+                Toast
+                    .makeText(this@SettingsActivity, R.string.settings_secure_storage_unavailable, Toast.LENGTH_LONG)
+                    .show()
+                return@launch
+            }
             startActivity(
                 Intent(this@SettingsActivity, MainActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
@@ -367,6 +385,15 @@ private fun SettingsScreen(
     onTestScreensaver: () -> Unit,
 ) {
     val state by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(settingsViewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            settingsViewModel.notices.collect { notice ->
+                Toast.makeText(context, notice, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     val actions =
         remember(

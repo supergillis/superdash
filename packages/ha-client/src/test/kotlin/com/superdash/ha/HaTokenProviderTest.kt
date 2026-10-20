@@ -8,7 +8,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -28,8 +27,8 @@ class HaTokenProviderTest {
     private fun providerWith(
         initial: HaTokens?,
         respondWith: HaTokenResponse,
-    ): Pair<HaTokenProvider, RecordingTokenStore> {
-        val store = RecordingTokenStore(initial)
+    ): Pair<HaTokenProvider, InMemoryHaTokenStore> {
+        val store = InMemoryHaTokenStore(initial)
         val engine =
             MockEngine { _ ->
                 val refreshPart = respondWith.refreshToken?.let { "\"refresh_token\":\"$it\"," } ?: ""
@@ -88,7 +87,7 @@ class HaTokenProviderTest {
         // This must surface as a reauth condition (NotAuthenticatedException), not a
         // transient error that the reconnect loop would retry forever.
         val store =
-            RecordingTokenStore(
+            InMemoryHaTokenStore(
                 HaTokens("near-expiry", "revoked-refresh", (now + 10.seconds).toEpochMilliseconds()),
             )
         val engine =
@@ -105,7 +104,7 @@ class HaTokenProviderTest {
     }
 
     @Test fun `refresh failing with 500 throws the typed exchange error`() {
-        val store = RecordingTokenStore(HaTokens("near-expiry", "r1", (now + 10.seconds).toEpochMilliseconds()))
+        val store = InMemoryHaTokenStore(HaTokens("near-expiry", "r1", (now + 10.seconds).toEpochMilliseconds()))
         val engine =
             MockEngine { _ ->
                 respond(
@@ -144,24 +143,4 @@ class HaTokenProviderTest {
             val expected = (now + 1800.seconds).toEpochMilliseconds()
             assertEquals(expected, store.lastSaved!!.expiresAtEpochMs)
         }
-}
-
-/** In-memory store, records the last save for assertion. */
-class RecordingTokenStore(
-    initial: HaTokens?,
-) : HaTokenStoreLike {
-    private val state = MutableStateFlow(initial)
-    var lastSaved: HaTokens? = null
-        private set
-
-    override suspend fun load(): HaTokens? = state.value
-
-    override suspend fun save(tokens: HaTokens) {
-        state.value = tokens
-        lastSaved = tokens
-    }
-
-    override suspend fun clear() {
-        state.value = null
-    }
 }

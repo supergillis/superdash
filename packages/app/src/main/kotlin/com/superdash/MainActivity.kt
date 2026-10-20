@@ -57,6 +57,7 @@ import com.superdash.settings.SettingsActivity
 import com.superdash.theme.SuperdashTheme
 import com.superdash.voice.VoiceService
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 private val log = Log("MainActivity")
 
@@ -163,7 +164,11 @@ class MainActivity : AppCompatActivity() {
                             // in the NeedsReauth state just re-saved the same URL and did
                             // nothing (tokens stayed, state stayed NeedsReauth). Tokens are
                             // already null on first run, so this is a no-op there.
-                            graph.tokenStore.clear()
+                            try {
+                                graph.tokenStore.clear()
+                            } catch (e: IOException) {
+                                log.w("clearing tokens failed", e)
+                            }
                         }
                     },
                     onSidebarPinnedChange = { value ->

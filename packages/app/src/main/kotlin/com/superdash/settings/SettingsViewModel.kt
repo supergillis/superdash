@@ -7,7 +7,9 @@ import com.superdash.AppGraph
 import com.superdash.R
 import com.superdash.camera.CameraSettings
 import com.superdash.core.locale.SupportedLanguage
+import com.superdash.core.log.Log
 import com.superdash.core.resources.StringProvider
+import com.superdash.core.security.isKeyUnavailable
 import com.superdash.core.util.UrlNormalizer
 import com.superdash.feed.FeedConfig
 import com.superdash.feed.FeedSettings
@@ -28,14 +30,21 @@ import com.superdash.voice.pipeline.VoiceResponseMode
 import com.superdash.voice.pipeline.VoiceSttProvider
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
+
+private val log = Log("SettingsViewModel")
 
 sealed interface RefreshImmichCatalogResult {
     data class Success(
@@ -85,7 +94,7 @@ class SettingsViewModel(
     private val localeController: LocaleSettingsController,
     haUrlFlow: Flow<String?>,
     immichUrlFlow: Flow<String>,
-    immichApiKeyFlow: Flow<String>,
+    immichApiKeyFlow: Flow<String?>,
     immichAlbumFlow: Flow<String>,
     immichCatalogTtlHoursFlow: Flow<Int> = MutableStateFlow(24),
     voiceModelStateFlow: Flow<VoiceModelState>,
@@ -304,17 +313,21 @@ class SettingsViewModel(
         }
 
     private val esphomeUiStateFlow: Flow<EsphomeSettingsState> =
-        combine(kioskSettings.esphomeEnabled, esphomePskStore.psk) { enabled, psk ->
-            EsphomeSettingsState(
-                enabled = enabled,
-                pskState =
-                    if (psk == null) {
-                        PskState.NotSet
-                    } else {
-                        PskState.Configured(fingerprint = fingerprintOf(psk))
-                    },
-            )
+        combine(kioskSettings.esphomeEnabled, pskStateFlow()) { enabled, pskState ->
+            EsphomeSettingsState(enabled = enabled, pskState = pskState)
         }
+
+    // The PSK store retries while the key is unavailable, so start from Unavailable
+    // rather than holding back the whole settings state.
+    private fun pskStateFlow(): Flow<PskState> =
+        esphomePskStore.psk
+            .map { psk ->
+                if (psk == null) {
+                    PskState.NotSet
+                } else {
+                    PskState.Configured(fingerprint = fingerprintOf(psk))
+                }
+            }.onStart { emit(PskState.Unavailable) }
 
     private val sidebarUiStateFlow: Flow<SidebarSettingsState> =
         combine(
@@ -598,16 +611,29 @@ class SettingsViewModel(
         if (raw.size != 32) {
             return false
         }
-        viewModelScope.launch { esphomePskStore.set(raw) }
+        launch { esphomePskStore.set(raw) }
         return true
     }
 
-    fun clearNoisePsk() {
-        viewModelScope.launch { esphomePskStore.clear() }
-    }
+    fun clearNoisePsk() = launch { esphomePskStore.clear() }
+
+    private val noticesChannel = Channel<String>(Channel.BUFFERED)
+
+    /** One-shot messages for the user, such as a failed secure write. Buffered until collected. */
+    val notices: Flow<String> = noticesChannel.receiveAsFlow()
 
     private fun launch(block: suspend () -> Unit) {
-        viewModelScope.launch { block() }
+        viewModelScope.launch {
+            try {
+                block()
+            } catch (e: IOException) {
+                if (!e.isKeyUnavailable()) {
+                    throw e
+                }
+                log.w("secure write failed; key unavailable", e)
+                noticesChannel.send(strings.get(R.string.settings_secure_storage_unavailable))
+            }
+        }
     }
 
     class Factory(
@@ -632,7 +658,7 @@ class SettingsViewModel(
                     },
                 haUrlFlow = graph.settings.haUrl,
                 immichUrlFlow = graph.immichSettings.url,
-                immichApiKeyFlow = graph.immichSettings.apiKey,
+                immichApiKeyFlow = graph.immichApiKeyForSettings,
                 immichAlbumFlow = graph.immichSettings.album,
                 immichCatalogTtlHoursFlow = graph.immichSettings.catalogTtlHours,
                 voiceModelStateFlow = graph.voiceModels.state,

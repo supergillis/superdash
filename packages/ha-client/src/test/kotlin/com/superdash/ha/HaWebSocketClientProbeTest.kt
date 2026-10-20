@@ -131,19 +131,4 @@ class HaWebSocketClientProbeTest {
             )
         }
     }
-
-    private class InMemoryHaTokenStore : HaTokenStoreLike {
-        private var tokens: HaTokens? =
-            HaTokens(accessToken = "access", refreshToken = "refresh", expiresAtEpochMs = Long.MAX_VALUE / 2)
-
-        override suspend fun load(): HaTokens? = tokens
-
-        override suspend fun save(tokens: HaTokens) {
-            this.tokens = tokens
-        }
-
-        override suspend fun clear() {
-            tokens = null
-        }
-    }
 }

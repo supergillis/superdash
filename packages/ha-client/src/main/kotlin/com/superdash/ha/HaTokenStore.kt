@@ -6,8 +6,7 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStoreFile
 import com.superdash.core.log.Log
-import com.superdash.ha.security.AeadEncryption
-import com.superdash.ha.security.KeystoreKeyProvider
+import com.superdash.core.security.AeadEncryption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.io.IOException
@@ -18,9 +17,8 @@ private val log = Log("HaTokenStore")
 
 class HaTokenStore(
     context: Context,
+    encryption: AeadEncryption,
 ) : HaTokenStoreLike {
-    private val encryption = AeadEncryption(KeystoreKeyProvider(context.applicationContext))
-
     private val store: DataStore<HaTokens?> =
         DataStoreFactory.create(
             serializer = AeadHaTokensSerializer(encryption),

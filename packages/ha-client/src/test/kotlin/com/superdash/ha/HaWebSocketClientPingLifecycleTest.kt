@@ -150,23 +150,4 @@ class HaWebSocketClientPingLifecycleTest {
         const val PING_INTERVAL_MS_FOR_TEST = 100L
         const val PONG_TIMEOUT_MS_FOR_TEST = 50L
     }
-
-    private class InMemoryHaTokenStore : HaTokenStoreLike {
-        private var tokens: HaTokens? =
-            HaTokens(
-                accessToken = "access",
-                refreshToken = "refresh",
-                expiresAtEpochMs = Long.MAX_VALUE / 2,
-            )
-
-        override suspend fun load(): HaTokens? = tokens
-
-        override suspend fun save(tokens: HaTokens) {
-            this.tokens = tokens
-        }
-
-        override suspend fun clear() {
-            tokens = null
-        }
-    }
 }

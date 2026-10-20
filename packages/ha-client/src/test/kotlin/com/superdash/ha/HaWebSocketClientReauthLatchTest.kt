@@ -71,18 +71,4 @@ class HaWebSocketClientReauthLatchTest {
             thrown is HaWebSocketClient.NotAuthenticatedExceptionWrapper,
         )
     }
-
-    private class InMemoryHaTokenStore(
-        private var tokens: HaTokens?,
-    ) : HaTokenStoreLike {
-        override suspend fun load(): HaTokens? = tokens
-
-        override suspend fun save(tokens: HaTokens) {
-            this.tokens = tokens
-        }
-
-        override suspend fun clear() {
-            tokens = null
-        }
-    }
 }

@@ -6,8 +6,7 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStoreFile
 import com.superdash.core.log.Log
-import com.superdash.ha.security.AeadEncryption
-import com.superdash.ha.security.KeystoreKeyProvider
+import com.superdash.core.security.AeadEncryption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.IOException
@@ -24,10 +23,9 @@ private val log = Log("EsphomePskStore")
  *  rather than as base64 to keep the on-disk size bounded. */
 class EsphomePskStore(
     context: Context,
+    encryption: AeadEncryption,
     fileName: String = "esphome_psk.bin",
 ) {
-    private val encryption = AeadEncryption(KeystoreKeyProvider(context.applicationContext))
-
     private val store: DataStore<ByteArray?> =
         DataStoreFactory.create(
             serializer = AeadByteArraySerializer(encryption),

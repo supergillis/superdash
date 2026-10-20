@@ -1,4 +1,4 @@
-package com.superdash.ha.security
+package com.superdash.core.security
 
 import android.content.Context
 import com.google.crypto.tink.Aead

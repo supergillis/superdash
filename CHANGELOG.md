@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.2.0](https://github.com/supergillis/superdash/compare/v1.1.0...v1.2.0) (2026-10-21)
+
+
+### Features
+
+* **settings:** warn about unencrypted Home Assistant, Immich and ESPHome connections ([#87](https://github.com/supergillis/superdash/issues/87)) ([d3cb4cd](https://github.com/supergillis/superdash/commit/d3cb4cd1a5d3c82f2dd43768fc64279d8bcd3279)), closes [#21](https://github.com/supergillis/superdash/issues/21) [#22](https://github.com/supergillis/superdash/issues/22)
+
+
+### Bug Fixes
+
+* **app:** reload the dashboard WebView directly instead of through the bridge ([#86](https://github.com/supergillis/superdash/issues/86)) ([d1a19ec](https://github.com/supergillis/superdash/commit/d1a19ec611a1bcdb1915f09a6d8bfafdf5453aac)), closes [#23](https://github.com/supergillis/superdash/issues/23)
+* **app:** show the dashboard after login on WebViews without document-start scripts ([#93](https://github.com/supergillis/superdash/issues/93)) ([0502489](https://github.com/supergillis/superdash/commit/0502489be292060193f337d0178947659937787a)), closes [#38](https://github.com/supergillis/superdash/issues/38) [#39](https://github.com/supergillis/superdash/issues/39)
+* **esphome:** close the listener on startup failure and give mdns one owner ([#84](https://github.com/supergillis/superdash/issues/84)) ([cced1ed](https://github.com/supergillis/superdash/commit/cced1ed1b87a4afccd1308cd2f3709df06baabee)), closes [#8](https://github.com/supergillis/superdash/issues/8) [#9](https://github.com/supergillis/superdash/issues/9)
+* **esphome:** give every tablet a distinct MAC and dedupe frame decoding ([#92](https://github.com/supergillis/superdash/issues/92)) ([af74051](https://github.com/supergillis/superdash/commit/af74051072a1d2010e0e0a1d22e5d25cef8071b8)), closes [#26](https://github.com/supergillis/superdash/issues/26) [#31](https://github.com/supergillis/superdash/issues/31)
+* **ha-client:** check the OAuth token exchange status and match callbacks case-insensitively ([#91](https://github.com/supergillis/superdash/issues/91)) ([b416917](https://github.com/supergillis/superdash/commit/b416917dd1e024eb1b33518da2553d18f317cb0e)), closes [#26](https://github.com/supergillis/superdash/issues/26)
+* **ha-client:** keep a reconnect wake-up that arrives during a failing attempt ([#85](https://github.com/supergillis/superdash/issues/85)) ([8ee115f](https://github.com/supergillis/superdash/commit/8ee115f1f2e38149e588c6c82d499b3d8ee69a7f)), closes [#29](https://github.com/supergillis/superdash/issues/29)
+* **ha-client:** route websocket frames by id and probe dead sockets ([#79](https://github.com/supergillis/superdash/issues/79)) ([b6b4163](https://github.com/supergillis/superdash/commit/b6b41639d067d0aaff867058c02bc4617e5c7975))
+* **immich:** fail the catalog refresh on a bad page and tolerate missing dates ([#83](https://github.com/supergillis/superdash/issues/83)) ([ffb4484](https://github.com/supergillis/superdash/commit/ffb44849b4632f11c9708386626858ce59b68b30)), closes [#15](https://github.com/supergillis/superdash/issues/15) [#16](https://github.com/supergillis/superdash/issues/16)
+* **kiosk:** make start on boot and launch on wake actually launch ([#77](https://github.com/supergillis/superdash/issues/77)) ([ec4e56d](https://github.com/supergillis/superdash/commit/ec4e56d7826bbe238ffb7b3b06e5514d622c2baa))
+* **security:** survive keystore outages without crashing or wiping secrets ([#96](https://github.com/supergillis/superdash/issues/96)) ([903b32f](https://github.com/supergillis/superdash/commit/903b32f0aa92b6814ab071c01bf18dd8693b22b6))
+* **voice:** close hand-off, wake and shutdown races in the voice pipeline ([#94](https://github.com/supergillis/superdash/issues/94)) ([09017d6](https://github.com/supergillis/superdash/commit/09017d62ffbd1149a0ce2e3383f994ded55a8c60)), closes [#26](https://github.com/supergillis/superdash/issues/26) [#31](https://github.com/supergillis/superdash/issues/31)
+* **voice:** throw Java exceptions from JNI instead of aborting ([#90](https://github.com/supergillis/superdash/issues/90)) ([8c7bf50](https://github.com/supergillis/superdash/commit/8c7bf50efa6053f23e461f881cdb671da2f1d4fd)), closes [#20](https://github.com/supergillis/superdash/issues/20)
+
 ## [1.1.0](https://github.com/supergillis/superdash/compare/v1.0.0...v1.1.0) (2026-10-06)
 
 

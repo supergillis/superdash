@@ -17,7 +17,6 @@ import com.superdash.core.resources.AndroidStringProvider
 import com.superdash.core.resources.StringProvider
 import com.superdash.core.security.AeadEncryption
 import com.superdash.core.security.KeystoreAeadEncryption
-import com.superdash.core.security.KeystoreKeyProvider
 import com.superdash.device.DeviceIdRepository
 import com.superdash.device.DeviceInfo
 import com.superdash.device.ScreenStateProvider
@@ -68,6 +67,7 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
@@ -94,13 +94,21 @@ class AppGraph(
 
     val cameraSettings: CameraSettings = SettingsRepositoryCameraSettings(keyValueStore)
 
-    private val aeadEncryption: AeadEncryption = KeystoreAeadEncryption(KeystoreKeyProvider(application))
+    private val encryption: AeadEncryption =
+        KeystoreAeadEncryption(application).also { keystoreEncryption ->
+            scope.launch(Dispatchers.IO) { keystoreEncryption.warmUp() }
+        }
 
-    val immichSettings: ImmichSettings =
+    private val immichSettingsRepository =
         SettingsRepositoryImmichSettings(
             store = keyValueStore,
-            secret = AeadSecretString(aeadEncryption),
+            secret = AeadSecretString(encryption),
         )
+
+    val immichSettings: ImmichSettings = immichSettingsRepository
+
+    /** Null while secure storage is unavailable, unlike [ImmichSettings.apiKey] which waits. */
+    val immichApiKeyForSettings: Flow<String?> get() = immichSettingsRepository.revealedApiKey
 
     val screensaverSettings: ScreensaverSettings = SettingsRepositoryScreensaverSettings(keyValueStore)
 
@@ -110,11 +118,11 @@ class AppGraph(
 
     val sidebarSettings: SidebarSettings = SettingsRepositorySidebarSettings(keyValueStore)
 
-    val ha: HaSubgraph = HaSubgraph(application, scope, settings, aeadEncryption)
+    val ha: HaSubgraph = HaSubgraph(application, scope, settings, encryption)
 
     val immich: ImmichSubgraph = ImmichSubgraph(scope, immichSettings, ha.httpClient, application.applicationContext)
 
-    private val esphomePskStore = EsphomePskStore(application, aeadEncryption)
+    private val esphomePskStore = EsphomePskStore(application, encryption)
 
     val esphomePsk: EsphomePskStore get() = esphomePskStore
 

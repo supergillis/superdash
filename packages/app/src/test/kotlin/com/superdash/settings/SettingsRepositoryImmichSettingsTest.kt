@@ -2,6 +2,7 @@ package com.superdash.settings
 
 import com.superdash.core.persistence.InMemoryKeyValueStore
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -110,6 +111,48 @@ class SettingsRepositoryImmichSettingsTest {
                 SettingsRepositoryImmichSettings(store, PrefixSecret).apiKey.first(),
             )
         }
+
+    @Test
+    fun `saving an empty api key keeps a stored key that cannot be revealed`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set("immich_api_key", "enc:v1:sealed")
+            val settings = SettingsRepositoryImmichSettings(store, UnrevealableSecret)
+
+            settings.setApiKey("")
+
+            assertEquals("enc:v1:sealed", SettingsRepositoryImmichSettings(store).apiKey.first())
+        }
+
+    @Test
+    fun `api key recovers once the key becomes available`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set("immich_api_key", "enc:v1:sealed")
+            var outages = 1
+            val recoveringSecret =
+                object : SecretString {
+                    override fun conceal(plain: String): String = plain
+
+                    override fun reveal(stored: String): String? =
+                        if (outages-- > 0) {
+                            null
+                        } else {
+                            "real-key"
+                        }
+                }
+
+            val apiKey = SettingsRepositoryImmichSettings(store, recoveringSecret).apiKey.first()
+
+            assertEquals("real-key", apiKey)
+            assertEquals(1_000L, currentTime)
+        }
+
+    private object UnrevealableSecret : SecretString {
+        override fun conceal(plain: String): String = plain
+
+        override fun reveal(stored: String): String? = null
+    }
 
     private object PrefixSecret : SecretString {
         override fun conceal(plain: String): String = if (plain.isEmpty()) plain else "enc:$plain"

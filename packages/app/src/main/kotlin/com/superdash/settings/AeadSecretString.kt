@@ -1,7 +1,11 @@
 package com.superdash.settings
 
 import android.util.Base64
+import com.superdash.core.log.Log
 import com.superdash.core.security.AeadEncryption
+import com.superdash.core.security.KeyUnavailableException
+
+private val log = Log("AeadSecretString")
 
 /** [SecretString] backed by Tink AEAD (the same primitive that protects HA
  *  tokens). Encrypted values carry a version prefix so legacy plaintext values
@@ -16,7 +20,7 @@ internal class AeadSecretString(
             PREFIX + Base64.encodeToString(encryption.encrypt(plain.encodeToByteArray()), Base64.NO_WRAP)
         }
 
-    override fun reveal(stored: String): String {
+    override fun reveal(stored: String): String? {
         if (!stored.startsWith(PREFIX)) {
             // Legacy plaintext (or empty). Read as-is; re-encrypted on next write.
             return stored
@@ -24,7 +28,11 @@ internal class AeadSecretString(
         return try {
             val cipher = Base64.decode(stored.removePrefix(PREFIX), Base64.NO_WRAP)
             encryption.decrypt(cipher).decodeToString()
+        } catch (e: KeyUnavailableException) {
+            log.w("encryption key unavailable; secret not revealed")
+            null
         } catch (t: Throwable) {
+            log.w("failed to decrypt stored secret; returning empty", t)
             ""
         }
     }

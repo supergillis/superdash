@@ -58,7 +58,7 @@ data class SettingsUiState(
     val mediaLibrarySourceTitle: String? get() = screensaver.mediaLibrarySourceTitle
     val mediaLibraryOrderKey: String get() = screensaver.mediaLibraryOrderKey
     val immichUrl: String get() = immich.url
-    val immichApiKey: String get() = immich.apiKey
+    val immichApiKey: String? get() = immich.apiKey
     val immichAlbum: String get() = immich.album
     val feedState: FeedState get() = overlay.feedState
     val isIdle: Boolean get() = overlay.isIdle
@@ -212,6 +212,9 @@ data class EsphomeSettingsState(
 
 @Immutable
 sealed interface PskState {
+    /** Secure storage has not produced the PSK yet, so it is neither set nor unset. */
+    data object Unavailable : PskState
+
     data object NotSet : PskState
 
     data class Configured(
@@ -258,7 +261,8 @@ data class ScreensaverSettingsState(
 @Immutable
 data class ImmichSettingsState(
     val url: String,
-    val apiKey: String,
+    /** Null while secure storage cannot reveal the stored key. */
+    val apiKey: String?,
     val album: String,
     val catalogTtlHours: Int,
 ) {

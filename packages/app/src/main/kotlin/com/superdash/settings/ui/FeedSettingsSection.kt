@@ -146,11 +146,13 @@ fun EsphomeSettingsSection(
     val invalidKeyMessage = stringResource(R.string.settings_esphome_psk_invalid)
     val configuredHint =
         when (val pskState = state.pskState) {
+            is PskState.Unavailable -> stringResource(R.string.settings_value_unavailable)
             is PskState.NotSet -> stringResource(R.string.settings_esphome_psk_not_set)
             is PskState.Configured ->
                 stringResource(R.string.settings_esphome_psk_configured, pskState.fingerprint)
         }
 
+    val pskEditable = state.pskState != PskState.Unavailable
     ListItem(
         headlineContent = { Text(stringResource(R.string.settings_esphome_encryption_key_title)) },
         supportingContent = {
@@ -163,6 +165,7 @@ fun EsphomeSettingsSection(
                         error = null
                     },
                     placeholder = { Text(stringResource(R.string.settings_esphome_encryption_key_placeholder)) },
+                    enabled = pskEditable,
                     isError = error != null,
                     supportingText = {
                         error?.let { Text(it) }
@@ -171,6 +174,7 @@ fun EsphomeSettingsSection(
                 )
                 Row {
                     TextButton(
+                        enabled = pskEditable,
                         onClick = {
                             if (actions.onSavePskBase64(draft)) {
                                 draft = ""
@@ -181,6 +185,7 @@ fun EsphomeSettingsSection(
                         },
                     ) { Text(stringResource(R.string.settings_action_save)) }
                     TextButton(
+                        enabled = pskEditable,
                         onClick = {
                             actions.onClearPsk()
                             draft = ""

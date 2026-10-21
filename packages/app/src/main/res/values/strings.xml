@@ -323,4 +323,6 @@
         <item quantity="other">Refreshed %1$d items</item>
     </plurals>
     <string name="settings_immich_refresh_failed">Refresh failed: %1$s</string>
+    <string name="settings_secure_storage_unavailable">Secure storage unavailable, try again</string>
+    <string name="settings_value_unavailable">Unavailable</string>
 </resources>

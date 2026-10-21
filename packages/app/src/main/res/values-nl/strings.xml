@@ -322,4 +322,6 @@
         <item quantity="other">%1$d items vernieuwd</item>
     </plurals>
     <string name="settings_immich_refresh_failed">Vernieuwen mislukt: %1$s</string>
+    <string name="settings_secure_storage_unavailable">Beveiligde opslag niet beschikbaar, probeer opnieuw</string>
+    <string name="settings_value_unavailable">Niet beschikbaar</string>
 </resources>

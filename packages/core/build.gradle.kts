@@ -13,6 +13,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.annotation) // only for @StringRes in StringProvider
+    api(libs.androidx.datastore.core)
     implementation(libs.kotlinx.coroutines.jdk8)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.tink.android)

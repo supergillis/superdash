@@ -1,8 +1,10 @@
 package com.superdash.settings
 
+import com.superdash.R
 import com.superdash.camera.CameraSettings
 import com.superdash.core.locale.SupportedLanguage
 import com.superdash.core.resources.StringProvider
+import com.superdash.core.security.KeyUnavailableException
 import com.superdash.feed.FeedConfig
 import com.superdash.feed.FeedSettings
 import com.superdash.feed.FeedState
@@ -22,9 +24,12 @@ import com.superdash.voice.pipeline.VoiceSttProvider
 import com.superdash.voice.wake.WakeWordModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -38,6 +43,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -297,6 +303,58 @@ class SettingsViewModelTest {
 
             assertEquals(ScreensaverMode.Off, viewModel.uiState.value.screensaver.dayMode)
             assertEquals(ScreensaverMode.Immich, viewModel.uiState.value.screensaver.nightMode)
+        }
+
+    @Test
+    fun `settings render while the psk never arrives`() =
+        runTest {
+            val stalledPskStore =
+                object : PskStore {
+                    override val psk: Flow<ByteArray?> = flow { awaitCancellation() }
+
+                    override suspend fun set(psk: ByteArray) = Unit
+
+                    override suspend fun clear() = Unit
+                }
+            val kiosk = FakeKioskSettings(esphomeEnabledFlow = MutableStateFlow(true))
+            val viewModel = buildViewModel(kiosk = kiosk, pskStore = stalledPskStore)
+            backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(
+                EsphomeSettingsState(enabled = true, pskState = PskState.Unavailable),
+                viewModel.uiState.value.esphome,
+            )
+        }
+
+    @Test
+    fun `secure writes that hit an unavailable key surface a notice instead of crashing`() =
+        runTest {
+            // Wrapped the way DataStore wraps a read failure.
+            // PSK set is left out because android.util.Base64 is a stub in unit tests.
+            val outage = IOException("Inoperable file", KeyUnavailableException(IllegalStateException("locked")))
+            val failingPskStore =
+                object : PskStore {
+                    override val psk: Flow<ByteArray?> = MutableStateFlow(null)
+
+                    override suspend fun set(psk: ByteArray) = Unit
+
+                    override suspend fun clear() = throw outage
+                }
+            val failingActions =
+                object : SettingsExternalActions by RecordingSettingsExternalActions() {
+                    override suspend fun setImmichApiKey(value: String) = throw outage
+                }
+            val viewModel = buildViewModel(pskStore = failingPskStore, actions = failingActions)
+            val notices = mutableListOf<String>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.notices.toList(notices) }
+
+            viewModel.clearNoisePsk()
+            viewModel.setImmichApiKey("key")
+            advanceUntilIdle()
+
+            val notice = "string:${R.string.settings_secure_storage_unavailable}"
+            assertEquals(listOf(notice, notice), notices)
         }
 
     @Test

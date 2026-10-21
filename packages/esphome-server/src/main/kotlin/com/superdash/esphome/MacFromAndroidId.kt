@@ -4,7 +4,8 @@ package com.superdash.esphome
  *  ESPHome's mDNS TXT requires `mac` and HA's `esphome` integration uses a
  *  formatted version of it as the config-entry unique_id. We synthesize a
  *  locally-administered (bit 1 of first octet set), unicast (bit 0 cleared)
- *  MAC from the input. Android does not expose a real MAC since 6.0.
+ *  MAC from the hex digits of the input, so UUID dashes are ignored. Android
+ *  does not expose a real MAC since 6.0.
  *
  *  Caveat for callers: if the input id rotates (factory reset, app
  *  reinstall, `pm clear`), HA sees a "different device" and orphans entity
@@ -12,13 +13,20 @@ package com.superdash.esphome
  *  user-set device identifier (e.g. paired-once token) would be a better
  *  source. */
 internal fun deriveMacFromStableId(stableId: String): String {
-    val padded = stableId.padEnd(12, '0').take(12).uppercase()
     val bytes =
-        IntArray(6) { i ->
-            val pair = padded.substring(i * 2, i * 2 + 2)
-            pair.toIntOrNull(radix = 16) ?: 0
-        }
-    // First octet: set bit 1 (locally administered), clear bit 0 (unicast).
-    bytes[0] = (bytes[0] or 0x02) and 0xFE
-    return bytes.joinToString(":") { it.toString(16).padStart(2, '0').uppercase() }
+        stableId
+            .filter { it in '0'..'9' || it.lowercaseChar() in 'a'..'f' }
+            .padEnd(MAC_HEX_LENGTH, '0')
+            .take(MAC_HEX_LENGTH)
+            .hexToByteArray()
+    bytes[0] = ((bytes[0].toInt() or 0x02) and 0xFE).toByte()
+    return bytes.toHexString(MAC_FORMAT)
 }
+
+private const val MAC_HEX_LENGTH = 12
+
+private val MAC_FORMAT =
+    HexFormat {
+        upperCase = true
+        bytes.byteSeparator = ":"
+    }

@@ -15,6 +15,7 @@ import com.superdash.core.persistence.DataStoreKeyValueStore
 import com.superdash.core.persistence.KeyValueStore
 import com.superdash.core.resources.AndroidStringProvider
 import com.superdash.core.resources.StringProvider
+import com.superdash.device.DeviceIdRepository
 import com.superdash.device.DeviceInfo
 import com.superdash.device.ScreenStateProvider
 import com.superdash.esphome.EsphomeBindings
@@ -72,6 +73,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
 class AppGraph(
@@ -218,7 +220,12 @@ class AppGraph(
             isIdleFlow = idleController.isIdle,
         )
 
-    val deviceInfo: DeviceInfo = DeviceInfo(application)
+    val deviceInfo: DeviceInfo =
+        DeviceInfo(
+            application = application,
+            // Only runs when ANDROID_ID is null or blank.
+            fallbackId = { runBlocking { DeviceIdRepository(keyValueStore).fallbackId() } },
+        )
 
     val screenStateProvider: ScreenStateProvider =
         ScreenStateProvider(application.applicationContext)

@@ -6,7 +6,6 @@ import io.ktor.utils.io.readByte
 import io.ktor.utils.io.readByteArray
 import io.ktor.utils.io.writeByteArray
 import kotlinx.io.Buffer
-import kotlinx.io.Source
 import kotlinx.io.readByteArray
 
 internal data class EsphomeFrame(
@@ -39,20 +38,6 @@ internal fun encodeVarint(value: Int): ByteArray {
     return buffer.readByteArray()
 }
 
-internal fun Source.readVarint(): Int {
-    var result = 0
-    var shift = 0
-    while (true) {
-        check(shift <= 28) { "varint too large for Int32" }
-        val byte = readByte().toInt() and 0xFF
-        result = result or ((byte and 0x7F) shl shift)
-        if (byte and 0x80 == 0) {
-            return result
-        }
-        shift += 7
-    }
-}
-
 internal fun encodeFrame(
     messageType: Int,
     payload: ByteArray,
@@ -65,31 +50,12 @@ internal fun encodeFrame(
     return buffer.readByteArray()
 }
 
-/** Read one whole frame off a `Source`. Returns `null` at EOF. Throws on
- *  preamble != 0x00. The encrypted variant uses 0x01 and is rejected. */
-internal suspend fun Source.readFrame(): EsphomeFrame? {
-    if (exhausted()) {
-        return null
-    }
-    val preamble = readByte().toInt() and 0xFF
-    check(preamble == 0x00) { "Unsupported frame preamble: $preamble (encrypted streams are out of MVP scope)" }
-    val length = readVarint()
-    require(length in 0..NOISE_MAX_PAYLOAD) { "ESPHome frame length out of range: $length" }
-    val messageType = readVarint()
-    val payload = readByteArray(length)
-    return EsphomeFrame(messageType, payload)
-}
-
-/** Read one whole frame off a Ktor `ByteReadChannel`. Mirrors `Source.readFrame`
- *  but using channel I/O so connection coroutines suspend on socket reads. */
+/** Read one whole frame off a Ktor `ByteReadChannel`. Uses channel I/O
+ *  so connection coroutines suspend on socket reads. */
 internal suspend fun ByteReadChannel.readEsphomeFrame(): EsphomeFrame {
     val preamble = readByte().toInt() and 0xFF
     check(preamble == 0x00) { "Unsupported frame preamble: $preamble" }
-    val length = readVarintFromChannel()
-    require(length in 0..NOISE_MAX_PAYLOAD) { "ESPHome frame length out of range: $length" }
-    val messageType = readVarintFromChannel()
-    val payload = readByteArray(length)
-    return EsphomeFrame(messageType, payload)
+    return readEsphomeFrameAfterPreamble()
 }
 
 /** Read a frame whose preamble byte has already been consumed by the caller.

@@ -1,7 +1,7 @@
 package com.superdash.settings
 
 import android.util.Base64
-import com.superdash.ha.security.AeadEncryption
+import com.superdash.core.security.AeadEncryption
 
 /** [SecretString] backed by Tink AEAD (the same primitive that protects HA
  *  tokens). Encrypted values carry a version prefix so legacy plaintext values

@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.androidx.annotation) // only for @StringRes in StringProvider
     implementation(libs.kotlinx.coroutines.jdk8)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.tink.android)
 
     testFixturesImplementation(libs.kotlinx.coroutines.jdk8)
 

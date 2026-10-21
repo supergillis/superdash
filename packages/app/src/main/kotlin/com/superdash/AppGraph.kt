@@ -15,6 +15,9 @@ import com.superdash.core.persistence.DataStoreKeyValueStore
 import com.superdash.core.persistence.KeyValueStore
 import com.superdash.core.resources.AndroidStringProvider
 import com.superdash.core.resources.StringProvider
+import com.superdash.core.security.AeadEncryption
+import com.superdash.core.security.KeystoreAeadEncryption
+import com.superdash.core.security.KeystoreKeyProvider
 import com.superdash.device.DeviceIdRepository
 import com.superdash.device.DeviceInfo
 import com.superdash.device.ScreenStateProvider
@@ -31,8 +34,6 @@ import com.superdash.ha.HaTokenProvider
 import com.superdash.ha.HaTokenStore
 import com.superdash.ha.HaWebSocketClient
 import com.superdash.ha.media.CameraStreamSource
-import com.superdash.ha.security.AeadEncryption
-import com.superdash.ha.security.KeystoreKeyProvider
 import com.superdash.immich.ImmichApiClient
 import com.superdash.immich.ImmichSettings
 import com.superdash.immich.okhttp.ImmichAuthInterceptor
@@ -93,10 +94,12 @@ class AppGraph(
 
     val cameraSettings: CameraSettings = SettingsRepositoryCameraSettings(keyValueStore)
 
+    private val aeadEncryption: AeadEncryption = KeystoreAeadEncryption(KeystoreKeyProvider(application))
+
     val immichSettings: ImmichSettings =
         SettingsRepositoryImmichSettings(
             store = keyValueStore,
-            secret = AeadSecretString(AeadEncryption(KeystoreKeyProvider(application))),
+            secret = AeadSecretString(aeadEncryption),
         )
 
     val screensaverSettings: ScreensaverSettings = SettingsRepositoryScreensaverSettings(keyValueStore)
@@ -107,11 +110,11 @@ class AppGraph(
 
     val sidebarSettings: SidebarSettings = SettingsRepositorySidebarSettings(keyValueStore)
 
-    val ha: HaSubgraph = HaSubgraph(application, scope, settings)
+    val ha: HaSubgraph = HaSubgraph(application, scope, settings, aeadEncryption)
 
     val immich: ImmichSubgraph = ImmichSubgraph(scope, immichSettings, ha.httpClient, application.applicationContext)
 
-    private val esphomePskStore = EsphomePskStore(application)
+    private val esphomePskStore = EsphomePskStore(application, aeadEncryption)
 
     val esphomePsk: EsphomePskStore get() = esphomePskStore
 

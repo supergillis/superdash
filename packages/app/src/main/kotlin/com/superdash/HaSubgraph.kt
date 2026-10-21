@@ -2,6 +2,7 @@ package com.superdash
 
 import android.app.Application
 import com.superdash.core.json.coreJson
+import com.superdash.core.security.AeadEncryption
 import com.superdash.ha.HaAssistClient
 import com.superdash.ha.HaMediaSourceClient
 import com.superdash.ha.HaServiceCallClient
@@ -24,6 +25,7 @@ class HaSubgraph(
     private val application: Application,
     private val scope: CoroutineScope,
     private val settings: SettingsRepository,
+    encryption: AeadEncryption,
 ) {
     val httpClient: HttpClient =
         HttpClient(OkHttp) {
@@ -31,7 +33,7 @@ class HaSubgraph(
             install(WebSockets)
         }
 
-    val tokenStore: HaTokenStore = HaTokenStore(application)
+    val tokenStore: HaTokenStore = HaTokenStore(application, encryption)
 
     val haUrlFlow: StateFlow<String?> =
         settings.haUrl.stateIn(scope, SharingStarted.Eagerly, null)

@@ -16,6 +16,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -886,4 +887,221 @@ class ImmichSlideshowSourceTest {
             // 1 synchronous fetch for current slide + 3 prefetches = 4 distinct ids.
             assertEquals(4, fetchedIds.toSet().size)
         }
+
+    private val jsonHeaders = headersOf("Content-Type", "application/json")
+    private val staleEntry = ImmichCatalogEntry("old", "IMAGE", ImmichAssetOrientation.Landscape)
+    private val staleSlide = SlideshowMedia(url = "http://immich/api/assets/old/thumbnail?size=preview")
+
+    private fun clientWithEngine(engine: MockEngine) =
+        ImmichApiClient(
+            HttpClient(engine) { install(ContentNegotiation) { json() } },
+            "http://immich",
+            "api-key",
+            sleep = {},
+        )
+
+    private data class FailedRefreshCase(
+        val name: String,
+        val albumName: String,
+        val respondTo: (String, Int) -> Pair<HttpStatusCode, String>,
+    )
+
+    @Test
+    fun `failed refresh keeps the previous catalog in memory and in the store`() {
+        val firstPage =
+            """{"assets":{"items":[{"id":"new","type":"IMAGE","originalFileName":"new.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":"2"}}"""
+        listOf(
+            FailedRefreshCase("second search page returns 500", "") { path, searchCall ->
+                when {
+                    path == "/api/search/metadata" && searchCall == 1 -> HttpStatusCode.OK to firstPage
+                    else -> HttpStatusCode.InternalServerError to "boom"
+                }
+            },
+            FailedRefreshCase("album lookup is unauthorized", "test") { _, _ ->
+                HttpStatusCode.Unauthorized to "no"
+            },
+        ).forEach { case ->
+            runTest {
+                val store = InMemoryImmichCatalogStore()
+                store.save(case.albumName, listOf(staleEntry), fetchedAtMs = 0L)
+                var searchCalls = 0
+                val engine =
+                    MockEngine { request ->
+                        val path = request.url.encodedPath
+                        if (path == "/api/search/metadata") {
+                            searchCalls++
+                        }
+                        val (status, body) = case.respondTo(path, searchCalls)
+                        respond(body, status, jsonHeaders)
+                    }
+                val source =
+                    ImmichSlideshowSource(
+                        client = clientWithEngine(engine),
+                        albumName = case.albumName,
+                        catalogStore = store,
+                        now = { DAY_MS + 1 },
+                    )
+
+                val slide = source.next(SlideshowViewport.Landscape)
+
+                assertEquals(case.name, listOf(staleSlide), slide?.media)
+                assertEquals(
+                    case.name,
+                    ImmichCatalogStore.Snapshot(case.albumName, listOf(staleEntry), 0L),
+                    store.load(),
+                )
+                source.close()
+            }
+        }
+    }
+
+    private data class BackoffCase(
+        val name: String,
+        val ttlMs: Long,
+        val expectedBackoffMs: Long,
+    )
+
+    @Test
+    fun `failed refresh is retried only after the smaller of ttl and 15 minutes`() {
+        listOf(
+            BackoffCase("ttl longer than 15 minutes", ttlMs = DAY_MS, expectedBackoffMs = 15 * 60_000L),
+            BackoffCase("ttl shorter than 15 minutes", ttlMs = 60_000L, expectedBackoffMs = 60_000L),
+        ).forEach { case ->
+            runTest {
+                val store = InMemoryImmichCatalogStore()
+                store.save("", listOf(staleEntry), fetchedAtMs = 0L)
+                var searchCalls = 0
+                val engine =
+                    MockEngine { request ->
+                        if (request.url.encodedPath == "/api/search/metadata") {
+                            searchCalls++
+                        }
+                        respond("boom", HttpStatusCode.InternalServerError, jsonHeaders)
+                    }
+                var time = case.ttlMs + 1
+                val failedAt = time
+                val source =
+                    ImmichSlideshowSource(
+                        client = clientWithEngine(engine),
+                        catalogStore = store,
+                        now = { time },
+                        catalogTtlMs = { case.ttlMs },
+                    )
+
+                source.next(SlideshowViewport.Landscape)
+                val callsAfterFirstFailure = searchCalls
+                time = failedAt + case.expectedBackoffMs - 1
+                source.next(SlideshowViewport.Landscape)
+                val callsInsideBackoff = searchCalls
+                time = failedAt + case.expectedBackoffMs
+                source.next(SlideshowViewport.Landscape)
+
+                assertEquals(case.name, listOf(3, 3, 6), listOf(callsAfterFirstFailure, callsInsideBackoff, searchCalls))
+                source.close()
+            }
+        }
+    }
+
+    private fun searchEngine(failingSearchCalls: Int): MockEngine {
+        var searchCalls = 0
+        return MockEngine { request ->
+            when {
+                request.url.encodedPath == "/api/search/metadata" -> {
+                    searchCalls++
+                    if (searchCalls <= failingSearchCalls) {
+                        respond("boom", HttpStatusCode.InternalServerError, jsonHeaders)
+                    } else {
+                        respond(
+                            """{"assets":{"items":[{"id":"new","type":"IMAGE","originalFileName":"new.jpg","fileCreatedAt":"1970-01-01T00:00:00Z"}],"nextPage":null}}""",
+                            HttpStatusCode.OK,
+                            jsonHeaders,
+                        )
+                    }
+                }
+                else -> respond("""{"id":"new","type":"IMAGE","originalFileName":"new.jpg"}""", HttpStatusCode.OK, jsonHeaders)
+            }
+        }
+    }
+
+    @Test
+    fun `empty catalog retries on the next call even right after a failed refresh`() =
+        runTest {
+            val source =
+                ImmichSlideshowSource(
+                    client = clientWithEngine(searchEngine(failingSearchCalls = 3)),
+                    catalogStore = InMemoryImmichCatalogStore(),
+                    now = { 1_000L },
+                )
+
+            val firstSlide = source.next(SlideshowViewport.Landscape)
+            val secondSlide = source.next(SlideshowViewport.Landscape)
+
+            assertNull(firstSlide)
+            assertEquals(
+                listOf(
+                    SlideshowMedia(
+                        url = "http://immich/api/assets/new/thumbnail?size=preview",
+                        title = "new.jpg",
+                    ),
+                ),
+                secondSlide?.media,
+            )
+            source.close()
+        }
+
+    @Test
+    fun `slide without fileCreatedAt renders with a null date`() =
+        runTest {
+            val engine =
+                MockEngine { request ->
+                    when (request.url.encodedPath) {
+                        "/api/search/metadata" ->
+                            respond(
+                                """{"assets":{"items":[{"id":"a","type":"IMAGE","originalFileName":"a.jpg"}],"nextPage":null}}""",
+                                HttpStatusCode.OK,
+                                jsonHeaders,
+                            )
+                        else ->
+                            respond(
+                                """{"id":"a","type":"IMAGE","originalFileName":"a.jpg","exifInfo":{"city":"Paris"}}""",
+                                HttpStatusCode.OK,
+                                jsonHeaders,
+                            )
+                    }
+                }
+            val source =
+                ImmichSlideshowSource(client = clientWithEngine(engine), catalogStore = InMemoryImmichCatalogStore())
+
+            val slide = source.next(SlideshowViewport.Landscape)
+
+            assertEquals(
+                listOf(
+                    SlideshowMedia(
+                        url = "http://immich/api/assets/a/thumbnail?size=preview",
+                        title = "a.jpg",
+                        date = null,
+                        locationLabel = "Paris",
+                    ),
+                ),
+                slide?.media,
+            )
+            source.close()
+        }
+
+    @Test
+    fun `next rethrows cancellation raised during the catalog refresh`() =
+        runTest {
+            val engine = MockEngine { throw CancellationException("cancelled") }
+            val source =
+                ImmichSlideshowSource(client = clientWithEngine(engine), catalogStore = InMemoryImmichCatalogStore())
+
+            val failure = runCatching { source.next(SlideshowViewport.Landscape) }.exceptionOrNull()
+
+            assertTrue("expected CancellationException but got $failure", failure is CancellationException)
+            source.close()
+        }
+
+    private companion object {
+        const val DAY_MS = 24L * 60 * 60 * 1000
+    }
 }

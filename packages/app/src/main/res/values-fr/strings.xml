@@ -91,6 +91,8 @@
     <string name="settings_esphome_psk_not_set">Non définie — texte clair utilisé.</string>
     <string name="settings_esphome_psk_configured">Configurée (%1$s). Remplacez en saisissant une nouvelle valeur.</string>
     <string name="settings_esphome_psk_invalid">La clé doit se décoder en exactement 32 octets.</string>
+    <string name="settings_unencrypted_url_warning">Connexion non chiffrée. Le trafic et les identifiants peuvent être lus sur le réseau. Utilisez https://.</string>
+    <string name="settings_esphome_unencrypted_warning">ESPHome n\'est pas chiffré. Définissez une clé de chiffrement pour que seuls les appareils de confiance puissent se connecter.</string>
 
     <!-- HA entity picker -->
     <string name="settings_ha_entity_id_default">ID d\'entité</string>

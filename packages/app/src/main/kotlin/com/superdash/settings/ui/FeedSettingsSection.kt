@@ -131,14 +131,14 @@ fun EsphomeSettingsSection(
     state: EsphomeSettingsState,
     actions: EsphomeSettingsActions,
 ) {
-    ListItem(
-        headlineContent = { Text(stringResource(R.string.settings_esphome_enabled_title)) },
-        supportingContent = {
-            Text(stringResource(R.string.settings_esphome_enabled_summary))
-        },
-        trailingContent = {
-            Switch(checked = state.enabled, onCheckedChange = actions.onEsphomeEnabledChange)
-        },
+    SettingsSwitchRow(
+        label = stringResource(R.string.settings_esphome_enabled_title),
+        checked = state.enabled,
+        onCheckedChange = actions.onEsphomeEnabledChange,
+        supportingText = stringResource(R.string.settings_esphome_enabled_summary),
+        warningText =
+            stringResource(R.string.settings_esphome_unencrypted_warning)
+                .takeIf { state.enabled && state.pskState is PskState.NotSet },
     )
 
     var draft by remember { mutableStateOf("") }

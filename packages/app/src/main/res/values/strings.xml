@@ -92,6 +92,8 @@
     <string name="settings_esphome_psk_not_set">Not set — plaintext is in use.</string>
     <string name="settings_esphome_psk_configured">Configured (%1$s). Replace by entering a new value.</string>
     <string name="settings_esphome_psk_invalid">Key must decode to exactly 32 bytes.</string>
+    <string name="settings_unencrypted_url_warning">Unencrypted connection. Traffic and credentials can be read on the network. Use https://.</string>
+    <string name="settings_esphome_unencrypted_warning">ESPHome is unencrypted. Set an encryption key so only trusted devices can connect.</string>
 
     <!-- HA entity picker -->
     <string name="settings_ha_entity_id_default">Entity ID</string>

@@ -22,6 +22,7 @@ import com.superdash.R
 import com.superdash.core.util.UrlNormalizer
 import com.superdash.settings.ImmichSettingsActions
 import com.superdash.settings.ImmichSettingsState
+import com.superdash.settings.isUnencryptedUrl
 import kotlinx.coroutines.launch
 
 @Composable
@@ -30,11 +31,13 @@ fun ImmichSettingsSection(
     actions: ImmichSettingsActions,
 ) {
     val notSet = stringResource(R.string.settings_value_not_set)
+    val unencryptedWarning = stringResource(R.string.settings_unencrypted_url_warning)
     SettingsTextEditRow(
         label = stringResource(R.string.settings_immich_url_label),
         value = state.url.takeIf { it.isNotBlank() } ?: notSet,
         dialogTitle = stringResource(R.string.settings_immich_url_dialog_title),
         initialValue = state.url,
+        warningText = unencryptedWarning.takeIf { isUnencryptedUrl(state.url) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         transformOnSave = { value -> UrlNormalizer.normalize(value) ?: value },
         onSave = actions.onImmichUrlChange,

@@ -91,6 +91,8 @@
     <string name="settings_esphome_psk_not_set">Niet ingesteld — platte tekst wordt gebruikt.</string>
     <string name="settings_esphome_psk_configured">Geconfigureerd (%1$s). Vervang door een nieuwe waarde in te voeren.</string>
     <string name="settings_esphome_psk_invalid">Sleutel moet exact 32 bytes decoderen.</string>
+    <string name="settings_unencrypted_url_warning">Onversleutelde verbinding. Verkeer en inloggegevens kunnen op het netwerk worden gelezen. Gebruik https://.</string>
+    <string name="settings_esphome_unencrypted_warning">ESPHome is niet versleuteld. Stel een versleutelingssleutel in zodat alleen vertrouwde apparaten kunnen verbinden.</string>
 
     <!-- HA entity picker -->
     <string name="settings_ha_entity_id_default">Entiteit-ID</string>

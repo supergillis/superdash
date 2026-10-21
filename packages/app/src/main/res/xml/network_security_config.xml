@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Explicitly allow HTTP traffic globally as requested to support local unencrypted HA instances -->
+    <!-- The Home Assistant and Immich URLs are entered at runtime, and this file cannot name
+         hosts that are unknown at build time. Cleartext and user CAs are therefore allowed for
+         every host, to support local HTTP and self-signed setups. Settings warns about http:// URLs. -->
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />

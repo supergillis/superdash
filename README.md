@@ -122,7 +122,13 @@ to the extent permitted by the GPL-3.0 license. You run it at your own risk.
 service, embeds a WebView, and exposes an ESPHome native API server on your
 local network. It has not been security audited. Run it only on networks and
 devices you trust, and review the code, permissions, and settings before
-pointing it at a home you care about.
+pointing it at a home you care about. Android cannot limit the network
+security config to hosts entered at runtime, so superdash allows plain HTTP and
+user-installed CAs for every host. This supports local setups, but a CA that
+someone installed on the device can be used to read https traffic, and anyone
+on the network can read http traffic. Use https:// URLs where you can, and set
+an ESPHome encryption key. Settings warns about http:// URLs and about
+ESPHome without a key.
 
 **Not affiliated.** superdash is an independent, community-built project. It is
 not affiliated with or endorsed by Home Assistant, Nabu Casa, or any commercial

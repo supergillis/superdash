@@ -75,7 +75,9 @@ class HaWebSocketClient(
     private val scope = CoroutineScope(SupervisorJob() + context.minusKey(Job))
     private val json = haJson
     private val nextId = AtomicInteger(1)
-    private val reconnectSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    // Conflated so a wake sent while an attempt is running is kept for the next park or backoff.
+    private val reconnectSignal = Channel<Unit>(Channel.CONFLATED)
     private val probeRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private var loopJob: Job? = null
 
@@ -223,7 +225,7 @@ class HaWebSocketClient(
             .collect { newUrl ->
                 log.i("HA URL changed; forcing reconnect", "url" to (newUrl ?: "<null>"))
                 requestReconnect("HA URL changed")
-                reconnectSignal.tryEmit(Unit)
+                reconnectSignal.trySend(Unit)
             }
     }
 
@@ -238,14 +240,14 @@ class HaWebSocketClient(
      *  pong arrives in time; while waiting to reconnect it wakes the loop. */
     fun checkConnection() {
         probeRequests.tryEmit(Unit)
-        reconnectSignal.tryEmit(Unit)
+        reconnectSignal.trySend(Unit)
     }
 
     /** Drops the live connection and reconnects. Healthy sockets are cut too,
      *  so routine callers use [checkConnection] instead. */
     fun forceReconnect() {
         requestReconnect("reconnect requested")
-        reconnectSignal.tryEmit(Unit)
+        reconnectSignal.trySend(Unit)
     }
 
     /** Cancels the in-flight connection job and tells the loop to reconnect at
@@ -262,11 +264,12 @@ class HaWebSocketClient(
             val url = haUrl.value
             if (url.isNullOrBlank()) {
                 _state.value = HaConnectionState.Disconnected
-                reconnectSignal.first()
+                reconnectSignal.receive()
                 continue
             }
             _state.value = HaConnectionState.Connecting
             reconnectRequested.set(false)
+            reconnectSignal.tryReceive()
             try {
                 runConnectionTracked(url)
                 _state.value = HaConnectionState.Connecting
@@ -282,12 +285,12 @@ class HaWebSocketClient(
                 // availability, manual force-reconnect) before retrying. Don't return
                 // permanently. Transient HA-side states (config reload, brief
                 // auth_invalid during restart) shouldn't cement into permanent broken.
-                reconnectSignal.first()
+                reconnectSignal.receive()
                 continue
             } catch (t: AuthInvalidException) {
                 log.w("HA returned auth_invalid; awaiting reconnect signal")
                 _state.value = HaConnectionState.NeedsReauth(t.message ?: "auth invalid")
-                reconnectSignal.first()
+                reconnectSignal.receive()
                 continue
             } catch (t: Throwable) {
                 if (t is CancellationException) {
@@ -296,7 +299,7 @@ class HaWebSocketClient(
                 log.w("connection failed", t)
                 _state.value = HaConnectionState.Failed(t.message ?: "unknown")
             }
-            withTimeoutOrNull(delayMs) { reconnectSignal.first() }
+            withTimeoutOrNull(delayMs) { reconnectSignal.receive() }
             delayMs = (delayMs * 2).coerceAtMost(MAX_BACKOFF_MS)
         }
     }
@@ -330,6 +333,9 @@ class HaWebSocketClient(
             seedVoiceExposure()
             subscribeStateChanges()
             _activeSession.value = this
+            // Clears only wakes from before the session. A checkConnection while connected stays
+            // pending on purpose, so a probe that kills a dead socket reconnects at once.
+            reconnectSignal.tryReceive()
             val session = this
             try {
                 // Launch the ping loop on the per-connection scope so that ending

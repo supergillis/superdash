@@ -1,7 +1,17 @@
 package com.superdash.ha
 
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.utils.io.ByteReadChannel
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.net.URI
 
@@ -55,6 +65,41 @@ class HaOAuthFlowTest {
     }
 
     @Test
+    fun `isCallback matches scheme case-insensitively`() {
+        val callback = URI("HTTPS://ha.local/?auth_callback=1&code=abc123")
+        val result = HaOAuthFlow.isCallback(callback, "https://ha.local")
+        assertEquals(HaOAuthFlow.CallbackParams(code = "abc123", state = null), result)
+    }
+
+    @Test
+    fun `exchangeCode throws a typed error carrying the status and error code`() {
+        val cases =
+            listOf(
+                Triple(
+                    HttpStatusCode.BadRequest,
+                    """{"error":"invalid_request","error_description":"Invalid code"}""",
+                    "invalid_request",
+                ),
+                Triple(HttpStatusCode.InternalServerError, "upstream down", null),
+            )
+        cases.forEach { (status, body, expectedError) ->
+            val thrown =
+                assertThrows(HaTokenExchangeException::class.java) {
+                    runBlocking { HaOAuthFlow.exchangeCode(clientResponding(status, body), "https://ha.local", "code") }
+                }
+            assertEquals(status.value, thrown.status)
+            assertEquals(expectedError, thrown.error)
+        }
+    }
+
+    @Test
+    fun `isCallback matches an explicit default port against an implicit one`() {
+        val callback = URI("https://ha.example.com:443/?auth_callback=1&code=abc123")
+        val result = HaOAuthFlow.isCallback(callback, "https://ha.example.com")
+        assertEquals(HaOAuthFlow.CallbackParams(code = "abc123", state = null), result)
+    }
+
+    @Test
     fun `isCallback returns null for different port`() {
         val callback = URI("https://ha.local:9999/?auth_callback=1&code=abc123")
         assertNull(HaOAuthFlow.isCallback(callback, "https://ha.local"))
@@ -65,6 +110,17 @@ class HaOAuthFlowTest {
         val callback = URI("https://ha.local/?auth_callback=1")
         assertNull(HaOAuthFlow.isCallback(callback, "https://ha.local"))
     }
+
+    private fun clientResponding(status: HttpStatusCode, body: String) =
+        HttpClient(
+            MockEngine {
+                respond(
+                    content = ByteReadChannel(body),
+                    status = status,
+                    headers = headersOf("Content-Type", "application/json"),
+                )
+            },
+        ) { install(ContentNegotiation) { json() } }
 
     private fun queryParam(uri: URI, key: String): String? =
         uri.rawQuery

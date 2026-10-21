@@ -68,8 +68,7 @@ class HaOAuthInterceptor(
             log.w(
                 "OAuth state mismatch; rejecting callback",
                 null,
-                "expected" to expected,
-                "got" to (callback.state ?: "<null>"),
+                "hasState" to (callback.state != null),
             )
             return true
         }

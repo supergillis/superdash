@@ -29,7 +29,7 @@ class MicroWakeWordRunner(
     private val probeListener: ((Float) -> Unit)? = null,
 ) : WakeWordDetector {
     private val model = WakeWordModel.require(wakeWord)
-    private var featureExtractor = AudioFeatureExtractor(sampleRateHz = 16000, stepSizeMs = 10)
+    private val featureExtractor = AudioFeatureExtractor(sampleRateHz = 16000, stepSizeMs = 10)
     private val interpreter: Interpreter
     private val inputZeroPoint: Int
     private val inputScale: Float
@@ -81,6 +81,22 @@ class MicroWakeWordRunner(
                 ).collect { /* drives the onEach side-effect; values themselves discarded */ }
         }
 
+    private fun resetStreamingState() {
+        interpreter.resetVariableTensors()
+        featureBuffer.clear()
+        probHistory.clear()
+        cooldownChunks = 0
+        featureExtractor.reset()
+    }
+
+    // Partial feature state would corrupt the streaming model, so start clean.
+    private fun dropChunkAfterNativeFailure(error: Throwable): WakeEvent? {
+        log.w("feature extraction failed, dropping chunk", error)
+        runCatching { resetStreamingState() }
+            .onFailure { resetError -> log.w("streaming reset failed", resetError) }
+        return null
+    }
+
     private fun step(samples: ShortArray): WakeEvent? =
         synchronized(nativeLock) {
             if (closed) {
@@ -91,16 +107,18 @@ class MicroWakeWordRunner(
             // reset; carrying mel features or probability history across a mic
             // restart produces spurious wake fires or stuck cooldown.
             if (samples.isEmpty()) {
-                interpreter.resetVariableTensors()
-                featureBuffer.clear()
-                probHistory.clear()
-                cooldownChunks = 0
-                featureExtractor.close()
-                featureExtractor = AudioFeatureExtractor(sampleRateHz = 16000, stepSizeMs = 10)
+                resetStreamingState()
                 log.i("reset on audio restart sentinel", "word" to wakeWord)
                 return@synchronized null
             }
-            val newFrames = featureExtractor.extract(samples)
+            val newFrames =
+                try {
+                    featureExtractor.extract(samples)
+                } catch (error: OutOfMemoryError) {
+                    return@synchronized dropChunkAfterNativeFailure(error)
+                } catch (error: IllegalStateException) {
+                    return@synchronized dropChunkAfterNativeFailure(error)
+                }
             for (frame in newFrames) {
                 featureBuffer.addLast(frame)
             }

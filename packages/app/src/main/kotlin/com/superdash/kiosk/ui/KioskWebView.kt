@@ -3,6 +3,7 @@ package com.superdash.kiosk.ui
 import android.webkit.WebView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -13,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewCompat
-import androidx.webkit.WebViewFeature
 import com.superdash.core.log.Log
 import com.superdash.ha.HaOAuthInterceptor
 import com.superdash.ha.HaTokens
+import java.util.concurrent.atomic.AtomicReference
 
 private val log = Log("KioskWebView")
 
@@ -37,7 +38,12 @@ fun KioskWebView(
     var rendererKey by remember { mutableIntStateOf(0) }
     // Outside the key() so it survives pin changes. Pin changes rebuild the
     // WebView but auth hasn't changed, so it's not a fresh-login transition.
-    val previousTokensRef = remember { mutableStateOf<HaTokens?>(null) }
+    // Seeded with the first composition's tokens so cold start with stored
+    // tokens does not count as a login transition. The factory already loads the shell.
+    val previousTokensRef = remember { mutableStateOf(tokens) }
+    // Read by shouldInterceptRequest on a background thread when serving the shell.
+    val tokensRef = remember { AtomicReference(tokens) }
+    SideEffect { tokensRef.set(tokens) }
     key(rendererKey, haUrl, pin) {
         val webViewRef = remember { mutableStateOf<WebView?>(null) }
         val tokenScriptRef = remember { mutableStateOf<ScriptHandler?>(null) }
@@ -49,7 +55,9 @@ fun KioskWebView(
                     ctx = ctx,
                     shellUrl = shellUrl,
                     iframeUrl = iframeUrl,
+                    haUrl = haUrl,
                     pin = pin,
+                    tokensProvider = { tokensRef.get() },
                     onRendererGone = { rendererKey++ },
                     oauthInterceptor = oauthInterceptor,
                 ).also {
@@ -62,9 +70,7 @@ fun KioskWebView(
                 webView.destroy()
             },
         )
-        // Re-register the token document-start script on every token change
-        // so future page loads see fresh tokens. Only loadUrl on the first
-        // null→non-null transition. Mid-session refreshes must not navigate.
+        // Mid-session token refreshes must not navigate; only a real login does.
         LaunchedEffect(tokens) {
             val webView: WebView = webViewRef.value ?: return@LaunchedEffect
             val wasNull = previousTokensRef.value == null
@@ -86,13 +92,14 @@ fun KioskWebView(
                 return@LaunchedEffect
             }
             authLaunchAttemptedRef.value = false
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-                val origin: String = haOriginOf(haUrl) ?: return@LaunchedEffect
-                val script: String = buildTokenInjectionScript(haUrl, tokens)
-                tokenScriptRef.value = WebViewCompat.addDocumentStartJavaScript(webView, script, setOf(origin))
-                if (wasNull) {
-                    webView.loadUrl(shellUrl)
+            if (documentStartScriptSupported()) {
+                haOriginOf(haUrl)?.let { origin ->
+                    val script: String = buildTokenInjectionScript(haUrl, tokens)
+                    tokenScriptRef.value = WebViewCompat.addDocumentStartJavaScript(webView, script, setOf(origin))
                 }
+            }
+            if (wasNull) {
+                webView.loadUrl(shellUrl)
             }
         }
     }

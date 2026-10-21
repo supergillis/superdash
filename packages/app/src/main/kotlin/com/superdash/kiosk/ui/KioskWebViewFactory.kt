@@ -35,6 +35,9 @@ internal const val SHELL_PATH = "/_superdash/kiosk-shell.html"
  *  iframe should load. */
 private const val SHELL_HA_URL_PLACEHOLDER = "__SUPERDASH_HA_URL__"
 
+/** Placeholder inside an inline script that runs before the iframe loads. */
+private const val SHELL_TOKEN_SEED_PLACEHOLDER = "__SUPERDASH_TOKEN_SEED__"
+
 /** Top-level URL of the kiosk shell. Same origin as HA so the iframe
  *  inside the shell can talk to HA via same-origin DOM access. */
 internal fun shellUrl(haUrl: String): String = haUrl.trimEnd('/') + SHELL_PATH
@@ -47,6 +50,9 @@ internal fun pinnedUrl(haUrl: String, pin: String): String =
         haUrl.trimEnd('/') + "/" + pin
     }
 
+internal fun documentStartScriptSupported(): Boolean =
+    WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
+
 internal fun haOriginOf(haUrl: String): String? =
     runCatching {
         val uri = URI(haUrl)
@@ -58,6 +64,33 @@ internal fun haOriginOf(haUrl: String): String? =
             }
         uri.scheme + "://" + uri.host + portPart
     }.getOrNull()
+
+internal data class WebOrigin(
+    val scheme: String?,
+    val host: String?,
+    val port: Int,
+)
+
+internal fun webOrigin(scheme: String?, host: String?, port: Int): WebOrigin {
+    val normalizedScheme: String? = scheme?.lowercase()
+    val effectivePort: Int =
+        when {
+            port != -1 -> port
+            normalizedScheme == "https" -> 443
+            normalizedScheme == "http" -> 80
+            else -> -1
+        }
+    return WebOrigin(normalizedScheme, host?.lowercase(), effectivePort)
+}
+
+internal object KioskShellAccess {
+    fun shouldServeShell(
+        isMainFrame: Boolean,
+        requestOrigin: WebOrigin,
+        haOrigin: WebOrigin,
+        path: String?,
+    ): Boolean = isMainFrame && requestOrigin == haOrigin && path == SHELL_PATH
+}
 
 internal object KioskAuthNavigation {
     fun shouldSnapMainFrameToShell(
@@ -79,18 +112,24 @@ internal object KioskAuthNavigation {
     }
 }
 
-internal fun buildTokenInjectionScript(haUrl: String, tokens: HaTokens): String {
-    val expiresInSec: Long = ((tokens.expiresAtEpochMs - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
+internal fun buildTokenInjectionScript(
+    haUrl: String,
+    tokens: HaTokens,
+    nowEpochMs: Long = System.currentTimeMillis(),
+): String {
+    val expiresInSec: Long = ((tokens.expiresAtEpochMs - nowEpochMs) / 1000).coerceAtLeast(0)
+    // Built field by field so the key order does not depend on the JSON library.
     val payload: String =
-        JSONObject()
-            .apply {
-                put("access_token", tokens.accessToken)
-                put("refresh_token", tokens.refreshToken)
-                put("expires_in", expiresInSec)
-                put("hassUrl", haUrl)
-                put("clientId", "$haUrl/")
-                put("expires", tokens.expiresAtEpochMs)
-            }.toString()
+        listOf(
+            "access_token" to JSONObject.quote(tokens.accessToken),
+            "refresh_token" to JSONObject.quote(tokens.refreshToken),
+            "expires_in" to expiresInSec.toString(),
+            "hassUrl" to JSONObject.quote(haUrl),
+            "clientId" to JSONObject.quote("$haUrl/"),
+            "expires" to tokens.expiresAtEpochMs.toString(),
+        ).joinToString(separator = ",", prefix = "{", postfix = "}") { (key, value) ->
+            "\"$key\":$value"
+        }
     return """
         (function() {
             try {
@@ -117,10 +156,40 @@ private fun buildPinScript(pin: String): String {
         """.trimIndent()
 }
 
+private val shellPlaceholders = Regex("$SHELL_TOKEN_SEED_PLACEHOLDER|$SHELL_HA_URL_PLACEHOLDER")
+
+internal fun buildShellHtml(
+    template: String,
+    iframeUrl: String,
+    haUrl: String,
+    tokens: HaTokens?,
+    nowEpochMs: Long = System.currentTimeMillis(),
+): String {
+    // The seed sits inside an inline script, so "<" is escaped to stop a token
+    // value from closing the script. The script holds no other "<".
+    val seed: String =
+        tokens
+            ?.let { buildTokenInjectionScript(haUrl, it, nowEpochMs).replace("<", "\\u003c") }
+            .orEmpty()
+    // One pass, so a substituted value is never scanned for the other placeholder.
+    return shellPlaceholders.replace(template) { match ->
+        if (match.value == SHELL_TOKEN_SEED_PLACEHOLDER) {
+            seed
+        } else {
+            iframeUrl
+        }
+    }
+}
+
 /** Reads the kiosk shell asset, substitutes the iframe target URL, and
  *  returns it as an HTML response. Returns null if the asset is missing,
  *  in which case normal handling proceeds and HA returns its own 404. */
-private fun buildShellResponse(ctx: Context, iframeUrl: String): WebResourceResponse? {
+private fun buildShellResponse(
+    ctx: Context,
+    iframeUrl: String,
+    haUrl: String,
+    tokens: HaTokens?,
+): WebResourceResponse? {
     val template: String =
         runCatching {
             ctx.assets.open("kiosk-shell.html").use { it.readBytes().decodeToString() }
@@ -128,9 +197,16 @@ private fun buildShellResponse(ctx: Context, iframeUrl: String): WebResourceResp
             log.w("kiosk-shell.html asset missing", it)
             return null
         }
-    val html: String = template.replace(SHELL_HA_URL_PLACEHOLDER, iframeUrl)
+    val html: String = buildShellHtml(template, iframeUrl, haUrl, tokens)
     val bytes: ByteArray = html.toByteArray(Charsets.UTF_8)
-    return WebResourceResponse("text/html", "UTF-8", ByteArrayInputStream(bytes))
+    return WebResourceResponse(
+        "text/html",
+        "UTF-8",
+        200,
+        "OK",
+        mapOf("Cache-Control" to "no-store"),
+        ByteArrayInputStream(bytes),
+    )
 }
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -138,7 +214,9 @@ internal fun buildKioskWebView(
     ctx: Context,
     shellUrl: String,
     iframeUrl: String,
+    haUrl: String,
     pin: String,
+    tokensProvider: () -> HaTokens?,
     onRendererGone: () -> Unit,
     oauthInterceptor: HaOAuthInterceptor,
 ): WebView =
@@ -163,7 +241,7 @@ internal fun buildKioskWebView(
         if (WebViewFeature.isFeatureSupported(WebViewFeature.SAFE_BROWSING_ENABLE)) {
             WebSettingsCompat.setSafeBrowsingEnabled(settings, false)
         }
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+        if (documentStartScriptSupported()) {
             val origin = haOriginOf(shellUrl) ?: "*"
             if (pin.isNotEmpty()) {
                 WebViewCompat.addDocumentStartJavaScript(
@@ -174,25 +252,34 @@ internal fun buildKioskWebView(
             }
             WebViewCompat.addDocumentStartJavaScript(this, KioskWebViewScripts.kioskJs(ctx), setOf(origin))
         } else {
-            log.w("DOCUMENT_START_SCRIPT not supported on this WebView; kiosk CSS not injected")
+            log.w("no DOCUMENT_START_SCRIPT; kiosk CSS, pin script and token injection disabled")
         }
 
-        val haOriginHost: String? = runCatching { URI(shellUrl) }.getOrNull()?.host
+        val haUri: URI? = runCatching { URI(shellUrl) }.getOrNull()
+        val haOrigin: WebOrigin = webOrigin(haUri?.scheme, haUri?.host, haUri?.port ?: -1)
         webViewClient =
             object : WebViewClient() {
                 override fun shouldInterceptRequest(view: WebView, req: WebResourceRequest): WebResourceResponse? {
                     val url = req.url
-                    if (url.host == haOriginHost && url.path == SHELL_PATH) {
-                        return buildShellResponse(ctx, iframeUrl)
+                    val requestOrigin: WebOrigin = webOrigin(url.scheme, url.host, url.port)
+                    if (KioskShellAccess.shouldServeShell(req.isForMainFrame, requestOrigin, haOrigin, url.path)) {
+                        return buildShellResponse(ctx, iframeUrl, haUrl, tokensProvider())
                     }
                     return null
                 }
 
                 override fun shouldOverrideUrlLoading(view: WebView, req: WebResourceRequest): Boolean {
-                    if (oauthInterceptor.handleNavigation(req.url)) {
+                    if (req.isForMainFrame && oauthInterceptor.handleNavigation(req.url)) {
                         return true
                     }
-                    if (req.url.host != haOriginHost) {
+                    // Same-host iframe cards on other ports must keep loading in-frame.
+                    val sameOrigin: Boolean =
+                        if (req.isForMainFrame) {
+                            webOrigin(req.url.scheme, req.url.host, req.url.port) == haOrigin
+                        } else {
+                            req.url.host == haOrigin.host
+                        }
+                    if (!sameOrigin) {
                         if (req.hasGesture()) {
                             view.context.startActivity(
                                 android.content.Intent(android.content.Intent.ACTION_VIEW, req.url),
@@ -221,7 +308,7 @@ internal fun buildKioskWebView(
                         KioskAuthNavigation.shouldSnapMainFrameToShell(
                             urlHost = req.url.host,
                             urlPath = req.url.path,
-                            haOriginHost = haOriginHost,
+                            haOriginHost = haOrigin.host,
                             shellPath = SHELL_PATH,
                         )
                     ) {
@@ -241,12 +328,13 @@ internal fun buildKioskWebView(
             object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
                     val resources = request.resources.joinToString(",")
-                    if (request.origin.host != haOriginHost) {
+                    // Mic and camera grants are limited to the HA origin on purpose.
+                    if (webOrigin(request.origin.scheme, request.origin.host, request.origin.port) != haOrigin) {
                         log.w(
                             "WebView permission deny (origin mismatch)",
                             null,
                             "origin" to request.origin,
-                            "expected" to haOriginHost,
+                            "expected" to haOrigin,
                             "resources" to resources,
                         )
                         request.deny()

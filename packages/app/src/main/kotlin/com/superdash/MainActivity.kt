@@ -52,6 +52,7 @@ import com.superdash.kiosk.ui.KioskOverlays
 import com.superdash.kiosk.ui.KioskWebView
 import com.superdash.kiosk.ui.SidebarRailLayout
 import com.superdash.kiosk.ui.VoiceOverlay
+import com.superdash.kiosk.ui.shellUrl
 import com.superdash.screensaver.ScreensaverHost
 import com.superdash.settings.SettingsActivity
 import com.superdash.theme.SuperdashTheme
@@ -285,12 +286,31 @@ class MainActivity : AppCompatActivity() {
     private fun handleAuthCode(app: SuperdashApp, code: String) {
         val haUrl = app.graph.haUrlFlow.value ?: return
         lifecycleScope.launch {
-            exchangeAndSaveAuthCode(
-                httpClient = app.graph.httpClient,
-                tokenStore = app.graph.tokenStore,
-                haUrl = haUrl,
-                code = code,
-            )
+            val exchanged =
+                exchangeAndSaveAuthCode(
+                    httpClient = app.graph.httpClient,
+                    tokenStore = app.graph.tokenStore,
+                    haUrl = haUrl,
+                    code = code,
+                )
+            if (exchanged) {
+                return@launch
+            }
+            // One automatic relaunch only. A trusted-networks bypass could otherwise loop,
+            // and every 400 from /auth/token counts toward HA's ip_ban.
+            if (oauthInterceptor.lastAuthorizeWasAutomatic) {
+                log.w("OAuth exchange failed again; showing the HA frontend login")
+                dashboardWebView?.loadUrl(shellUrl(haUrl))
+                return@launch
+            }
+            // The interceptor consumed its state, so only a fresh authorize URL can recover.
+            val authorizeUrl =
+                runCatching { oauthInterceptor.buildAuthorizeUrl(automatic = true).toString() }
+                    .getOrElse {
+                        log.w("OAuth authorize URL unavailable for relaunch", it)
+                        return@launch
+                    }
+            dashboardWebView?.loadUrl(authorizeUrl)
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.superdash.voice.audio
 
+import com.superdash.core.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -10,8 +11,20 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
-private const val DEFAULT_STREAM_BUFFER_CAPACITY = 256
+private val log = Log("AudioFrameHub")
+
+private const val STATE_PENDING = 0
+private const val STATE_COLLECTING = 1
+private const val STATE_HANDED_OFF = 2
+private const val STATE_TIMED_OUT = 3
+private const val FRAME_DURATION_MS = 10
+private const val LIVE_BUFFER_MS = 15_000
+
+// Sized by time so a cold first-use model load of several seconds cannot drop the
+// start of the command.
+private const val DEFAULT_STREAM_BUFFER_CAPACITY = LIVE_BUFFER_MS / FRAME_DURATION_MS
 private const val UNCOLLECTED_STREAM_TIMEOUT_MS = 5_000L
 
 /** Fan-out of recent audio frames + pre-roll snapshot for new subscribers.
@@ -31,7 +44,7 @@ class AudioFrameHub(
 ) {
     private val lock = Any()
     private val recentFrames = ArrayDeque<ShortArray>(capacity)
-    private val subscribers = mutableSetOf<Channel<ShortArray>>()
+    private val subscribers = mutableSetOf<AudioFrameStream>()
     private var closed = false
 
     fun publish(samples: ShortArray) {
@@ -53,40 +66,34 @@ class AudioFrameHub(
             // Subscribers receive a reference to the same defensive copy; the
             // channel slot prevents in-place mutation across consumers, and
             // downstream code only reads from these frames.
-            subscribers.forEach { channel ->
-                channel.trySend(copy)
+            subscribers.forEach { stream ->
+                stream.offerLiveFrame(copy)
             }
         }
     }
 
     fun openStream(): AudioFrameStream {
-        val liveFrames =
-            Channel<ShortArray>(
-                capacity = streamBufferCapacity,
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-            )
-        val snapshot =
+        val stream =
             synchronized(lock) {
-                if (closed) {
-                    liveFrames.close()
-                } else {
-                    subscribers += liveFrames
+                AudioFrameStream(
+                    snapshot = recentFrames.map { it.copyOf() },
+                    liveFrameCapacity = streamBufferCapacity,
+                    streamScope = streamScope,
+                    uncollectedStreamTimeoutMs = uncollectedStreamTimeoutMs,
+                    unsubscribe = { finished ->
+                        synchronized(lock) {
+                            subscribers -= finished
+                        }
+                    },
+                ).also { opened ->
+                    if (closed) {
+                        opened.close()
+                    } else {
+                        subscribers += opened
+                    }
                 }
-                recentFrames.map { it.copyOf() }
             }
-        return AudioFrameStream(
-            snapshot = snapshot,
-            liveFrames = liveFrames,
-            preRollFrameCount = snapshot.size,
-            streamScope = streamScope,
-            uncollectedStreamTimeoutMs = uncollectedStreamTimeoutMs,
-            closeAction = {
-                synchronized(lock) {
-                    subscribers -= liveFrames
-                }
-                liveFrames.close()
-            },
-        )
+        return stream
     }
 
     internal fun subscriberCount(): Int =
@@ -95,38 +102,73 @@ class AudioFrameHub(
         }
 
     fun close() {
-        val channels =
+        val streams =
             synchronized(lock) {
                 closed = true
                 val current = subscribers.toList()
                 subscribers.clear()
                 current
             }
-        channels.forEach { it.close() }
+        streams.forEach { it.closeLiveFrames() }
     }
 }
 
-class AudioFrameStream(
+class AudioFrameStream internal constructor(
     private val snapshot: List<ShortArray>,
-    private val liveFrames: Channel<ShortArray>,
-    val preRollFrameCount: Int,
+    liveFrameCapacity: Int,
     streamScope: CoroutineScope,
     uncollectedStreamTimeoutMs: Long,
-    private val closeAction: () -> Unit,
+    private val unsubscribe: (AudioFrameStream) -> Unit,
 ) : AutoCloseable {
-    private val collectionStarted = AtomicBoolean(false)
+    private val state = AtomicInteger(STATE_PENDING)
     private val closed = AtomicBoolean(false)
-    private var uncollectedTimeoutJob: Job? = null
+    private val droppedLiveFrameTotal = AtomicInteger(0)
+    private val liveFrames =
+        Channel<ShortArray>(
+            capacity = liveFrameCapacity,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+            onUndeliveredElement = { droppedLiveFrameTotal.incrementAndGet() },
+        )
+    private val uncollectedTimeoutJob: Job? =
+        if (uncollectedStreamTimeoutMs > 0L) {
+            streamScope.launch {
+                delay(uncollectedStreamTimeoutMs)
+                // The compare-and-set makes the timeout lose against a concurrent hand-off.
+                if (state.compareAndSet(STATE_PENDING, STATE_TIMED_OUT)) {
+                    close()
+                }
+            }
+        } else {
+            null
+        }
+
+    val preRollFrameCount: Int = snapshot.size
+
+    /** Live frames lost to a full buffer so far. Pre-roll is never counted. */
+    val droppedLiveFrames: Int get() = droppedLiveFrameTotal.get()
 
     val audio: Flow<ShortArray> =
         flow {
-            collectionStarted.set(true)
+            if (!state.compareAndSet(STATE_PENDING, STATE_COLLECTING) && state.get() == STATE_TIMED_OUT) {
+                log.w("collection started after the uncollected timeout closed the stream")
+            }
             uncollectedTimeoutJob?.cancel()
+            var loggedDropped = 0
             try {
                 for (frame in snapshot) {
                     emit(frame.copyOf())
                 }
                 for (frame in liveFrames) {
+                    // One log per burst: logged when the consumer catches up after drops.
+                    val dropped = droppedLiveFrameTotal.get()
+                    if (dropped > loggedDropped) {
+                        log.w(
+                            "live command frames dropped, consumer too slow",
+                            null,
+                            "dropped" to dropped - loggedDropped,
+                        )
+                        loggedDropped = dropped
+                    }
                     emit(frame)
                 }
             } finally {
@@ -134,34 +176,31 @@ class AudioFrameStream(
             }
         }
 
-    init {
-        if (uncollectedStreamTimeoutMs > 0L) {
-            uncollectedTimeoutJob =
-                streamScope.launch {
-                    delay(uncollectedStreamTimeoutMs)
-                    if (!collectionStarted.get()) {
-                        close()
-                    }
-                }
-        }
+    internal fun offerLiveFrame(frame: ShortArray) {
+        liveFrames.trySend(frame)
     }
 
-    /** Hands the stream off to an owner that will drive collection when it is
-     *  ready and close the stream when its run completes. Cancels the wall-clock
-     *  uncollected-stream timeout: a slow first-use provider load (e.g. a ~50 MB
-     *  Whisper/Moonshine warm-up) legitimately delays the start of collection past
-     *  the timeout, and without this the stream would self-close mid-load and drop
-     *  the first command after boot (empty transcript). The leak the timeout guards
-     *  against is still covered — the owner closes the stream on run completion even
-     *  when the provider never collects (e.g. provider-missing). */
+    internal fun closeLiveFrames() {
+        liveFrames.close()
+    }
+
+    /** Hands the stream off to an owner that closes it when its run completes.
+     *  Disarms the uncollected-stream timeout, because a slow first provider load
+     *  can delay collection past it and the stream would drop the first command.
+     *  The owner's close on run completion still reclaims a stream the provider
+     *  never collects. */
     fun markHandedOff() {
+        if (!state.compareAndSet(STATE_PENDING, STATE_HANDED_OFF) && state.get() == STATE_TIMED_OUT) {
+            log.w("hand-off after the uncollected timeout already closed the stream")
+        }
         uncollectedTimeoutJob?.cancel()
     }
 
     override fun close() {
         if (closed.compareAndSet(false, true)) {
             uncollectedTimeoutJob?.cancel()
-            closeAction()
+            unsubscribe(this)
+            liveFrames.close()
         }
     }
 }

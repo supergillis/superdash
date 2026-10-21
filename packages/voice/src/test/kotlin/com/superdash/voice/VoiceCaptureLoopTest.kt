@@ -107,6 +107,18 @@ class VoiceCaptureLoopTest {
         }
 
     @Test
+    fun `slow collector still receives every frame published during a cold model load`() =
+        runTest {
+            val hub = AudioFrameHub(capacity = 4, streamScope = this, uncollectedStreamTimeoutMs = 0)
+            val commandAudio = hub.openStream()
+            commandAudio.markHandedOff()
+
+            repeat(400) { hub.publish(frame((it + 1).toShort())) }
+
+            assertEquals((1..400).toList(), commandAudio.audio.takeFrameValues(400))
+        }
+
+    @Test
     fun `provider missing closes uncollected command stream`() =
         runTest {
             var hub: AudioFrameHub? = null

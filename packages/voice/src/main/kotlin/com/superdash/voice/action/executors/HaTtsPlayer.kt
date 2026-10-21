@@ -14,6 +14,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.superdash.core.log.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
 private val log = Log("HaTtsPlayer")
@@ -88,7 +89,9 @@ class HaTtsPlayer(
             }
             completion.await()
         } finally {
-            withContext(Dispatchers.Main) {
+            // NonCancellable: on a cancelled run a plain withContext throws at once and
+            // the old answer would keep playing over the next command.
+            withContext(NonCancellable + Dispatchers.Main) {
                 player.removeListener(listener)
                 player.stop()
                 player.clearMediaItems()

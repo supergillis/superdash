@@ -37,27 +37,6 @@ class VoiceServiceStartPolicyTest {
     }
 
     @Test
-    fun `foreground start denial is not treated as started`() {
-        val started =
-            VoiceServiceStartPolicy.tryStartForeground {
-                throw SecurityException("microphone foreground service denied")
-            }
-
-        assertFalse(started)
-    }
-
-    @Test
-    fun `background foreground start rejection is not treated as started`() {
-        val started =
-            VoiceServiceStartPolicy.tryStartForeground {
-                // ForegroundServiceStartNotAllowedException is an IllegalStateException.
-                throw IllegalStateException("startForeground not allowed from background")
-            }
-
-        assertFalse(started)
-    }
-
-    @Test
     fun `stops when voice should not run`() {
         assertTrue(VoiceServiceStartPolicy.shouldStopForShouldRun(shouldRun = false))
     }
@@ -82,12 +61,5 @@ class VoiceServiceStartPolicyTest {
                 hasMicPermission = false,
             ),
         )
-    }
-
-    @Test
-    fun `foreground start success is treated as started`() {
-        val started = VoiceServiceStartPolicy.tryStartForeground {}
-
-        assertTrue(started)
     }
 }

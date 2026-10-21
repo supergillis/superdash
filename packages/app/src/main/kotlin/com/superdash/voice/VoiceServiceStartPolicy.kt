@@ -29,7 +29,4 @@ internal object VoiceServiceStartPolicy {
 
     fun shouldStopForShouldRun(shouldRun: Boolean): Boolean =
         !shouldRun
-
-    fun tryStartForeground(startForeground: () -> Unit): Boolean =
-        ForegroundServiceStartPolicy.tryStartForeground(startForeground)
 }

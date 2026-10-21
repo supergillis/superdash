@@ -17,7 +17,6 @@ import androidx.webkit.WebViewFeature
 import com.superdash.core.log.Log
 import com.superdash.ha.HaOAuthInterceptor
 import com.superdash.ha.HaTokens
-import com.superdash.ha.JsBridge
 
 private val log = Log("KioskWebView")
 
@@ -27,7 +26,8 @@ fun KioskWebView(
     dashboardPath: String,
     tokens: HaTokens?,
     oauthInterceptor: HaOAuthInterceptor,
-    bridge: JsBridge,
+    onWebViewCreated: (WebView) -> Unit,
+    onWebViewReleased: (WebView) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // dashboardPath is pre-normalized by SettingsRepository.dashboardPath.
@@ -52,19 +52,15 @@ fun KioskWebView(
                     pin = pin,
                     onRendererGone = { rendererKey++ },
                     oauthInterceptor = oauthInterceptor,
-                    onPageFinished = { webView, finishedUrl ->
-                        // Only install the bridge once the shell has finished
-                        // loading. The shell relays the port into the iframe
-                        // via postMessage. Installing on the iframe load
-                        // instead would race with shell teardown on reloads.
-                        val origin: String = haOriginOf(haUrl) ?: return@buildKioskWebView
-                        if (finishedUrl.startsWith(shellUrl)) {
-                            bridge.install(webView, origin)
-                        }
-                    },
-                ).also { webViewRef.value = it }
+                ).also {
+                    webViewRef.value = it
+                    onWebViewCreated(it)
+                }
             },
-            onRelease = { webView -> webView.destroy() },
+            onRelease = { webView ->
+                onWebViewReleased(webView)
+                webView.destroy()
+            },
         )
         // Re-register the token document-start script on every token change
         // so future page loads see fresh tokens. Only loadUrl on the first

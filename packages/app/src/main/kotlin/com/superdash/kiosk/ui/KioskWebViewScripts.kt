@@ -2,7 +2,7 @@ package com.superdash.kiosk.ui
 
 import android.content.Context
 
-/** The kiosk script + JS bridge installer, injected via
+/** The kiosk script, injected via
  *  WebViewCompat.addDocumentStartJavaScript().
  *
  *  The actual script lives at packages/app/src/main/assets/scripts/kiosk.js.

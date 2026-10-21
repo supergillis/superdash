@@ -4,7 +4,7 @@
     // Registered as a document-start script for the HA origin, so it
     // fires for both the kiosk shell and the HA iframe. Only the iframe
     // runs HA. Skip at the top level: the shell has no <home-assistant>,
-    // no history to trap, no bridge to install.
+    // no history to trap.
     if (window.parent === window) {
         return;
     }
@@ -54,26 +54,6 @@
         } catch (e) {
             /* ignore */
         }
-    }
-
-    function showOverlay(text, ttl) {
-        var existing = document.getElementById("superdash-overlay-msg");
-        if (existing) {
-            existing.remove();
-        }
-        var node = document.createElement("div");
-        node.id = "superdash-overlay-msg";
-        node.textContent = text;
-        node.style.cssText =
-            "position:fixed;top:24px;left:50%;transform:translateX(-50%);" +
-            "background:rgba(0,0,0,0.85);color:#fff;padding:16px 24px;" +
-            "border-radius:8px;font:500 18px sans-serif;z-index:99999;";
-        document.body.appendChild(node);
-        setTimeout(function () {
-            if (node.parentNode) {
-                node.remove();
-            }
-        }, ttl);
     }
 
     // Re-run on every HA mutation. injectStyle is idempotent via the #id
@@ -168,34 +148,5 @@
             rememberIfPinned();
         }
         injectKioskCss();
-    });
-
-    // JS bridge installer. The kiosk shell forwards Kotlin's
-    // __superdash_init__ message into this iframe; capture the port from
-    // it and expose it as window.__superdashBridge.
-    window.addEventListener("message", function (e) {
-        if (e.data === "__superdash_init__" && e.ports && e.ports[0]) {
-            window.__superdashBridge = e.ports[0];
-            window.__superdashBridge.onmessage = function (ev) {
-                try {
-                    var msg = JSON.parse(ev.data);
-                    if (!msg || !msg.type) {
-                        return;
-                    }
-                    if (msg.type === "overlay") {
-                        showOverlay(msg.text || "", msg.ttlMs || 3000);
-                    } else if (msg.type === "reload") {
-                        location.reload();
-                    } else if (msg.type === "reloadStart") {
-                        location.assign(pinnedHref());
-                    }
-                } catch (err) {
-                    /* non-JSON debug payloads — ignore */
-                }
-            };
-            window.__superdashBridge.postMessage(
-                JSON.stringify({ type: "ping", src: "js" }),
-            );
-        }
     });
 })();

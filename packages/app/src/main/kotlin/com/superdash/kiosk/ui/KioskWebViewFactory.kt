@@ -141,7 +141,6 @@ internal fun buildKioskWebView(
     pin: String,
     onRendererGone: () -> Unit,
     oauthInterceptor: HaOAuthInterceptor,
-    onPageFinished: (WebView, String) -> Unit,
 ): WebView =
     WebView(ctx).apply {
         settings.apply {
@@ -230,11 +229,6 @@ internal fun buildKioskWebView(
                         return true
                     }
                     return false
-                }
-
-                override fun onPageFinished(view: WebView, url: String) {
-                    super.onPageFinished(view, url)
-                    onPageFinished(view, url)
                 }
 
                 override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {

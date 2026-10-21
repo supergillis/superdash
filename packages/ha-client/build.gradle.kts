@@ -11,7 +11,6 @@ dependencies {
     implementation(project(":packages:core"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.androidx.webkit)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.websockets)
     implementation(libs.ktor.client.content.negotiation)

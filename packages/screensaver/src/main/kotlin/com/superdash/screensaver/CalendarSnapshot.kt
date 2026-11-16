@@ -80,3 +80,12 @@ data class CalendarSnapshot(
         }
     }
 }
+
+/** Picks the event to show across calendars. An in-progress event beats an
+ *  upcoming one, then the earliest start wins. Events without a start time
+ *  rank last. Ties keep the order of [snapshots]. */
+fun selectSoonestCalendarEvent(snapshots: List<CalendarSnapshot>): CalendarSnapshot? =
+    snapshots.minWithOrNull(
+        compareByDescending<CalendarSnapshot> { it.inProgress }
+            .thenBy(nullsLast()) { it.startTime },
+    )

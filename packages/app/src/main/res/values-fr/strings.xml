@@ -154,6 +154,8 @@
     <string name="settings_screensaver_idle_timeout">Délai d\'inactivité : %1$d min %2$ds</string>
     <string name="settings_screensaver_weather_entity">Entité météo</string>
     <string name="settings_screensaver_calendar_entity">Entité calendrier</string>
+    <string name="settings_screensaver_calendar_add">Ajouter un calendrier</string>
+    <string name="settings_screensaver_calendar_remove_named">Supprimer %1$s</string>
     <string name="settings_screensaver_power_usage_entity">Entité de consommation électrique</string>
     <string name="settings_screensaver_solar_power_entity">Entité de production solaire</string>
     <string name="settings_screensaver_grid_power_entity_label">Entité de puissance réseau (+ import / − export)</string>

@@ -51,7 +51,7 @@ data class SettingsUiState(
     val nightScreensaverMode: ScreensaverMode get() = screensaver.nightMode
     val idleTimeoutSec: Int get() = screensaver.idleTimeoutSec
     val weatherEntityId: String get() = screensaver.weatherEntityId
-    val calendarEntityId: String get() = screensaver.calendarEntityId
+    val calendarEntityIds: List<String> get() = screensaver.calendarEntityIds
     val overlayPosition: OverlayPosition get() = screensaver.overlayPosition
     val pictureSpacingDp: Int get() = screensaver.pictureSpacingDp
     val mediaLibrarySourceId: String? get() = screensaver.mediaLibrarySourceId
@@ -228,7 +228,7 @@ data class ScreensaverSettingsState(
     val nightMode: ScreensaverMode,
     val idleTimeoutSec: Int,
     val weatherEntityId: String,
-    val calendarEntityId: String,
+    val calendarEntityIds: List<String>,
     val powerUsageEntityId: String,
     val solarPowerEntityId: String,
     val gridPowerEntityId: String,
@@ -245,7 +245,7 @@ data class ScreensaverSettingsState(
                 nightMode = ScreensaverMode.Black,
                 idleTimeoutSec = 300,
                 weatherEntityId = "weather.home",
-                calendarEntityId = "",
+                calendarEntityIds = emptyList(),
                 powerUsageEntityId = "",
                 solarPowerEntityId = "",
                 gridPowerEntityId = "",

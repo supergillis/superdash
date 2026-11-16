@@ -2,6 +2,7 @@ package com.superdash.settings
 
 import com.superdash.core.persistence.KeyValueStore
 import com.superdash.core.persistence.Setting
+import com.superdash.core.persistence.mutate
 import com.superdash.core.persistence.observe
 import com.superdash.core.persistence.write
 import com.superdash.screensaver.ScreensaverSettings
@@ -40,7 +41,9 @@ internal class SettingsRepositoryScreensaverSettings(
 
     override val weatherEntityId: Flow<String> = store.observe(WEATHER_ENTITY_ID)
 
-    override val calendarEntityId: Flow<String> = store.observe(CALENDAR_ENTITY_ID)
+    // The key predates multiple calendars, so an old single id decodes as a one-item list.
+    override val calendarEntityIds: Flow<List<String>> =
+        store.observe(CALENDAR_ENTITY_IDS).map(::decodeCalendarEntityIds)
 
     override val powerUsageEntityId: Flow<String> = store.observe(POWER_USAGE_ENTITY_ID)
 
@@ -72,13 +75,38 @@ internal class SettingsRepositoryScreensaverSettings(
 
     override suspend fun setWeatherEntityId(value: String) = store.write(WEATHER_ENTITY_ID, value)
 
-    override suspend fun setCalendarEntityId(value: String) = store.write(CALENDAR_ENTITY_ID, value)
+    override suspend fun addCalendarEntityId(value: String) {
+        val entityId = value.trim()
+        if (entityId.isEmpty() || CALENDAR_ENTITY_ID_SEPARATOR in entityId) {
+            return
+        }
+        store.mutate(CALENDAR_ENTITY_IDS) { stored ->
+            val current = decodeCalendarEntityIds(stored)
+            if (entityId in current) {
+                stored
+            } else {
+                encodeCalendarEntityIds(current + entityId)
+            }
+        }
+    }
+
+    override suspend fun removeCalendarEntityId(value: String) {
+        store.mutate(CALENDAR_ENTITY_IDS) { stored ->
+            encodeCalendarEntityIds(decodeCalendarEntityIds(stored) - value)
+        }
+    }
 
     override suspend fun setPowerUsageEntityId(value: String) = store.write(POWER_USAGE_ENTITY_ID, value)
 
     override suspend fun setSolarPowerEntityId(value: String) = store.write(SOLAR_POWER_ENTITY_ID, value)
 
     override suspend fun setGridPowerEntityId(value: String) = store.write(GRID_POWER_ENTITY_ID, value)
+
+    private fun decodeCalendarEntityIds(stored: String): List<String> =
+        stored.split(CALENDAR_ENTITY_ID_SEPARATOR).map { it.trim() }.filter { it.isNotEmpty() }
+
+    private fun encodeCalendarEntityIds(entityIds: List<String>): String =
+        entityIds.joinToString(CALENDAR_ENTITY_ID_SEPARATOR)
 
     private companion object {
         val DAY_MODE = Setting(key = "day_screensaver_mode", default = "photos")
@@ -92,7 +120,8 @@ internal class SettingsRepositoryScreensaverSettings(
         val ML_SOURCE_ID = Setting(key = "media_library_source_id", default = "")
         val ML_SOURCE_TITLE = Setting(key = "media_library_source_title", default = "")
         val WEATHER_ENTITY_ID = Setting(key = "weather_entity_id", default = "weather.home")
-        val CALENDAR_ENTITY_ID = Setting(key = "calendar_entity_id", default = "")
+        const val CALENDAR_ENTITY_ID_SEPARATOR = ","
+        val CALENDAR_ENTITY_IDS = Setting(key = "calendar_entity_id", default = "")
         val POWER_USAGE_ENTITY_ID = Setting(key = "power_usage_entity_id", default = "")
         val SOLAR_POWER_ENTITY_ID = Setting(key = "solar_power_entity_id", default = "")
         val GRID_POWER_ENTITY_ID = Setting(key = "grid_power_entity_id", default = "")

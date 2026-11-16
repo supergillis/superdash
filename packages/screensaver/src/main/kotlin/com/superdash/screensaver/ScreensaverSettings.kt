@@ -29,7 +29,7 @@ interface ScreensaverSettings {
 
     val weatherEntityId: Flow<String>
 
-    val calendarEntityId: Flow<String>
+    val calendarEntityIds: Flow<List<String>>
 
     val powerUsageEntityId: Flow<String>
 
@@ -55,7 +55,9 @@ interface ScreensaverSettings {
 
     suspend fun setWeatherEntityId(value: String)
 
-    suspend fun setCalendarEntityId(value: String)
+    suspend fun addCalendarEntityId(value: String)
+
+    suspend fun removeCalendarEntityId(value: String)
 
     suspend fun setPowerUsageEntityId(value: String)
 

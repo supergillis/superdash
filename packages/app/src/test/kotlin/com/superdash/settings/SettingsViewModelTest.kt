@@ -966,7 +966,7 @@ class SettingsViewModelTest {
         mediaLibrarySourceIdFlow: MutableStateFlow<String?> = MutableStateFlow(null),
         mediaLibrarySourceTitleFlow: MutableStateFlow<String?> = MutableStateFlow(null),
         weatherEntityIdFlow: MutableStateFlow<String> = MutableStateFlow("weather.home"),
-        calendarEntityIdFlow: MutableStateFlow<String> = MutableStateFlow(""),
+        calendarEntityIdsFlow: MutableStateFlow<List<String>> = MutableStateFlow(emptyList()),
         powerUsageEntityIdFlow: MutableStateFlow<String> = MutableStateFlow(""),
         solarPowerEntityIdFlow: MutableStateFlow<String> = MutableStateFlow(""),
         gridPowerEntityIdFlow: MutableStateFlow<String> = MutableStateFlow(""),
@@ -981,7 +981,7 @@ class SettingsViewModelTest {
         override val mediaLibrarySourceId: Flow<String?> = mediaLibrarySourceIdFlow.asStateFlow()
         override val mediaLibrarySourceTitle: Flow<String?> = mediaLibrarySourceTitleFlow.asStateFlow()
         override val weatherEntityId: Flow<String> = weatherEntityIdFlow.asStateFlow()
-        override val calendarEntityId: Flow<String> = calendarEntityIdFlow.asStateFlow()
+        override val calendarEntityIds: Flow<List<String>> = calendarEntityIdsFlow.asStateFlow()
         override val powerUsageEntityId: Flow<String> = powerUsageEntityIdFlow.asStateFlow()
         override val solarPowerEntityId: Flow<String> = solarPowerEntityIdFlow.asStateFlow()
         override val gridPowerEntityId: Flow<String> = gridPowerEntityIdFlow.asStateFlow()
@@ -1007,7 +1007,9 @@ class SettingsViewModelTest {
 
         override suspend fun setWeatherEntityId(value: String) = Unit
 
-        override suspend fun setCalendarEntityId(value: String) = Unit
+        override suspend fun addCalendarEntityId(value: String) = Unit
+
+        override suspend fun removeCalendarEntityId(value: String) = Unit
 
         override suspend fun setPowerUsageEntityId(value: String) = Unit
 

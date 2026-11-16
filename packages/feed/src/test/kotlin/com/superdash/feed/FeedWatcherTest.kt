@@ -187,6 +187,29 @@ class FeedWatcherTest {
         }
 
     @Test
+    fun `feed without a trigger entity is never observed`() =
+        runTest {
+            val manualOnly = FeedConfig("m", "Manual", "", "rtsp://go2rtc/manual")
+            val observedIds = mutableListOf<String>()
+            val watcher =
+                FeedWatcher(
+                    scope = TestScope(testScheduler),
+                    feedsFlow = flowOf(listOf(configA, manualOnly)),
+                    enabledFlow = flowOf(true),
+                    observeEntity = { id ->
+                        observedIds += id
+                        MutableStateFlow<EntityState?>(entity("off"))
+                    },
+                    bus = KioskEventBus(),
+                    nowEpochMs = { 0L },
+                )
+            watcher.start()
+            advanceUntilIdle()
+
+            assertEquals(listOf("binary_sensor.front_door"), observedIds)
+        }
+
+    @Test
     fun `cross feed ring emits a separate event`() =
         runTest {
             val configB = FeedConfig("b", "Back", "binary_sensor.back_door", "camera.back")

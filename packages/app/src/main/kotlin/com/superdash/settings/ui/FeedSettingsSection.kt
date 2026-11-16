@@ -66,7 +66,9 @@ fun FeedSettingsSection(
                     headlineContent = { Text(config.name) },
                     supportingContent = {
                         Column {
-                            Text(config.triggerEntity, style = MaterialTheme.typography.bodySmall)
+                            if (config.triggerEntity.isNotBlank()) {
+                                Text(config.triggerEntity, style = MaterialTheme.typography.bodySmall)
+                            }
                             Text(config.cameraEntity, style = MaterialTheme.typography.bodySmall)
                             Text(
                                 if (config.trigger is FeedTrigger.Sustained) {

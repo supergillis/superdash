@@ -218,7 +218,7 @@ fun FeedEditDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = name.isNotBlank() && trigger.isNotBlank() && camera.isNotBlank(),
+                enabled = name.isNotBlank() && camera.isNotBlank(),
                 onClick = {
                     val parsedTrigger =
                         if (sustained) {

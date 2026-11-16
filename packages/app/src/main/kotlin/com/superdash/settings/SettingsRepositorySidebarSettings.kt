@@ -10,6 +10,7 @@ import com.superdash.kiosk.SidebarSettings
 import com.superdash.kiosk.SidebarSettingsDefaults
 import com.superdash.kiosk.SidebarShortcut
 import com.superdash.kiosk.defaultShortLabel
+import com.superdash.kiosk.legacySidebarIconToMdi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.ListSerializer
@@ -49,7 +50,8 @@ internal class SettingsRepositorySidebarSettings(
         runCatching {
             val shortcutElements = json.decodeFromString<JsonArray>(value)
             shortcutElements.map { element ->
-                val shortcut = json.decodeFromJsonElement(SidebarShortcut.serializer(), element)
+                val decodedShortcut = json.decodeFromJsonElement(SidebarShortcut.serializer(), element)
+                val shortcut = decodedShortcut.copy(icon = legacySidebarIconToMdi(decodedShortcut.icon))
                 val shortcutObject = element as? JsonObject
                 if (shortcutObject == null) {
                     shortcut

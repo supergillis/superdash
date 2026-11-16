@@ -116,6 +116,22 @@ internal val SidebarAction.defaultShortLabel: String
             is SidebarAction.ShowFeed -> "Camera"
         }
 
+internal val SidebarAction.defaultIcon: String
+    get() =
+        when (this) {
+            SidebarAction.OpenSettings -> "mdi:cog"
+            SidebarAction.ReloadDashboard -> "mdi:refresh"
+            SidebarAction.ShowScreensaver, SidebarAction.DismissScreensaver -> "mdi:image"
+            is SidebarAction.SetNightModeActive ->
+                if (active) {
+                    "mdi:weather-night"
+                } else {
+                    "mdi:white-balance-sunny"
+                }
+            is SidebarAction.OpenDashboardPath -> "mdi:view-dashboard"
+            is SidebarAction.ShowFeed -> "mdi:video"
+        }
+
 internal fun SidebarAction.emitsUserTouchedFromSidebar(): Boolean =
     when (this) {
         SidebarAction.ShowScreensaver,
@@ -150,7 +166,7 @@ object SidebarSettingsDefaults {
         SidebarShortcut(
             id = "settings",
             title = "Settings",
-            icon = "settings",
+            icon = SidebarAction.OpenSettings.defaultIcon,
             action = SidebarAction.OpenSettings,
             shortLabel = SidebarAction.OpenSettings.defaultShortLabel,
         )
@@ -161,30 +177,44 @@ object SidebarSettingsDefaults {
             SidebarShortcut(
                 id = "show-screensaver",
                 title = "Show screensaver",
-                icon = "screensaver",
+                icon = SidebarAction.ShowScreensaver.defaultIcon,
                 action = SidebarAction.ShowScreensaver,
                 shortLabel = SidebarAction.ShowScreensaver.defaultShortLabel,
             ),
             SidebarShortcut(
                 id = "night-mode-on",
                 title = "Night mode on",
-                icon = "moon",
+                icon = SidebarAction.SetNightModeActive(active = true).defaultIcon,
                 action = SidebarAction.SetNightModeActive(active = true),
                 shortLabel = SidebarAction.SetNightModeActive(active = true).defaultShortLabel,
             ),
             SidebarShortcut(
                 id = "night-mode-off",
                 title = "Night mode off",
-                icon = "sun",
+                icon = SidebarAction.SetNightModeActive(active = false).defaultIcon,
                 action = SidebarAction.SetNightModeActive(active = false),
                 shortLabel = SidebarAction.SetNightModeActive(active = false).defaultShortLabel,
             ),
             SidebarShortcut(
                 id = "reload-dashboard",
                 title = "Reload dashboard",
-                icon = "refresh",
+                icon = SidebarAction.ReloadDashboard.defaultIcon,
                 action = SidebarAction.ReloadDashboard,
                 shortLabel = SidebarAction.ReloadDashboard.defaultShortLabel,
             ),
         )
 }
+
+private val legacySidebarIcons =
+    mapOf(
+        "settings" to "mdi:cog",
+        "screensaver" to "mdi:image",
+        "moon" to "mdi:weather-night",
+        "sun" to "mdi:white-balance-sunny",
+        "refresh" to "mdi:refresh",
+        "dashboard" to "mdi:view-dashboard",
+        "camera" to "mdi:video",
+    )
+
+/** Icons saved before MDI names were stored used short keys. Anything else passes through unchanged. */
+fun legacySidebarIconToMdi(icon: String): String = legacySidebarIcons[icon] ?: icon

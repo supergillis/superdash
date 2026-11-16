@@ -189,6 +189,8 @@
     <string name="settings_sidebar_title_label">Title</string>
     <string name="settings_sidebar_label_label">Label</string>
     <string name="settings_sidebar_icon_label">Icon</string>
+    <string name="settings_sidebar_icon_search_label">Search icons</string>
+    <string name="settings_sidebar_icon_no_results">No icons found</string>
     <string name="settings_sidebar_action_label">Action</string>
     <string name="settings_sidebar_dashboard_path_label">Dashboard path</string>
     <string name="settings_sidebar_action_settings">Settings</string>
@@ -202,11 +204,6 @@
     <string name="settings_sidebar_action_open_dashboard_view_path">Open dashboard view: %1$s</string>
     <string name="settings_sidebar_action_show_feed">Show camera</string>
     <string name="settings_sidebar_no_feeds">No cameras configured</string>
-    <string name="settings_sidebar_icon_moon">Moon</string>
-    <string name="settings_sidebar_icon_sun">Sun</string>
-    <string name="settings_sidebar_icon_refresh">Refresh</string>
-    <string name="settings_sidebar_icon_dashboard">Dashboard</string>
-    <string name="settings_sidebar_icon_camera">Camera</string>
 
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Keep screen on</string>

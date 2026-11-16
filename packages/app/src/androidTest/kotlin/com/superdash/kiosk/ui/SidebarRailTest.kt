@@ -30,7 +30,7 @@ class SidebarRailTest {
             SidebarShortcut(
                 id = "settings",
                 title = "Settings",
-                icon = "settings",
+                icon = "mdi:cog",
                 shortLabel = "Settings",
                 action = SidebarAction.OpenSettings,
             )
@@ -56,7 +56,7 @@ class SidebarRailTest {
             SidebarShortcut(
                 id = "screensaver",
                 title = "Show screensaver",
-                icon = "screensaver",
+                icon = "mdi:image",
                 shortLabel = "Sleep",
                 action = SidebarAction.ShowScreensaver,
             )
@@ -116,7 +116,7 @@ class SidebarRailTest {
             SidebarShortcut(
                 id = "settings",
                 title = "Settings",
-                icon = "settings",
+                icon = "mdi:cog",
                 action = SidebarAction.OpenSettings,
             )
 
@@ -313,7 +313,7 @@ class SidebarRailTest {
             SidebarShortcut(
                 id = "settings",
                 title = "Settings",
-                icon = "settings",
+                icon = "mdi:cog",
                 action = SidebarAction.OpenSettings,
             )
 

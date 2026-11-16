@@ -276,6 +276,22 @@ class FeedOverlayControllerTest {
         }
 
     @Test
+    fun `a feed opened by hand stays open until it is closed by hand`() =
+        runTest {
+            val controller = controller(scope = TestScope(testScheduler))
+            runCurrent()
+
+            controller.show(doorbell)
+            advanceTimeBy(10 * 60_000L)
+            runCurrent()
+            assertEquals(FeedState.Showing(doorbell, 5L), controller.state.value)
+
+            controller.close()
+            runCurrent()
+            assertEquals(FeedState.Idle, controller.state.value)
+        }
+
+    @Test
     fun `show bypasses suppression and trigger state`() =
         runTest {
             val activeFeeds = MutableStateFlow(mapOf("baby" to 100L))

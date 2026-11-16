@@ -112,7 +112,7 @@ class FeedOverlayController(
     }
 
     /** Force the overlay open for [config], bypassing trigger state, suppression,
-     *  and the master toggle. Used by Settings' Test button and the sidebar. */
+     *  the master toggle and auto close. Used by Settings' Test button and the sidebar. */
     fun show(config: FeedConfig) {
         log.i("show", "feed" to config.id)
         suppressed.update { it - config.id }
@@ -138,10 +138,11 @@ class FeedOverlayController(
         // openedAtEpochMs is part of the key so a re-activation of an already
         // showing feed restarts the timer: ringing again at t=59 must not leave
         // one second of overlay. Sustained feeds keep a stable timestamp while
-        // they stay active, so this never thrashes their timer.
+        // they stay active, so this never thrashes their timer. A feed opened
+        // by hand stays until it is closed by hand.
         val key =
             (current as? FeedState.Showing)
-                ?.takeIf { it.config.autoCloseSec > 0 }
+                ?.takeIf { it.config.autoCloseSec > 0 && forced.value == null }
                 ?.let { AutoClose(it.config.id, it.config.autoCloseSec, it.openedAtEpochMs) }
         if (key == autoCloseKey) {
             return

@@ -20,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -30,13 +31,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.superdash.R
 import com.superdash.feed.FeedConfig
+import com.superdash.icons.MdiIcon
 import com.superdash.kiosk.SidebarAction
 import com.superdash.kiosk.SidebarPosition
 import com.superdash.kiosk.SidebarShortcut
+import com.superdash.kiosk.defaultIcon
 import com.superdash.kiosk.defaultShortLabel
 import com.superdash.settings.SettingsChoice
 import com.superdash.settings.SettingsChoiceRow
@@ -214,12 +219,24 @@ private fun SidebarShortcutDialog(
         )
     }
     var iconDraft by remember(shortcut.id) { mutableStateOf(shortcut.icon) }
+    var showIconPicker by remember(shortcut.id) { mutableStateOf(false) }
     var actionKind by remember(shortcut.id) { mutableStateOf(SidebarActionKind.fromAction(shortcut.action)) }
     var dashboardPath by remember(shortcut.id) {
         mutableStateOf((shortcut.action as? SidebarAction.OpenDashboardPath)?.path ?: "")
     }
     var feedId by remember(shortcut.id) {
         mutableStateOf((shortcut.action as? SidebarAction.ShowFeed)?.feedId ?: "")
+    }
+
+    if (showIconPicker) {
+        MdiIconPickerDialog(
+            onSelect = { name ->
+                iconDraft = name
+                iconFollowsAction = false
+                showIconPicker = false
+            },
+            onDismiss = { showIconPicker = false },
+        )
     }
 
     AlertDialog(
@@ -249,14 +266,15 @@ private fun SidebarShortcutDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                SettingsChoiceRow(
-                    label = stringResource(R.string.settings_sidebar_icon_label),
-                    choices = rememberIconChoices(),
-                    selectedValue = iconDraft,
-                    onSelect = { value ->
-                        iconDraft = value
-                        iconFollowsAction = false
-                    },
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_sidebar_icon_label)) },
+                    supportingContent = { Text(iconDraft) },
+                    leadingContent = { MdiIcon(name = iconDraft) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(role = Role.Button) { showIconPicker = true },
                 )
                 if (shortcut.action !is SidebarAction.OpenSettings) {
                     SettingsChoiceRow(
@@ -394,57 +412,10 @@ private enum class SidebarActionKind(
     }
 }
 
-private data class SidebarIconOption(
-    val id: String,
-    @StringRes val labelRes: Int,
-)
-
-private val iconOptions =
-    listOf(
-        SidebarIconOption("settings", R.string.settings_sidebar_action_settings),
-        SidebarIconOption("screensaver", R.string.settings_screensaver_title),
-        SidebarIconOption("moon", R.string.settings_sidebar_icon_moon),
-        SidebarIconOption("sun", R.string.settings_sidebar_icon_sun),
-        SidebarIconOption("refresh", R.string.settings_sidebar_icon_refresh),
-        SidebarIconOption("dashboard", R.string.settings_sidebar_icon_dashboard),
-        SidebarIconOption("camera", R.string.settings_sidebar_icon_camera),
-    )
-
-internal val SidebarAction.defaultIcon: String
-    get() =
-        when (this) {
-            SidebarAction.OpenSettings -> {
-                "settings"
-            }
-            SidebarAction.ReloadDashboard -> {
-                "refresh"
-            }
-            SidebarAction.ShowScreensaver, SidebarAction.DismissScreensaver -> {
-                "screensaver"
-            }
-            is SidebarAction.SetNightModeActive -> {
-                if (active) {
-                    "moon"
-                } else {
-                    "sun"
-                }
-            }
-            is SidebarAction.OpenDashboardPath -> {
-                "dashboard"
-            }
-            is SidebarAction.ShowFeed -> {
-                "camera"
-            }
-        }
-
 private val availableActionKinds =
     SidebarActionKind.entries.filterNot { kind ->
         kind == SidebarActionKind.OpenSettings || kind == SidebarActionKind.DismissScreensaver
     }
-
-@Composable
-private fun rememberIconChoices(): List<SettingsChoice<String>> =
-    iconOptions.map { option -> SettingsChoice(option.id, stringResource(option.labelRes)) }
 
 @Composable
 private fun rememberActionChoices(): List<SettingsChoice<SidebarActionKind>> =
@@ -456,10 +427,6 @@ internal fun isSaveableSidebarAction(action: SidebarAction): Boolean =
     action !is SidebarAction.ShowFeed || action.feedId.isNotBlank()
 
 internal fun sidebarActionChoiceLabelIds(): List<Int> = availableActionKinds.map { kind -> kind.labelRes }
-
-internal fun sidebarIconChoiceLabelIds(): List<Int> = iconOptions.map { option -> option.labelRes }
-
-internal fun sidebarIconChoiceIds(): List<String> = iconOptions.map { option -> option.id }
 
 @Composable
 private fun sidebarActionText(action: SidebarAction): String =
@@ -511,7 +478,7 @@ internal fun newDashboardShortcut(id: String): SidebarShortcut {
     return SidebarShortcut(
         id = id,
         title = "Dashboard $nextIndex",
-        icon = "dashboard",
+        icon = action.defaultIcon,
         action = action,
         shortLabel = action.defaultShortLabel,
         shortLabelCustomized = false,

@@ -188,6 +188,8 @@
     <string name="settings_sidebar_title_label">Titre</string>
     <string name="settings_sidebar_label_label">Libellé</string>
     <string name="settings_sidebar_icon_label">Icône</string>
+    <string name="settings_sidebar_icon_search_label">Rechercher une icône</string>
+    <string name="settings_sidebar_icon_no_results">Aucune icône trouvée</string>
     <string name="settings_sidebar_action_label">Action</string>
     <string name="settings_sidebar_dashboard_path_label">Chemin du tableau de bord</string>
     <string name="settings_sidebar_action_settings">Paramètres</string>
@@ -201,11 +203,6 @@
     <string name="settings_sidebar_action_open_dashboard_view_path">Ouvrir une vue du tableau de bord : %1$s</string>
     <string name="settings_sidebar_action_show_feed">Afficher la caméra</string>
     <string name="settings_sidebar_no_feeds">Aucune caméra configurée</string>
-    <string name="settings_sidebar_icon_moon">Lune</string>
-    <string name="settings_sidebar_icon_sun">Soleil</string>
-    <string name="settings_sidebar_icon_refresh">Actualiser</string>
-    <string name="settings_sidebar_icon_dashboard">Tableau de bord</string>
-    <string name="settings_sidebar_icon_camera">Caméra</string>
 
     <!-- Device -->
     <string name="settings_device_keep_screen_on">Garder l\'écran allumé</string>

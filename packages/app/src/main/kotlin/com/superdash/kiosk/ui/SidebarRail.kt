@@ -21,14 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.DashboardCustomize
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -41,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -50,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.superdash.R
+import com.superdash.icons.MdiIcon
 import com.superdash.kiosk.SidebarPosition
 import com.superdash.kiosk.SidebarShortcut
 import com.superdash.kiosk.defaultShortLabel
@@ -317,11 +310,7 @@ fun SidebarIconButton(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Icon(
-                    imageVector = sidebarIcon(shortcut.icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                )
+                MdiIcon(name = shortcut.icon, size = 22.dp)
                 Text(
                     text = sidebarLabel(shortcut),
                     modifier = Modifier.clearAndSetSemantics {},
@@ -336,22 +325,16 @@ fun SidebarIconButton(
         if (selected) {
             FilledTonalIconButton(
                 onClick = onClick,
-                modifier = Modifier.size(compactButtonSize),
+                modifier = Modifier.size(compactButtonSize).semantics { contentDescription = contentDesc },
             ) {
-                Icon(
-                    imageVector = sidebarIcon(shortcut.icon),
-                    contentDescription = contentDesc,
-                )
+                MdiIcon(name = shortcut.icon)
             }
         } else {
             IconButton(
                 onClick = onClick,
-                modifier = Modifier.size(compactButtonSize),
+                modifier = Modifier.size(compactButtonSize).semantics { contentDescription = contentDesc },
             ) {
-                Icon(
-                    imageVector = sidebarIcon(shortcut.icon),
-                    contentDescription = contentDesc,
-                )
+                MdiIcon(name = shortcut.icon)
             }
         }
     }
@@ -476,16 +459,4 @@ private fun sidebarContentDescription(shortcut: SidebarShortcut, selected: Boole
         stringResource(R.string.sidebar_item_active_content_description, shortcut.title)
     } else {
         shortcut.title
-    }
-
-private fun sidebarIcon(value: String): ImageVector =
-    when (value) {
-        "settings" -> Icons.Filled.Settings
-        "screensaver" -> Icons.Filled.Wallpaper
-        "moon" -> Icons.Filled.DarkMode
-        "sun" -> Icons.Filled.LightMode
-        "refresh" -> Icons.Filled.Refresh
-        "dashboard" -> Icons.Filled.DashboardCustomize
-        "camera" -> Icons.Filled.Videocam
-        else -> Icons.Filled.DashboardCustomize
     }

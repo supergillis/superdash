@@ -181,7 +181,7 @@ class SettingsRepositorySidebarSettingsTest {
                     SidebarShortcut(
                         id = "dashboard-home",
                         title = "Home",
-                        icon = "dashboard",
+                        icon = "mdi:view-dashboard",
                         action = SidebarAction.OpenDashboardPath("lovelace/home"),
                     ),
                 )
@@ -257,6 +257,41 @@ class SettingsRepositorySidebarSettingsTest {
             val shortcut = settings.shortcuts.first()[1]
             assertEquals(null, shortcut.shortLabel)
             assertEquals(true, shortcut.shortLabelCustomized)
+        }
+
+    @Test fun `stored shortcuts with legacy icon names load with mdi names`() =
+        runTest {
+            val store = InMemoryKeyValueStore()
+            store.set(
+                "sidebar.shortcuts",
+                """
+                [
+                  {"id":"settings","title":"Settings","icon":"settings","action":{"type":"open_settings"}},
+                  {"id":"screensaver","title":"Sleep","icon":"screensaver","action":{"type":"show_screensaver"}},
+                  {"id":"night","title":"Night","icon":"moon","action":{"type":"set_night_mode_active","active":true}},
+                  {"id":"day","title":"Day","icon":"sun","action":{"type":"set_night_mode_active","active":false}},
+                  {"id":"reload","title":"Reload","icon":"refresh","action":{"type":"reload_dashboard"}},
+                  {"id":"dash","title":"Dash","icon":"dashboard","action":{"type":"open_dashboard_path","path":"lovelace/1"}},
+                  {"id":"feed","title":"Door","icon":"camera","action":{"type":"show_feed","feedId":"door"}},
+                  {"id":"custom","title":"Lamp","icon":"mdi:lamp","action":{"type":"reload_dashboard"}}
+                ]
+                """.trimIndent(),
+            )
+            val settings = SettingsRepositorySidebarSettings(store)
+
+            assertEquals(
+                listOf(
+                    "mdi:cog",
+                    "mdi:image",
+                    "mdi:weather-night",
+                    "mdi:white-balance-sunny",
+                    "mdi:refresh",
+                    "mdi:view-dashboard",
+                    "mdi:video",
+                    "mdi:lamp",
+                ),
+                settings.shortcuts.first().map { shortcut -> shortcut.icon },
+            )
         }
 
     @Test fun `invalid shortcut json falls back to defaults`() =

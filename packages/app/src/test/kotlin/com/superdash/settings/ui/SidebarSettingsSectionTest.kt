@@ -1,12 +1,16 @@
 package com.superdash.settings.ui
 
 import com.superdash.R
+import com.superdash.icons.MdiCodepoints
 import com.superdash.kiosk.SidebarAction
+import com.superdash.kiosk.SidebarSettingsDefaults
 import com.superdash.kiosk.SidebarShortcut
+import com.superdash.kiosk.defaultIcon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class SidebarSettingsSectionTest {
     @Test fun `generated draft changes from view to reload when action changes to reload dashboard`() {
@@ -107,26 +111,8 @@ class SidebarSettingsSectionTest {
         )
     }
 
-    @Test fun `settings icon choices are the expected fixed set`() {
-        assertEquals(
-            listOf(
-                R.string.settings_sidebar_action_settings,
-                R.string.settings_screensaver_title,
-                R.string.settings_sidebar_icon_moon,
-                R.string.settings_sidebar_icon_sun,
-                R.string.settings_sidebar_icon_refresh,
-                R.string.settings_sidebar_icon_dashboard,
-                R.string.settings_sidebar_icon_camera,
-            ),
-            sidebarIconChoiceLabelIds(),
-        )
-    }
-
-    @Test fun `a show camera shortcut defaults to the camera icon`() {
-        assertEquals("camera", SidebarAction.ShowFeed("feed").defaultIcon)
-    }
-
-    @Test fun `every default icon is a choice in the picker`() {
+    @Test fun `every default icon is an mdi name that exists in the bundled font`() {
+        val codepoints = MdiCodepoints(File("src/main/assets/mdi/codepoints.json").readText())
         val actions =
             listOf(
                 SidebarAction.OpenSettings,
@@ -138,8 +124,10 @@ class SidebarSettingsSectionTest {
                 SidebarAction.OpenDashboardPath("lovelace/1"),
                 SidebarAction.ShowFeed("feed"),
             )
-        actions.forEach { action ->
-            assertTrue("${action.defaultIcon} for $action", action.defaultIcon in sidebarIconChoiceIds())
-        }
+        val icons = actions.map { action -> action.defaultIcon } + SidebarSettingsDefaults.shortcuts.map { it.icon }
+        assertEquals(
+            icons.map { icon -> icon to true },
+            icons.map { icon -> icon to (icon.startsWith("mdi:") && codepoints.codepoint(icon) != null) },
+        )
     }
 }

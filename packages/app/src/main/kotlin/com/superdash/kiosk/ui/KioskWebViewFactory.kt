@@ -238,6 +238,8 @@ internal fun buildKioskWebView(
         CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
         setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_BOUND, false)
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+        // Safe Browsing is off because the kiosk only loads the user's own HA origin,
+        // so a reputation lookup per navigation adds latency without protecting anything.
         if (WebViewFeature.isFeatureSupported(WebViewFeature.SAFE_BROWSING_ENABLE)) {
             WebSettingsCompat.setSafeBrowsingEnabled(settings, false)
         }
@@ -281,9 +283,13 @@ internal fun buildKioskWebView(
                         }
                     if (!sameOrigin) {
                         if (req.hasGesture()) {
-                            view.context.startActivity(
-                                android.content.Intent(android.content.Intent.ACTION_VIEW, req.url),
-                            )
+                            try {
+                                view.context.startActivity(
+                                    android.content.Intent(android.content.Intent.ACTION_VIEW, req.url),
+                                )
+                            } catch (e: android.content.ActivityNotFoundException) {
+                                log.w("no app for external link", e, "scheme" to req.url.scheme)
+                            }
                         }
                         return true
                     }

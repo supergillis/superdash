@@ -240,7 +240,7 @@ class ImmichApiClientTest {
             PageFailureCase(
                 "second page is malformed json",
                 listOf(pageOne, malformedPage),
-                expectedCalls = 1 + 3,
+                expectedCalls = 1 + 1,
                 expectedStatusCode = null,
                 expectedFailure = JsonConvertException::class,
             ),
@@ -289,7 +289,7 @@ class ImmichApiClientTest {
     )
 
     @Test
-    fun `non success responses throw ImmichHttpException and only 401 and 403 skip retries`() {
+    fun `non success responses throw ImmichHttpException and only listCatalog retries server errors`() {
         val operations: Map<String, suspend (ImmichApiClient) -> Any?> =
             mapOf(
                 "getAsset" to { client -> client.getAsset("some-id") },
@@ -312,7 +312,7 @@ class ImmichApiClientTest {
             StatusCase("getAlbumByName", HttpStatusCode.InternalServerError, expectedCalls = 1),
             StatusCase("listCatalog", HttpStatusCode.Unauthorized, expectedCalls = 1),
             StatusCase("listCatalog", HttpStatusCode.Forbidden, expectedCalls = 1),
-            StatusCase("listCatalog", HttpStatusCode.NotFound, expectedCalls = 3),
+            StatusCase("listCatalog", HttpStatusCode.NotFound, expectedCalls = 1),
             StatusCase("listCatalog", HttpStatusCode.InternalServerError, expectedCalls = 3),
         ).forEach { case ->
             runTest {
@@ -324,6 +324,50 @@ class ImmichApiClientTest {
                 val label = "${case.operation} ${case.status.value}"
                 assertEquals(label, case.status.value, (failure as? ImmichHttpException)?.statusCode)
                 assertEquals(label, case.expectedCalls, calls.size)
+            }
+        }
+    }
+
+    private data class RetryCase(
+        val name: String,
+        val reply: MockResponse?,
+        val expectedCalls: Int,
+    )
+
+    @Test
+    fun `listCatalog retries only network errors, 5xx and 429`() {
+        listOf(
+            RetryCase("network error", null, expectedCalls = 3),
+            RetryCase("500", MockResponse(HttpStatusCode.InternalServerError, "x"), expectedCalls = 3),
+            RetryCase("503", MockResponse(HttpStatusCode.ServiceUnavailable, "x"), expectedCalls = 3),
+            RetryCase("429", MockResponse(HttpStatusCode.TooManyRequests, "x"), expectedCalls = 3),
+            RetryCase("400", MockResponse(HttpStatusCode.BadRequest, "x"), expectedCalls = 1),
+            RetryCase("404", MockResponse(HttpStatusCode.NotFound, "x"), expectedCalls = 1),
+            RetryCase("malformed json", malformedPage, expectedCalls = 1),
+        ).forEach { case ->
+            runTest {
+                var calls = 0
+                val engine =
+                    MockEngine {
+                        calls++
+                        val reply = case.reply ?: throw java.io.IOException("connection reset")
+                        respond(
+                            content = reply.body,
+                            status = reply.status,
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    }
+                val client =
+                    ImmichApiClient(
+                        HttpClient(engine) { install(ContentNegotiation) { json() } },
+                        "http://immich",
+                        "key",
+                        sleep = {},
+                    )
+
+                runCatching { client.listCatalog() }
+
+                assertEquals(case.name, case.expectedCalls, calls)
             }
         }
     }

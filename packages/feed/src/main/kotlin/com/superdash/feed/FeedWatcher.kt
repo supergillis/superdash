@@ -106,7 +106,8 @@ class FeedWatcher(
                 mutableActiveFeeds.update { it - id }
             }
             for (config in configs) {
-                if (subscriptions.containsKey(config.id)) {
+                // A feed without a trigger entity only opens by hand.
+                if (config.triggerEntity.isBlank() || subscriptions.containsKey(config.id)) {
                     continue
                 }
                 val feedId = config.id

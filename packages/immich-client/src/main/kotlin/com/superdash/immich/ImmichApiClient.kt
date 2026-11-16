@@ -85,7 +85,7 @@ class ImmichApiClient(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                if (e.isAuthFailure() || attempt >= CATALOG_PAGE_ATTEMPTS) {
+                if (!e.isTransient() || attempt >= CATALOG_PAGE_ATTEMPTS) {
                     log.w("catalog page failed", e, "page" to page, "attempt" to attempt)
                     throw e
                 }
@@ -95,8 +95,13 @@ class ImmichApiClient(
         }
     }
 
-    private fun Exception.isAuthFailure(): Boolean =
-        this is ImmichHttpException && statusCode in AUTH_FAILURE_STATUS_CODES
+    private fun Exception.isTransient(): Boolean =
+        when (this) {
+            is ImmichHttpException ->
+                statusCode >= SERVER_ERROR_STATUS_CODE ||
+                    statusCode == TOO_MANY_REQUESTS_STATUS_CODE
+            else -> this is IOException
+        }
 
     private suspend fun fetchSearchPage(
         page: String,
@@ -218,7 +223,8 @@ class ImmichApiClient(
         const val CATALOG_PAGE_SIZE = 1000
         const val CATALOG_PAGE_ATTEMPTS = 3
         const val CATALOG_PAGE_RETRY_DELAY_MS = 1_000L
-        val AUTH_FAILURE_STATUS_CODES = setOf(401, 403)
+        const val SERVER_ERROR_STATUS_CODE = 500
+        const val TOO_MANY_REQUESTS_STATUS_CODE = 429
 
         // Hard cap on pagination loops. At 1000 assets/page this admits 200k assets,
         // far beyond a realistic slideshow library. Guards against a misbehaving server

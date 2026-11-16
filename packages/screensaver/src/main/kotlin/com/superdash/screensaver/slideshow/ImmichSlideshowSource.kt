@@ -47,8 +47,6 @@ class ImmichSlideshowSource(
         prefetchScope.cancel()
     }
 
-    fun catalogSize(): Int = catalog.size
-
     private var catalog: List<ImmichCatalogEntry> = emptyList()
     private var shuffledIndices: IntArray = IntArray(0)
     private var cursor: Int = 0

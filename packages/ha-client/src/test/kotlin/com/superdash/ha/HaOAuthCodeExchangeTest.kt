@@ -15,20 +15,6 @@ import org.junit.Test
 import java.io.IOException
 
 class HaOAuthCodeExchangeTest {
-    private class RecordingTokenStore : HaTokenStoreLike {
-        var saved: HaTokens? = null
-
-        override suspend fun load(): HaTokens? = saved
-
-        override suspend fun save(tokens: HaTokens) {
-            saved = tokens
-        }
-
-        override suspend fun clear() {
-            saved = null
-        }
-    }
-
     private data class Case(
         val name: String,
         val engine: MockEngine,
@@ -67,11 +53,11 @@ class HaOAuthCodeExchangeTest {
                 ),
             )
         cases.forEach { case ->
-            val store = RecordingTokenStore()
+            val store = InMemoryHaTokenStore(tokens = null)
             val client = HttpClient(case.engine) { install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) } }
             val result = runBlocking { exchangeAndSaveAuthCode(client, store, "https://ha.local", "code") }
             assertEquals(case.name, case.expectedResult, result)
-            assertEquals(case.name, case.expectSaved, store.saved != null)
+            assertEquals(case.name, case.expectSaved, store.lastSaved != null)
         }
     }
 }

@@ -2,6 +2,10 @@ package com.superdash.kiosk.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
@@ -326,6 +330,33 @@ internal fun buildKioskWebView(
             }
         webChromeClient =
             object : WebChromeClient() {
+                private var fullscreenView: View? = null
+                private var fullscreenCallback: CustomViewCallback? = null
+
+                // WebView only reports document.fullscreenEnabled when the host
+                // handles custom views, so without this no page can go fullscreen.
+                override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                    val root = this@apply.rootView as? ViewGroup
+                    if (fullscreenView != null || root == null) {
+                        callback.onCustomViewHidden()
+                        return
+                    }
+                    view.setBackgroundColor(Color.BLACK)
+                    root.addView(view, ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                    fullscreenView = view
+                    fullscreenCallback = callback
+                    log.i("WebView fullscreen enter")
+                }
+
+                override fun onHideCustomView() {
+                    val view = fullscreenView ?: return
+                    (view.parent as? ViewGroup)?.removeView(view)
+                    fullscreenView = null
+                    fullscreenCallback?.onCustomViewHidden()
+                    fullscreenCallback = null
+                    log.i("WebView fullscreen exit")
+                }
+
                 override fun onPermissionRequest(request: PermissionRequest) {
                     val resources = request.resources.joinToString(",")
                     // Mic and camera grants are limited to the HA origin on purpose.

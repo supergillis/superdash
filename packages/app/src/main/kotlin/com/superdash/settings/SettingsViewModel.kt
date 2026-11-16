@@ -163,14 +163,14 @@ class SettingsViewModel(
             combine(
                 screensaverSettings.idleTimeoutSec,
                 screensaverSettings.weatherEntityId,
-                screensaverSettings.calendarEntityId,
+                screensaverSettings.calendarEntityIds,
                 screensaverSettings.overlayPosition,
                 screensaverSettings.pictureSpacingDp,
             ) { timeout, weather, calendar, overlay, spacing ->
                 ScreensaverDisplay(
                     timeoutSec = timeout,
                     weatherEntityId = weather,
-                    calendarEntityId = calendar,
+                    calendarEntityIds = calendar,
                     overlayPosition = OverlayPosition.fromKey(overlay),
                     pictureSpacingDp = spacing,
                 )
@@ -195,7 +195,7 @@ class SettingsViewModel(
                 nightMode = modes.second,
                 idleTimeoutSec = display.timeoutSec,
                 weatherEntityId = display.weatherEntityId,
-                calendarEntityId = display.calendarEntityId,
+                calendarEntityIds = display.calendarEntityIds,
                 powerUsageEntityId = energy.powerUsageEntityId,
                 solarPowerEntityId = energy.solarPowerEntityId,
                 gridPowerEntityId = energy.gridPowerEntityId,
@@ -461,7 +461,7 @@ class SettingsViewModel(
     private data class ScreensaverDisplay(
         val timeoutSec: Int,
         val weatherEntityId: String,
-        val calendarEntityId: String,
+        val calendarEntityIds: List<String>,
         val overlayPosition: OverlayPosition,
         val pictureSpacingDp: Int,
     )
@@ -528,7 +528,9 @@ class SettingsViewModel(
 
     fun setWeatherEntityId(value: String) = launch { screensaverSettings.setWeatherEntityId(value) }
 
-    fun setCalendarEntityId(value: String) = launch { screensaverSettings.setCalendarEntityId(value) }
+    fun addCalendarEntityId(value: String) = launch { screensaverSettings.addCalendarEntityId(value) }
+
+    fun removeCalendarEntityId(value: String) = launch { screensaverSettings.removeCalendarEntityId(value) }
 
     fun setPowerUsageEntityId(value: String) = launch { screensaverSettings.setPowerUsageEntityId(value) }
 

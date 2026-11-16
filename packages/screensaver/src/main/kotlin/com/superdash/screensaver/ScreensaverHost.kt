@@ -32,6 +32,8 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 
 private const val RANDOM_ROTATION_MS = 15L * 60 * 1000
@@ -77,11 +79,13 @@ fun ScreensaverHost(
     val immichCatalogTtlHours by immichCatalogTtlHoursFlow.collectAsStateWithLifecycle(initialValue = 24)
     val entity by haClient.observeEntity(weatherEntityId).collectAsStateWithLifecycle(initialValue = null)
     val weather = WeatherSnapshot.fromEntity(entity)
-    val calendarEntityId by settings.calendarEntityId.collectAsStateWithLifecycle(initialValue = "")
-    val calendarEntity by haClient
-        .observeEntity(calendarEntityId)
-        .collectAsStateWithLifecycle(initialValue = null)
-    val calendar = CalendarSnapshot.fromEntity(calendarEntity)
+    val calendarEntityIds by settings.calendarEntityIds.collectAsStateWithLifecycle(initialValue = emptyList())
+    val calendarEntities by remember(calendarEntityIds) {
+        haClient.entities
+            .map { all -> calendarEntityIds.mapNotNull { all[it] } }
+            .distinctUntilChanged()
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val calendar = selectSoonestCalendarEvent(calendarEntities.mapNotNull { CalendarSnapshot.fromEntity(it) })
     val powerUsageEntityId by settings.powerUsageEntityId.collectAsStateWithLifecycle(initialValue = "")
     val solarPowerEntityId by settings.solarPowerEntityId.collectAsStateWithLifecycle(initialValue = "")
     val gridPowerEntityId by settings.gridPowerEntityId.collectAsStateWithLifecycle(initialValue = "")

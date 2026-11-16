@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.superdash.R
 import com.superdash.ha.EntityState
@@ -149,27 +151,40 @@ fun ScreensaverSettingsSection(
             )
         }
         val calendarEntityLabel = stringResource(R.string.settings_screensaver_calendar_entity)
-        SettingsValueRow(
-            label = calendarEntityLabel,
-            value = state.calendarEntityId.takeIf { it.isNotBlank() } ?: notSet,
+        state.calendarEntityIds.forEach { calendarEntityId ->
+            val removeDescription =
+                stringResource(R.string.settings_screensaver_calendar_remove_named, calendarEntityId)
+            ListItem(
+                headlineContent = { Text(calendarEntityLabel) },
+                supportingContent = { Text(calendarEntityId) },
+                trailingContent = {
+                    TextButton(
+                        onClick = { actions.onCalendarEntityIdRemove(calendarEntityId) },
+                        modifier = Modifier.semantics { contentDescription = removeDescription },
+                    ) {
+                        Text(stringResource(R.string.settings_action_delete))
+                    }
+                },
+            )
+        }
+        SettingsActionRow(
+            label = stringResource(R.string.settings_screensaver_calendar_add),
             onClick = { editingCalendarEntity = true },
         )
         if (editingCalendarEntity) {
+            val addCalendar = { value: String ->
+                actions.onCalendarEntityIdAdd(value)
+                editingCalendarEntity = false
+            }
             HaEntityPickerDialog(
                 title = calendarEntityLabel,
-                entities = haEntities,
-                selectedEntityId = state.calendarEntityId,
+                entities = haEntities.filterNot { it.entityId in state.calendarEntityIds },
+                selectedEntityId = "",
                 allowedDomains = setOf("calendar"),
                 manualLabel = calendarEntityLabel,
                 onDismiss = { editingCalendarEntity = false },
-                onSelectManual = { value ->
-                    actions.onCalendarEntityIdChange(value)
-                    editingCalendarEntity = false
-                },
-                onSelect = { value ->
-                    actions.onCalendarEntityIdChange(value)
-                    editingCalendarEntity = false
-                },
+                onSelectManual = addCalendar,
+                onSelect = addCalendar,
             )
         }
         val powerUsageEntityLabel = stringResource(R.string.settings_screensaver_power_usage_entity)

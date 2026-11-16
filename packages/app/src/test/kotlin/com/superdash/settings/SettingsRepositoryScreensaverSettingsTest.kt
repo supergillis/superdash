@@ -72,18 +72,28 @@ class SettingsRepositoryScreensaverSettingsTest {
         }
 
     @Test
-    fun `calendarEntityId defaults to empty`() =
+    fun `calendarEntityIds reads an old single value as a one-item list`() =
         runTest {
-            val settings = SettingsRepositoryScreensaverSettings(InMemoryKeyValueStore())
-            assertEquals("", settings.calendarEntityId.first())
+            val store = InMemoryKeyValueStore()
+            store.set("calendar_entity_id", "calendar.family")
+            val settings = SettingsRepositoryScreensaverSettings(store)
+            assertEquals(listOf("calendar.family"), settings.calendarEntityIds.first())
         }
 
     @Test
-    fun `calendarEntityId round-trip`() =
+    fun `calendarEntityIds add and remove round-trip and reject invalid entries`() =
         runTest {
             val settings = SettingsRepositoryScreensaverSettings(InMemoryKeyValueStore())
-            settings.setCalendarEntityId("calendar.family")
-            assertEquals("calendar.family", settings.calendarEntityId.first())
+            settings.addCalendarEntityId(" calendar.work ")
+            settings.addCalendarEntityId("calendar.home")
+            settings.addCalendarEntityId("calendar.work")
+            settings.addCalendarEntityId("  ")
+            settings.addCalendarEntityId("calendar.a,calendar.b")
+            assertEquals(listOf("calendar.work", "calendar.home"), settings.calendarEntityIds.first())
+            settings.removeCalendarEntityId("calendar.work")
+            assertEquals(listOf("calendar.home"), settings.calendarEntityIds.first())
+            settings.removeCalendarEntityId("calendar.home")
+            assertEquals(emptyList<String>(), settings.calendarEntityIds.first())
         }
 
     @Test

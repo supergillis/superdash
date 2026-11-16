@@ -121,4 +121,37 @@ class CalendarSnapshotTest {
             )
         assertNull(CalendarSnapshot.fromEntity(entity, now, zone))
     }
+
+    @Test fun `selects the soonest event across calendars`() {
+        fun snapshot(
+            message: String,
+            start: String?,
+            inProgress: Boolean = false,
+        ) = CalendarSnapshot(
+            message = message,
+            startTime = start?.let { Instant.parse(it) },
+            endTime = null,
+            allDay = false,
+            inProgress = inProgress,
+        )
+
+        val later = snapshot("later", "2026-05-18T15:00:00Z")
+        val sooner = snapshot("sooner", "2026-05-18T12:00:00Z")
+        val running = snapshot("running", "2026-05-18T09:00:00Z", inProgress = true)
+        val runningEarlier = snapshot("running earlier", "2026-05-18T08:00:00Z", inProgress = true)
+        val undated = snapshot("undated", null)
+        val cases =
+            listOf(
+                emptyList<CalendarSnapshot>() to null,
+                listOf(later) to later,
+                listOf(later, sooner) to sooner,
+                listOf(sooner, running) to running,
+                listOf(running, runningEarlier) to runningEarlier,
+                listOf(undated, later) to later,
+                listOf(sooner, snapshot("same start", "2026-05-18T12:00:00Z")) to sooner,
+            )
+        cases.forEach { (snapshots, expected) ->
+            assertEquals(expected, selectSoonestCalendarEvent(snapshots))
+        }
+    }
 }

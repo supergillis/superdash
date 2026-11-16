@@ -155,6 +155,8 @@
     <string name="settings_screensaver_idle_timeout">Idle timeout: %1$d min %2$ds</string>
     <string name="settings_screensaver_weather_entity">Weather entity</string>
     <string name="settings_screensaver_calendar_entity">Calendar entity</string>
+    <string name="settings_screensaver_calendar_add">Add calendar</string>
+    <string name="settings_screensaver_calendar_remove_named">Delete %1$s</string>
     <string name="settings_screensaver_power_usage_entity">Power usage entity</string>
     <string name="settings_screensaver_solar_power_entity">Solar power entity</string>
     <string name="settings_screensaver_grid_power_entity_label">Grid power entity (+ import / − export)</string>
